@@ -15,6 +15,7 @@ import { BadRequest, Forbidden, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
 import type { Ctx } from "./access.js";
 import { logActivity } from "./activity.js";
+import { notify } from "./notifications.js";
 
 export type ShareKind = "todo" | "event" | "reference";
 
@@ -125,6 +126,13 @@ export async function addCollaborator(
     triagedAt: null,
   });
 
+  await notify(
+    db,
+    u.id,
+    "share_invite",
+    `${entity.title} was shared with you`,
+    kind === "reference" ? undefined : { type: kind, id },
+  );
   await logActivity(db, ctx.userId, c.activityType, id, "shared");
   return { ok: true };
 }

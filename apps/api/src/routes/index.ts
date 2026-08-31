@@ -6,6 +6,7 @@ import { buildSitemap, robotsTxt } from "../lib/sitemap.js";
 import { listActivity } from "../services/activity.js";
 import * as collab from "../services/collaborators.js";
 import * as events from "../services/events.js";
+import * as notifications from "../services/notifications.js";
 import * as home from "../services/home.js";
 import * as incoming from "../services/incoming.js";
 import * as projects from "../services/projects.js";
@@ -207,6 +208,15 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
     );
   }
   app.get("/shared-with-me", async (req) => collab.sharedWithMe(db, req.ctx));
+
+  // ─── notifications ──────────────────────────────────
+  app.get("/notifications", async (req) =>
+    notifications.listNotifications(db, req.ctx, req.currentUser.timezone),
+  );
+  app.post("/notifications/read-all", async (req) => notifications.markAllRead(db, req.ctx));
+  app.post("/notifications/:id/read", { schema: { params: idParams } }, async (req) =>
+    notifications.markRead(db, req.ctx, req.params.id),
+  );
 
   // ─── activity ───────────────────────────────────────
   app.get(

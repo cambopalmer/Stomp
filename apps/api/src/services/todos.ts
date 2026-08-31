@@ -13,6 +13,7 @@ import {
   workspaceIds,
 } from "./access.js";
 import { logActivity } from "./activity.js";
+import { notify } from "./notifications.js";
 
 /** An assignee must be reachable: yourself, or a member of the todo's workspace. */
 async function assertAssignable(
@@ -182,6 +183,19 @@ export async function updateTodo(db: Db, ctx: Ctx, id: string, input: UpdateTodo
         updatedAt: clock.now(),
       })
       .where(eq(todos.parentTodoId, id));
+  }
+
+  // Notify a newly-assigned person (not yourself).
+  if (
+    input.assigneeId !== undefined &&
+    input.assigneeId &&
+    input.assigneeId !== current.assigneeId &&
+    input.assigneeId !== ctx.userId
+  ) {
+    await notify(db, input.assigneeId, "assignment", `You were assigned: ${current.title}`, {
+      type: "todo",
+      id,
+    });
   }
 
   await logActivity(db, ctx.userId, "todo", id, input.status === "done" ? "completed" : "updated");

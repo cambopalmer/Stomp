@@ -35,7 +35,7 @@ function useWsPath(base: string): string {
 
 const WRITE_KEYS = [
   "home", "todos", "projects", "events", "references", "incoming",
-  "tags", "activity", "workspaces", "collab", "shared-with-me",
+  "tags", "activity", "workspaces", "collab", "shared-with-me", "notifications",
 ];
 
 function useInvalidateAll() {
@@ -173,6 +173,31 @@ export const useRemoveCollaborator = mutation(
   ({ kind, id, userId }: { kind: string; id: string; userId: string }) =>
     api.del(`/${kind}s/${id}/collaborators/${userId}`),
 );
+
+// ─── notifications ───────────────────────────────────
+export interface NotificationItem {
+  id: string;
+  type: string;
+  title: string;
+  body: string | null;
+  entityType: string | null;
+  entityId: string | null;
+  createdAt: number;
+  read: boolean;
+  transient: boolean;
+}
+
+export const useNotifications = () =>
+  useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => api.get<{ items: NotificationItem[]; unread: number }>("/notifications"),
+    refetchInterval: 60_000,
+  });
+
+export const useMarkNotificationRead = mutation((id: string) =>
+  api.post(`/notifications/${id}/read`),
+);
+export const useMarkAllNotificationsRead = mutation(() => api.post("/notifications/read-all"));
 
 export const useActivity = (entityType: string, entityId: string | undefined) =>
   useQuery({

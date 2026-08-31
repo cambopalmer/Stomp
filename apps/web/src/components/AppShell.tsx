@@ -16,6 +16,7 @@ import { useQuickCapture } from "../lib/queries.js";
 import { useTheme } from "../lib/theme.js";
 import { Button, Input } from "./ui.js";
 import { HotSidebar } from "./HotSidebar.js";
+import { NotificationsBell } from "./NotificationsBell.js";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher.js";
 
 const nav = [
@@ -80,6 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               Add
             </Button>
           </form>
+          <NotificationsBell />
           <button
             onClick={cycle}
             aria-label={`Theme: ${theme}. Click to change.`}
@@ -88,7 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <ThemeIcon size={16} aria-hidden="true" />
           </button>
-          <NavLink to="/signup" className="text-sm text-muted underline hover:text-text">
+          <NavLink to="/signup" className="hidden text-sm text-muted underline hover:text-text sm:inline">
             Create account
           </NavLink>
         </div>
