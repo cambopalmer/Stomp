@@ -44,9 +44,9 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 - [x] `[1]` Incoming full triage UI (inline → Todo / → Event forms + Dismiss)
 - [x] `[1]` Todo detail (`/todos/:id`) + subtasks UI
 - [x] `[1]` Filters on todos (priority, project) + learn (status, favorite)
-- [ ] `[1]` Tag pages (`/tags/:slug`) — needs a taggings list endpoint
-- [x] `[1]` Project detail: 4 item tabs + progress bar (members list still TODO)
-- [ ] `[1]` Activity-log panel on detail screens — needs `GET /activity?entityType&entityId`
+- [x] `[1]` Tag pages (`/tags/:name`) + tag editor on todo detail (`GET /tags/:id/items`, `GET /taggings`)
+- [x] `[1]` Project detail: 4 item tabs + progress bar (members list still TODO — Phase 2)
+- [x] `[1]` Activity-log panel on todo detail (`GET /activity?entityType&entityId`)
 - [x] `[1]` Empty / loading / error states (`ErrorState`, `QueryBoundary`)
 - [x] `[1]` Dark mode pass (banner toggle, `lib/theme.ts`, tokens)
 

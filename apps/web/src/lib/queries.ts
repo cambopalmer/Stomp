@@ -22,7 +22,7 @@ import type {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api.js";
 
-const WRITE_KEYS = ["home", "todos", "projects", "events", "references", "incoming", "tags"];
+const WRITE_KEYS = ["home", "todos", "projects", "events", "references", "incoming", "tags", "activity"];
 
 function useInvalidateAll() {
   const qc = useQueryClient();
@@ -96,6 +96,38 @@ export const useWorkspaces = () =>
   useQuery({ queryKey: ["workspaces"], queryFn: () => api.get<Workspace[]>("/workspaces") });
 
 export const useTags = () => useQuery({ queryKey: ["tags"], queryFn: () => api.get<Tag[]>("/tags") });
+
+export const useTagItems = (tagId: string | undefined) =>
+  useQuery({
+    queryKey: ["tags", "items", tagId],
+    queryFn: () =>
+      api.get<{ tag: Tag; todos: Todo[]; events: CalendarEvent[]; references: Reference[] }>(
+        `/tags/${tagId}/items`,
+      ),
+    enabled: !!tagId,
+  });
+
+export const useEntityTags = (entityType: string, entityId: string | undefined) =>
+  useQuery({
+    queryKey: ["tags", "entity", entityType, entityId],
+    queryFn: () => api.get<Tag[]>(`/taggings?entityType=${entityType}&entityId=${entityId}`),
+    enabled: !!entityId,
+  });
+
+export const useActivity = (entityType: string, entityId: string | undefined) =>
+  useQuery({
+    queryKey: ["activity", entityType, entityId],
+    queryFn: () =>
+      api.get<{ id: string; action: string; actor: string | null; createdAt: number }[]>(
+        `/activity?entityType=${entityType}&entityId=${entityId}`,
+      ),
+    enabled: !!entityId,
+  });
+
+type TagLink = { tagId: string; entityType: string; entityId: string };
+export const useApplyTag = mutation((body: TagLink) => api.post("/taggings", body));
+export const useRemoveTag = mutation((body: TagLink) => api.del("/taggings", body));
+export const useCreateTag = mutation((name: string) => api.post<Tag>("/tags", { name }));
 
 // ─── mutations ───────────────────────────────────────
 export const useCreateTodo = mutation((body: CreateTodo) => api.post<Todo>("/todos", body));

@@ -109,6 +109,46 @@ describe("todos CRUD", () => {
   });
 });
 
+describe("tags + activity", () => {
+  it("tags an item, lists it on a tag page, and untags it", async () => {
+    const todo = (
+      await app.inject({ method: "POST", url: "/api/todos", payload: { title: "taggable" } })
+    ).json();
+    const tag = (await app.inject({ method: "POST", url: "/api/tags", payload: { name: "focus" } })).json();
+
+    const applied = await app.inject({
+      method: "POST",
+      url: "/api/taggings",
+      payload: { tagId: tag.id, entityType: "todo", entityId: todo.id },
+    });
+    expect(applied.statusCode).toBe(200);
+
+    const onEntity = await get(`/api/taggings?entityType=todo&entityId=${todo.id}`);
+    expect(onEntity.json().map((t: { name: string }) => t.name)).toContain("focus");
+
+    const items = await get(`/api/tags/${tag.id}/items`);
+    expect(items.json().todos.map((t: { id: string }) => t.id)).toContain(todo.id);
+
+    const removed = await app.inject({
+      method: "DELETE",
+      url: "/api/taggings",
+      payload: { tagId: tag.id, entityType: "todo", entityId: todo.id },
+    });
+    expect(removed.statusCode).toBe(200);
+  });
+
+  it("records activity for a todo", async () => {
+    const todo = (
+      await app.inject({ method: "POST", url: "/api/todos", payload: { title: "trackable" } })
+    ).json();
+    await app.inject({ method: "PATCH", url: `/api/todos/${todo.id}`, payload: { status: "done" } });
+    const activity = await get(`/api/activity?entityType=todo&entityId=${todo.id}`);
+    const actions = activity.json().map((a: { action: string }) => a.action);
+    expect(actions).toContain("created");
+    expect(actions).toContain("completed");
+  });
+});
+
 describe("incoming triage", () => {
   it("converts an incoming item to a todo", async () => {
     const item = (

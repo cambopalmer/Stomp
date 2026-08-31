@@ -3,6 +3,7 @@ import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { db } from "../db/client.js";
 import { buildSitemap, robotsTxt } from "../lib/sitemap.js";
+import { listActivity } from "../services/activity.js";
 import * as events from "../services/events.js";
 import * as home from "../services/home.js";
 import * as incoming from "../services/incoming.js";
@@ -124,8 +125,37 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
     reply.code(201);
     return tags.createTag(db, req.ctx, req.body);
   });
+  app.get("/tags/:id/items", { schema: { params: idParams } }, async (req) =>
+    tags.tagItems(db, req.ctx, req.params.id),
+  );
+  app.get(
+    "/taggings",
+    {
+      schema: {
+        querystring: z.object({
+          entityType: z.enum(["todo", "event", "reference", "project"]),
+          entityId: z.string().uuid(),
+        }),
+      },
+    },
+    async (req) => tags.tagsForEntity(db, req.ctx, req.query.entityType, req.query.entityId),
+  );
   app.post("/taggings", { schema: { body: S.applyTag } }, async (req) => tags.applyTag(db, req.ctx, req.body));
   app.delete("/taggings", { schema: { body: S.applyTag } }, async (req) => tags.removeTag(db, req.ctx, req.body));
+
+  // ─── activity ───────────────────────────────────────
+  app.get(
+    "/activity",
+    {
+      schema: {
+        querystring: z.object({
+          entityType: z.enum(["todo", "event", "reference", "project", "incoming_item", "workspace"]),
+          entityId: z.string().uuid(),
+        }),
+      },
+    },
+    async (req) => listActivity(db, req.ctx, req.query.entityType, req.query.entityId),
+  );
 
   // ─── workspaces ─────────────────────────────────────
   app.get("/workspaces", async (req) => workspaces.listWorkspaces(db, req.ctx));

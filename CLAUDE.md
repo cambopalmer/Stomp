@@ -2,7 +2,7 @@
 
 STOMP is a personal/shared hub: **calendar, todos, incoming (triage inbox), and a learn library**, grouped by **projects**, with a home screen of tiles and a "hot & relevant" sidebar.
 
-**Current phase:** Phase 0 merged to `main`. Phase 1 (Fill the UI) in progress on branch `phase-1-ui` — detail/edit screens for todos (+subtasks), events, references; project detail with tabs; landing-page filters; dark-mode toggle; error/loading states. Remaining Phase 1: tag pages + activity-log panel (both need a small API endpoint). Open, non-blocking: D5 (brand color — using generated teal), B/C question sets.
+**Current phase:** Phase 0 merged to `main`. Phase 1 (Fill the UI) nearly complete on branch `phase-1-ui` — detail/edit screens for todos (+subtasks, tags, activity log), events, references; project detail with tabs; tag pages; landing-page filters; dark-mode toggle; error/loading states. Only "day-grid calendar view" and "project members list" deferred to later. Open, non-blocking: D5 (brand color — using generated teal), B/C question sets.
 
 ## Where things are
 

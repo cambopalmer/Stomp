@@ -1,6 +1,8 @@
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { ActivityPanel } from "../components/ActivityPanel.js";
+import { TagEditor } from "../components/TagEditor.js";
 import { TodoForm } from "../components/TodoForm.js";
 import { Button, Card, ErrorState, Input, Spinner } from "../components/ui.js";
 import { relativeDay } from "../lib/format.js";
@@ -78,7 +80,7 @@ export function TodoDetail() {
                 <dd className="tnum">{t.scheduledFor ? relativeDay(t.scheduledFor) : "—"}</dd>
               </div>
             </dl>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {["open", "in_progress", "blocked", "done"].map((st) => (
                 <Button
                   key={st}
@@ -89,6 +91,7 @@ export function TodoDetail() {
                 </Button>
               ))}
             </div>
+            <TagEditor entityType="todo" entityId={t.id} />
           </div>
         )}
       </Card>
@@ -146,6 +149,8 @@ export function TodoDetail() {
           </Button>
         </form>
       </section>
+
+      <ActivityPanel entityType="todo" entityId={t.id} />
     </div>
   );
 }
