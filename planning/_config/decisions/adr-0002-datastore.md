@@ -5,11 +5,13 @@
 
 ## Decision
 
-Use **SQLite** as the datastore.
+Use **SQLite** as the datastore, via the **`@libsql/client`** driver (`drizzle-orm/libsql`).
 
-- Local/dev: single file `stomp.db` via `better-sqlite3` (synchronous, fast, simple).
-- Access through **Drizzle ORM**; migrations as committed SQL files run on API boot.
-- Hosted later: **Turso** (hosted libSQL) free tier, or a mounted volume on the container host. Drizzle supports both drivers; change is a config swap.
+- Local/dev: single file `stomp.db` (`DATABASE_URL=file:./.data/stomp.db`).
+- Access through **Drizzle ORM**; migrations as committed SQL files (`apps/api/drizzle/`) run on API boot.
+- Hosted later: **Turso** (hosted libSQL) free tier, or a mounted volume on the container host — change is just `DATABASE_URL`.
+
+> **Driver note (Phase 0):** originally specced `better-sqlite3`, but it needs a C++ toolchain to build and has no prebuild for Node 24. Switched to `@libsql/client`, which ships prebuilt binaries **and** is the exact same client used for Turso — so this actually tightens the "config swap to hosted" promise. Queries are async (they already were under Drizzle).
 
 ## Why not the alternatives
 
