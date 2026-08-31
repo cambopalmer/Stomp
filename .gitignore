@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.data/
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+!.env.example
+.DS_Store
+coverage/
+.vite/
+*.local
+__pycache__/
+*.pyc
+
