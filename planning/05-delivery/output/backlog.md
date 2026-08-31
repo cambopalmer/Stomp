@@ -39,16 +39,16 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 
 ## Phase 1 — Fill the UI
 
-- [ ] `[1]` Event detail/edit + day grid
-- [ ] `[1]` Reference detail/edit
-- [ ] `[1]` Incoming full triage UI (→ Todo / → Event / Dismiss)
-- [ ] `[1]` Todo subtasks UI
-- [ ] `[1]` Filters on every landing page (status, priority, project, tag, assignee)
-- [ ] `[1]` Tag pages (`/tags/:slug`)
-- [ ] `[1]` Project detail: 4 item tabs + progress bar + members list
-- [ ] `[1]` Activity-log panel on detail screens
-- [ ] `[1]` Empty / loading / error states
-- [ ] `[1]` Dark mode pass
+- [x] `[1]` Event detail/edit (`/calendar/:id` + `EventForm`) — day grid still TODO
+- [x] `[1]` Reference detail/edit (`/learn/:id` + `ReferenceForm`)
+- [x] `[1]` Incoming full triage UI (inline → Todo / → Event forms + Dismiss)
+- [x] `[1]` Todo detail (`/todos/:id`) + subtasks UI
+- [x] `[1]` Filters on todos (priority, project) + learn (status, favorite)
+- [ ] `[1]` Tag pages (`/tags/:slug`) — needs a taggings list endpoint
+- [x] `[1]` Project detail: 4 item tabs + progress bar (members list still TODO)
+- [ ] `[1]` Activity-log panel on detail screens — needs `GET /activity?entityType&entityId`
+- [x] `[1]` Empty / loading / error states (`ErrorState`, `QueryBoundary`)
+- [x] `[1]` Dark mode pass (banner toggle, `lib/theme.ts`, tokens)
 
 ## Phase 2 — Workspaces, sharing & notifications
 

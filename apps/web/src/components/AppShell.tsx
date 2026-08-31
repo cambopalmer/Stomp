@@ -1,7 +1,18 @@
-import { CalendarDays, GraduationCap, Home, Inbox, ListTodo, FolderKanban } from "lucide-react";
+import {
+  CalendarDays,
+  FolderKanban,
+  GraduationCap,
+  Home,
+  Inbox,
+  ListTodo,
+  Monitor,
+  Moon,
+  Sun,
+} from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useQuickCapture } from "../lib/queries.js";
+import { useTheme } from "../lib/theme.js";
 import { Button, Input } from "./ui.js";
 import { HotSidebar } from "./HotSidebar.js";
 
@@ -19,9 +30,13 @@ function greeting() {
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 }
 
+const themeIcon = { system: Monitor, light: Sun, dark: Moon };
+
 export function AppShell({ children }: { children: ReactNode }) {
   const [capture, setCapture] = useState("");
   const quick = useQuickCapture();
+  const { theme, cycle } = useTheme();
+  const ThemeIcon = themeIcon[theme];
 
   const submitCapture = (e: FormEvent) => {
     e.preventDefault();
@@ -61,6 +76,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               Add
             </Button>
           </form>
+          <button
+            onClick={cycle}
+            aria-label={`Theme: ${theme}. Click to change.`}
+            title={`Theme: ${theme}`}
+            className="rounded-md border border-border p-2 text-muted hover:text-text"
+          >
+            <ThemeIcon size={16} aria-hidden="true" />
+          </button>
           <NavLink to="/signup" className="text-sm text-muted underline hover:text-text">
             Create account
           </NavLink>

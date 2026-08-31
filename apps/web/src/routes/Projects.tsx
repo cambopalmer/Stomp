@@ -2,8 +2,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createProject } from "@stomp/shared";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
 import type { z } from "zod";
-import { Button, Card, EmptyState, Field, Input, Spinner, Textarea } from "../components/ui.js";
+import { Button, Card, EmptyState, ErrorState, Field, Input, Spinner, Textarea } from "../components/ui.js";
 import { useCreateProject, useProjects } from "../lib/queries.js";
 
 type FormValues = z.infer<typeof createProject>;
@@ -43,10 +44,11 @@ function NewProjectForm({ onDone }: { onDone: () => void }) {
 }
 
 export function Projects() {
-  const { data, isLoading } = useProjects();
+  const { data, isLoading, isError, error, refetch } = useProjects();
   const [showForm, setShowForm] = useState(false);
 
   if (isLoading) return <Spinner />;
+  if (isError) return <ErrorState error={error} retry={refetch} />;
 
   return (
     <div className="flex flex-col gap-4">
@@ -68,7 +70,11 @@ export function Projects() {
           const total = p.counts.todosOpen + p.counts.todosDone;
           const pct = total ? Math.round((p.counts.todosDone / total) * 100) : 0;
           return (
-            <Card key={p.id}>
+            <Link
+              key={p.id}
+              to={`/projects/${p.id}`}
+              className="rounded-lg border border-border bg-surface p-4 transition-shadow hover:shadow-md"
+            >
               <div className="flex items-center gap-2">
                 <span
                   className="inline-block h-2.5 w-2.5 rounded-full"
@@ -92,7 +98,7 @@ export function Projects() {
                   {p.counts.references} refs · {p.counts.incoming} incoming
                 </p>
               </div>
-            </Card>
+            </Link>
           );
         })}
       </div>

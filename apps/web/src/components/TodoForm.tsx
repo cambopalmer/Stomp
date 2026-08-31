@@ -1,9 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { priority } from "@stomp/shared";
+import { priority, type Todo } from "@stomp/shared";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { dateInputToMs } from "../lib/format.js";
-import { useCreateTodo, useProjects } from "../lib/queries.js";
+import { dateInputToMs, msToDateInput } from "../lib/format.js";
+import { useCreateTodo, useProjects, useUpdateTodo } from "../lib/queries.js";
 import { Button, Field, Input, Select, Textarea } from "./ui.js";
 
 const formSchema = z.object({
@@ -17,43 +17,60 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function TodoForm({
-  onCreated,
+  existing,
+  onDone,
   defaultProjectId,
+  hideProject,
 }: {
-  onCreated: () => void;
+  existing?: Todo;
+  onDone: () => void;
   defaultProjectId?: string;
+  hideProject?: boolean;
 }) {
   const projects = useProjects();
-  const createTodo = useCreateTodo();
+  const create = useCreateTodo();
+  const update = useUpdateTodo();
+  const busy = create.isPending || update.isPending;
+
   const {
     register,
     handleSubmit,
     reset,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { priority: "none", projectId: defaultProjectId ?? "" },
+    defaultValues: {
+      title: existing?.title ?? "",
+      notes: existing?.notes ?? "",
+      priority: existing?.priority ?? "none",
+      dueDate: msToDateInput(existing?.dueAt),
+      scheduledDate: msToDateInput(existing?.scheduledFor),
+      projectId: existing?.projectId ?? defaultProjectId ?? "",
+    },
   });
 
   const submit = handleSubmit((v) => {
-    createTodo.mutate(
-      {
-        title: v.title,
-        notes: v.notes || undefined,
-        priority: v.priority,
-        dueAt: dateInputToMs(v.dueDate ?? "") ?? undefined,
-        scheduledFor: dateInputToMs(v.scheduledDate ?? "") ?? undefined,
-        projectId: v.projectId || undefined,
-      },
-      {
+    const body = {
+      title: v.title,
+      notes: v.notes || undefined,
+      priority: v.priority,
+      dueAt: dateInputToMs(v.dueDate ?? "") ?? undefined,
+      scheduledFor: dateInputToMs(v.scheduledDate ?? "") ?? undefined,
+      projectId: hideProject ? undefined : v.projectId || undefined,
+    };
+    const onError = (e: unknown) => setError("title", { message: (e as Error).message });
+    if (existing) {
+      update.mutate({ id: existing.id, body }, { onSuccess: onDone, onError });
+    } else {
+      create.mutate(body, {
         onSuccess: () => {
           reset({ priority: "none", projectId: defaultProjectId ?? "" });
-          onCreated();
+          onDone();
         },
-        onError: (e) => setError("title", { message: (e as Error).message }),
-      },
-    );
+        onError,
+      });
+    }
   });
 
   return (
@@ -74,16 +91,18 @@ export function TodoForm({
             ))}
           </Select>
         </Field>
-        <Field label="Project" htmlFor="t-project">
-          <Select id="t-project" {...register("projectId")}>
-            <option value="">— none —</option>
-            {projects.data?.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
-        </Field>
+        {!hideProject && (
+          <Field label="Project" htmlFor="t-project">
+            <Select id="t-project" {...register("projectId")}>
+              <option value="">— none —</option>
+              {projects.data?.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
         <Field label="Deadline" htmlFor="t-due">
           <Input id="t-due" type="date" {...register("dueDate")} />
         </Field>
@@ -92,8 +111,8 @@ export function TodoForm({
         </Field>
       </div>
       <div className="flex justify-end">
-        <Button type="submit" disabled={isSubmitting || createTodo.isPending}>
-          Add todo
+        <Button type="submit" disabled={busy}>
+          {existing ? "Save todo" : "Add todo"}
         </Button>
       </div>
     </form>

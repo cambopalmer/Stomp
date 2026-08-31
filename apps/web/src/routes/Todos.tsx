@@ -1,27 +1,26 @@
 import type { Todo } from "@stomp/shared";
 import { Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { TodoForm } from "../components/TodoForm.js";
-import { Button, Card, EmptyState, Spinner } from "../components/ui.js";
+import { Button, Card, EmptyState, ErrorState, Select, Spinner } from "../components/ui.js";
 import { priorityMeta, relativeDay } from "../lib/format.js";
-import { useDeleteTodo, useTodos, useUpdateTodo } from "../lib/queries.js";
+import { useDeleteTodo, useProjects, useTodos, useUpdateTodo } from "../lib/queries.js";
 
 const groupOrder = ["Overdue", "Today", "Upcoming", "Someday", "Done"] as const;
 type Group = (typeof groupOrder)[number];
 
 function groupOf(t: Todo): Group {
   if (t.status === "done" || t.status === "cancelled") return "Done";
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const day = today.getTime();
+  const day = new Date().setHours(0, 0, 0, 0);
   if (t.dueAt != null && t.dueAt < day) return "Overdue";
-  if ((t.dueAt != null && t.dueAt < day + 86_400_000) || (t.scheduledFor != null && t.scheduledFor >= day && t.scheduledFor < day + 86_400_000))
-    return "Today";
+  const inToday = (ms: number | null) => ms != null && ms >= day && ms < day + 86_400_000;
+  if ((t.dueAt != null && t.dueAt < day + 86_400_000) || inToday(t.scheduledFor)) return "Today";
   if (t.dueAt != null || t.scheduledFor != null) return "Upcoming";
   return "Someday";
 }
 
-function Row({ todo }: { todo: Todo }) {
+export function TodoRow({ todo }: { todo: Todo }) {
   const update = useUpdateTodo();
   const del = useDeleteTodo();
   const done = todo.status === "done";
@@ -36,17 +35,18 @@ function Row({ todo }: { todo: Todo }) {
         onChange={() => update.mutate({ id: todo.id, body: { status: done ? "open" : "done" } })}
         className="h-4 w-4 shrink-0 cursor-pointer"
       />
-      <span className={`min-w-0 flex-1 truncate text-sm ${done ? "text-muted line-through" : ""}`}>
+      <Link
+        to={`/todos/${todo.id}`}
+        className={`min-w-0 flex-1 truncate text-sm hover:underline ${done ? "text-muted line-through" : ""}`}
+      >
         {todo.title}
-      </span>
+      </Link>
       {todo.priority !== "none" && (
         <span className={`text-xs font-medium ${pri.className}`}>{pri.label}</span>
       )}
       {todo.dueAt && <span className="tnum text-xs text-muted">{relativeDay(todo.dueAt)}</span>}
       <button
-        onClick={() => {
-          if (confirm(`Delete "${todo.title}"?`)) del.mutate(todo.id);
-        }}
+        onClick={() => confirm(`Delete "${todo.title}"?`) && del.mutate(todo.id)}
         aria-label={`Delete ${todo.title}`}
         className="text-muted hover:text-danger"
       >
@@ -57,21 +57,27 @@ function Row({ todo }: { todo: Todo }) {
 }
 
 export function Todos() {
-  const { data, isLoading } = useTodos("?topLevel=true");
+  const todos = useTodos("?topLevel=true");
+  const projects = useProjects();
   const [showForm, setShowForm] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
 
   const grouped = useMemo(() => {
     const map = new Map<Group, Todo[]>();
-    for (const t of data ?? []) {
+    for (const t of todos.data ?? []) {
+      if (priorityFilter && t.priority !== priorityFilter) continue;
+      if (projectFilter && t.projectId !== projectFilter) continue;
       const g = groupOf(t);
-      const arr = map.get(g) ?? [];
-      arr.push(t);
-      map.set(g, arr);
+      map.set(g, [...(map.get(g) ?? []), t]);
     }
     return map;
-  }, [data]);
+  }, [todos.data, priorityFilter, projectFilter]);
 
-  if (isLoading) return <Spinner />;
+  if (todos.isLoading) return <Spinner />;
+  if (todos.isError) return <ErrorState error={todos.error} retry={todos.refetch} />;
+
+  const total = [...grouped.values()].reduce((n, a) => n + a.length, 0);
 
   return (
     <div className="flex flex-col gap-4">
@@ -82,11 +88,48 @@ export function Todos() {
 
       {showForm && (
         <Card>
-          <TodoForm onCreated={() => setShowForm(false)} />
+          <TodoForm onDone={() => setShowForm(false)} />
         </Card>
       )}
 
-      {(!data || data.length === 0) && <EmptyState title="No todos yet">Add one to get started.</EmptyState>}
+      <div className="flex flex-wrap gap-2">
+        <label className="sr-only" htmlFor="f-priority">
+          Filter by priority
+        </label>
+        <Select
+          id="f-priority"
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value)}
+        >
+          <option value="">Any priority</option>
+          {["urgent", "high", "medium", "low", "none"].map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </Select>
+        <label className="sr-only" htmlFor="f-project">
+          Filter by project
+        </label>
+        <Select
+          id="f-project"
+          value={projectFilter}
+          onChange={(e) => setProjectFilter(e.target.value)}
+        >
+          <option value="">Any project</option>
+          {projects.data?.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </Select>
+      </div>
+
+      {total === 0 && (
+        <EmptyState title="Nothing matches">
+          {todos.data?.length ? "Try clearing the filters." : "Add a todo to get started."}
+        </EmptyState>
+      )}
 
       {groupOrder.map((g) => {
         const items = grouped.get(g);
@@ -98,7 +141,7 @@ export function Todos() {
             </h2>
             <ul className="flex flex-col gap-1">
               {items.map((t) => (
-                <Row key={t.id} todo={t} />
+                <TodoRow key={t.id} todo={t} />
               ))}
             </ul>
           </section>

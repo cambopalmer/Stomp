@@ -1,6 +1,6 @@
 import { CalendarDays, GraduationCap, Inbox, ListTodo, FolderKanban } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Card, Spinner } from "../components/ui.js";
+import { Card, ErrorState, Spinner } from "../components/ui.js";
 import { useHomeSummary, useProjects } from "../lib/queries.js";
 
 function Tile({
@@ -42,7 +42,9 @@ export function Home() {
   const projects = useProjects();
 
   if (summary.isLoading) return <Spinner />;
-  const s = summary.data!;
+  if (summary.isError || !summary.data)
+    return <ErrorState error={summary.error} retry={summary.refetch} />;
+  const s = summary.data;
 
   return (
     <div className="flex flex-col gap-4">
@@ -91,7 +93,7 @@ export function Home() {
             const total = p.counts.todosOpen + p.counts.todosDone;
             return (
               <li key={p.id} className="flex items-center justify-between">
-                <Link to="/projects" className="hover:underline">
+                <Link to={`/projects/${p.id}`} className="hover:underline">
                   <span
                     className="mr-2 inline-block h-2 w-2 rounded-full align-middle"
                     style={{ background: p.color ?? "var(--color-muted-foreground)" }}

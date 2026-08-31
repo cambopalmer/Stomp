@@ -106,5 +106,46 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
 }
 
 export function Spinner() {
-  return <div className="p-8 text-center text-sm text-muted">Loading…</div>;
+  return (
+    <div className="p-8 text-center text-sm text-muted" role="status">
+      Loading…
+    </div>
+  );
+}
+
+export function ErrorState({ error, retry }: { error: unknown; retry?: () => void }) {
+  const message = error instanceof Error ? error.message : "Something went wrong";
+  return (
+    <div
+      role="alert"
+      className="rounded-lg border border-danger/40 bg-danger/5 p-4 text-sm text-danger"
+    >
+      <p className="font-medium">Couldn’t load this</p>
+      <p className="mt-0.5 text-danger/80">{message}</p>
+      {retry && (
+        <button onClick={retry} className="mt-2 underline">
+          Try again
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Loading / error / empty gate for a react-query result. */
+export function QueryBoundary<T>({
+  query,
+  children,
+  empty,
+}: {
+  query: { data: T | undefined; isLoading: boolean; isError: boolean; error: unknown; refetch: () => void };
+  children: (data: T) => ReactNode;
+  empty?: () => ReactNode;
+}) {
+  if (query.isLoading) return <Spinner />;
+  if (query.isError) return <ErrorState error={query.error} retry={query.refetch} />;
+  const data = query.data;
+  if (data == null || (Array.isArray(data) && data.length === 0)) {
+    return empty ? <>{empty()}</> : <EmptyState title="Nothing here yet" />;
+  }
+  return <>{children(data)}</>;
 }

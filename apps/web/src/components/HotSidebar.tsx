@@ -44,7 +44,7 @@ export function HotSidebar() {
           <ul className="flex flex-col gap-1">
             {todos.map((t) => (
               <li key={t.id}>
-                <Link to="/todos" className="block truncate rounded px-1 py-0.5 text-sm hover:bg-surface-2">
+                <Link to={`/todos/${t.id}`} className="block truncate rounded px-1 py-0.5 text-sm hover:bg-surface-2">
                   {t.title}
                   {t.dueAt && (
                     <span className="ml-1 text-xs text-muted tnum">· {relativeDay(t.dueAt)}</span>
