@@ -3,6 +3,7 @@ import type { CalendarEvent } from "@stomp/shared";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCreateEvent, useProjects, useUpdateEvent } from "../lib/queries.js";
+import { useWorkspace } from "../lib/workspace.js";
 import { Button, Field, Input, Select, Textarea } from "./ui.js";
 
 const schema = z
@@ -32,6 +33,7 @@ export function EventForm({ existing, onDone }: { existing?: CalendarEvent; onDo
   const projects = useProjects();
   const create = useCreateEvent();
   const update = useUpdateEvent();
+  const { active } = useWorkspace();
   const busy = create.isPending || update.isPending;
 
   const s = existing ? toLocalParts(existing.startsAt) : null;
@@ -63,6 +65,7 @@ export function EventForm({ existing, onDone }: { existing?: CalendarEvent; onDo
       startsAt: combine(v.date, v.startTime),
       endsAt: combine(v.date, v.endTime),
       projectId: v.projectId || undefined,
+      ...(existing ? {} : { workspaceId: active ?? undefined }),
     };
     const onError = (err: unknown) => setError("title", { message: (err as Error).message });
     if (existing) update.mutate({ id: existing.id, body }, { onSuccess: onDone, onError });

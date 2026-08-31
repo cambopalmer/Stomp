@@ -1,11 +1,11 @@
 import type { CalendarEvent, CreateEvent, UpdateEvent } from "@stomp/shared";
-import { and, asc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { eventCollaborators, events } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { Forbidden, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
-import { accessibleProjectIds, type Ctx, projectAccess } from "./access.js";
+import { accessibleProjectIds, assertWorkspaceMember, type Ctx, projectAccess } from "./access.js";
 import { logActivity } from "./activity.js";
 
 async function visible(db: Db, userId: string) {
@@ -25,11 +25,13 @@ async function visible(db: Db, userId: string) {
 export async function listEvents(
   db: Db,
   ctx: Ctx,
-  range?: { from?: number; to?: number },
+  range?: { from?: number; to?: number; workspaceId?: string | null },
 ): Promise<CalendarEvent[]> {
   const conds = [await visible(db, ctx.userId)];
   if (range?.from) conds.push(gte(events.endsAt, range.from));
   if (range?.to) conds.push(lte(events.startsAt, range.to));
+  if (range?.workspaceId === null) conds.push(isNull(events.workspaceId));
+  else if (range?.workspaceId) conds.push(eq(events.workspaceId, range.workspaceId));
   return db
     .select()
     .from(events)
@@ -52,6 +54,7 @@ export async function createEvent(db: Db, ctx: Ctx, input: CreateEvent): Promise
     const a = await projectAccess(db, ctx.userId, input.projectId);
     if (!a.canEdit) throw Forbidden("You can't add events to that project");
   }
+  await assertWorkspaceMember(db, ctx.userId, input.workspaceId);
   const ts = clock.now();
   const row = {
     id: newId(),

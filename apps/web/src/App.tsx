@@ -12,6 +12,7 @@ import { Signup } from "./routes/Signup.js";
 import { TagPage } from "./routes/TagPage.js";
 import { TodoDetail } from "./routes/TodoDetail.js";
 import { Todos } from "./routes/Todos.js";
+import { Workspaces } from "./routes/Workspaces.js";
 
 export function App() {
   return (
@@ -28,6 +29,7 @@ export function App() {
         <Route path="/projects" element={<Projects />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/tags/:name" element={<TagPage />} />
+        <Route path="/workspaces" element={<Workspaces />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="*" element={<Home />} />
       </Routes>

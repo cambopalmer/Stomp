@@ -1,6 +1,7 @@
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { projectMembers, projects, workspaceMembers } from "../db/schema.js";
+import { Forbidden } from "../lib/errors.js";
 
 export interface Ctx {
   userId: string;
@@ -13,6 +14,17 @@ export async function workspaceIds(db: Db, userId: string): Promise<string[]> {
     .from(workspaceMembers)
     .where(eq(workspaceMembers.userId, userId));
   return rows.map((r) => r.id);
+}
+
+/** Throw unless the user may place items in this workspace (no-op for null/personal). */
+export async function assertWorkspaceMember(
+  db: Db,
+  userId: string,
+  workspaceId: string | null | undefined,
+): Promise<void> {
+  if (!workspaceId) return;
+  const ids = await workspaceIds(db, userId);
+  if (!ids.includes(workspaceId)) throw Forbidden("You're not a member of that workspace");
 }
 
 /**

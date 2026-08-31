@@ -4,6 +4,7 @@ import type {
   CreateProject,
   CreateReference,
   CreateTodo,
+  CreateWorkspace,
   HomeSummary,
   HotList,
   IncomingItem,
@@ -18,11 +19,19 @@ import type {
   UpdateReference,
   UpdateTodo,
   Workspace,
+  WorkspaceMemberView,
 } from "@stomp/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api.js";
+import { useWorkspace } from "./workspace.js";
 
-const WRITE_KEYS = ["home", "todos", "projects", "events", "references", "incoming", "tags", "activity"];
+/** Append the active-workspace filter to a list path (`base` may already have a `?query`). */
+function useWsPath(base: string): string {
+  const { qs } = useWorkspace();
+  return base.includes("?") ? `${base}${qs}` : `${base}?${qs.slice(1)}`;
+}
+
+const WRITE_KEYS = ["home", "todos", "projects", "events", "references", "incoming", "tags", "activity", "workspaces"];
 
 function useInvalidateAll() {
   const qc = useQueryClient();
@@ -46,8 +55,10 @@ export const useHomeSummary = () =>
 export const useHotList = () =>
   useQuery({ queryKey: ["home", "hot"], queryFn: () => api.get<HotList>("/home/hot") });
 
-export const useTodos = (query = "?topLevel=true") =>
-  useQuery({ queryKey: ["todos", "list", query], queryFn: () => api.get<Todo[]>(`/todos${query}`) });
+export const useTodos = (query = "?topLevel=true") => {
+  const path = useWsPath(`/todos${query}`);
+  return useQuery({ queryKey: ["todos", "list", path], queryFn: () => api.get<Todo[]>(path) });
+};
 
 export const useTodo = (id: string | undefined) =>
   useQuery({
@@ -56,8 +67,10 @@ export const useTodo = (id: string | undefined) =>
     enabled: !!id,
   });
 
-export const useProjects = () =>
-  useQuery({ queryKey: ["projects", "list"], queryFn: () => api.get<ProjectWithCounts[]>("/projects") });
+export const useProjects = () => {
+  const path = useWsPath("/projects");
+  return useQuery({ queryKey: ["projects", "list", path], queryFn: () => api.get<ProjectWithCounts[]>(path) });
+};
 
 export const useProject = (id: string | undefined) =>
   useQuery({
@@ -66,8 +79,10 @@ export const useProject = (id: string | undefined) =>
     enabled: !!id,
   });
 
-export const useEvents = () =>
-  useQuery({ queryKey: ["events", "list"], queryFn: () => api.get<CalendarEvent[]>("/events") });
+export const useEvents = () => {
+  const path = useWsPath("/events");
+  return useQuery({ queryKey: ["events", "list", path], queryFn: () => api.get<CalendarEvent[]>(path) });
+};
 
 export const useEvent = (id: string | undefined) =>
   useQuery({
@@ -76,11 +91,10 @@ export const useEvent = (id: string | undefined) =>
     enabled: !!id,
   });
 
-export const useReferences = (query = "") =>
-  useQuery({
-    queryKey: ["references", "list", query],
-    queryFn: () => api.get<Reference[]>(`/references${query}`),
-  });
+export const useReferences = (query = "") => {
+  const path = useWsPath(`/references${query}`);
+  return useQuery({ queryKey: ["references", "list", path], queryFn: () => api.get<Reference[]>(path) });
+};
 
 export const useReference = (id: string | undefined) =>
   useQuery({
@@ -89,11 +103,28 @@ export const useReference = (id: string | undefined) =>
     enabled: !!id,
   });
 
-export const useIncoming = () =>
-  useQuery({ queryKey: ["incoming", "list"], queryFn: () => api.get<IncomingItem[]>("/incoming-items") });
+export const useIncoming = () => {
+  const path = useWsPath("/incoming-items");
+  return useQuery({ queryKey: ["incoming", "list", path], queryFn: () => api.get<IncomingItem[]>(path) });
+};
 
 export const useWorkspaces = () =>
   useQuery({ queryKey: ["workspaces"], queryFn: () => api.get<Workspace[]>("/workspaces") });
+
+export const useWorkspaceMembers = (id: string | undefined) =>
+  useQuery({
+    queryKey: ["workspaces", "members", id],
+    queryFn: () => api.get<WorkspaceMemberView[]>(`/workspaces/${id}/members`),
+    enabled: !!id,
+  });
+
+export const useCreateWorkspace = mutation((body: CreateWorkspace) =>
+  api.post<Workspace>("/workspaces", body),
+);
+export const useAddWorkspaceMember = mutation(
+  ({ id, body }: { id: string; body: { email: string; role: string } }) =>
+    api.post(`/workspaces/${id}/members`, body),
+);
 
 export const useTags = () => useQuery({ queryKey: ["tags"], queryFn: () => api.get<Tag[]>("/tags") });
 
@@ -154,9 +185,15 @@ export const useUpdateReference = mutation(({ id, body }: { id: string; body: Up
 );
 export const useDeleteReference = mutation((id: string) => api.del(`/references/${id}`));
 
-export const useQuickCapture = mutation((title: string) =>
-  api.post<IncomingItem>("/incoming-items", { title }),
-);
+export const useQuickCapture = () => {
+  const invalidate = useInvalidateAll();
+  const { active } = useWorkspace();
+  return useMutation({
+    mutationFn: (title: string) =>
+      api.post<IncomingItem>("/incoming-items", { title, workspaceId: active ?? undefined }),
+    onSuccess: invalidate,
+  });
+};
 export const useTriage = mutation(({ id, body }: { id: string; body: TriageIncoming }) =>
   api.post<IncomingItem>(`/incoming-items/${id}/triage`, body),
 );

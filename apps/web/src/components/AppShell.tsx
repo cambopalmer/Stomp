@@ -15,6 +15,7 @@ import { useQuickCapture } from "../lib/queries.js";
 import { useTheme } from "../lib/theme.js";
 import { Button, Input } from "./ui.js";
 import { HotSidebar } from "./HotSidebar.js";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher.js";
 
 const nav = [
   { to: "/", label: "Home", icon: Home, end: true },
@@ -54,9 +55,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
 
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-3">
-        <div className="flex items-baseline gap-3">
+        <div className="flex items-center gap-3">
           <span className="text-lg font-bold tracking-tight">STOMP</span>
-          <span className="hidden text-sm text-muted sm:inline">
+          <WorkspaceSwitcher />
+          <span className="hidden text-sm text-muted lg:inline">
             {greeting()} · <span className="tnum">{new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" }).format(new Date())}</span>
           </span>
         </div>

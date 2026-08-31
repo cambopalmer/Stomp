@@ -17,6 +17,30 @@ export async function listWorkspaces(db: Db, ctx: Ctx): Promise<Workspace[]> {
   return db.select().from(workspaces).where(inArray(workspaces.id, ids)).orderBy(workspaces.name);
 }
 
+export interface WorkspaceMemberView {
+  userId: string;
+  displayName: string;
+  email: string;
+  role: string;
+}
+
+export async function membersOf(db: Db, ctx: Ctx, workspaceId: string): Promise<WorkspaceMemberView[]> {
+  const wsIds = await workspaceIds(db, ctx.userId);
+  if (!wsIds.includes(workspaceId)) throw NotFound("Workspace");
+  const rows = await db
+    .select({
+      userId: workspaceMembers.userId,
+      role: workspaceMembers.role,
+      displayName: users.displayName,
+      email: users.email,
+    })
+    .from(workspaceMembers)
+    .innerJoin(users, eq(users.id, workspaceMembers.userId))
+    .where(eq(workspaceMembers.workspaceId, workspaceId))
+    .orderBy(users.displayName);
+  return rows;
+}
+
 export async function createWorkspace(db: Db, ctx: Ctx, input: CreateWorkspace): Promise<Workspace> {
   const ts = clock.now();
   let slug = slugify(input.name);
@@ -59,12 +83,16 @@ async function assertOwnerOrAdmin(db: Db, ctx: Ctx, workspaceId: string) {
 
 export async function addMember(db: Db, ctx: Ctx, workspaceId: string, input: AddWorkspaceMember) {
   await assertOwnerOrAdmin(db, ctx, workspaceId);
-  const [u] = await db.select({ id: users.id }).from(users).where(eq(users.id, input.userId)).limit(1);
-  if (!u) throw BadRequest("No such user");
+  const [u] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, input.email.toLowerCase()))
+    .limit(1);
+  if (!u) throw BadRequest("No user with that email. They need an account first (Phase 3).");
   const row = {
     id: newId(),
     workspaceId,
-    userId: input.userId,
+    userId: u.id,
     role: input.role,
     addedBy: ctx.userId,
     createdAt: clock.now(),

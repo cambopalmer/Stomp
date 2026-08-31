@@ -109,6 +109,60 @@ describe("todos CRUD", () => {
   });
 });
 
+describe("workspaces", () => {
+  it("lists the seeded shared workspace with its members", async () => {
+    const ws = (await get("/api/workspaces")).json();
+    expect(ws.length).toBe(1);
+    const members = (await get(`/api/workspaces/${ws[0].id}/members`)).json();
+    expect(members.map((m: { email: string }) => m.email).sort()).toEqual([
+      "owner@stomp.local",
+      "sam@stomp.local",
+    ]);
+  });
+
+  it("scopes todo lists by workspace", async () => {
+    const ws = (await get("/api/workspaces")).json();
+    const wsId = ws[0].id;
+
+    const personal = (await get("/api/todos?topLevel=true&workspaceId=personal")).json();
+    const shared = (await get(`/api/todos?topLevel=true&workspaceId=${wsId}`)).json();
+    const all = (await get("/api/todos?topLevel=true")).json();
+
+    expect(personal.every((t: { workspaceId: string | null }) => t.workspaceId === null)).toBe(true);
+    expect(shared.every((t: { workspaceId: string | null }) => t.workspaceId === wsId)).toBe(true);
+    expect(shared.length).toBeGreaterThan(0);
+    expect(all.length).toBe(personal.length + shared.length);
+  });
+
+  it("creates a workspace and adds a member by email", async () => {
+    const w = (
+      await app.inject({ method: "POST", url: "/api/workspaces", payload: { name: "Side project" } })
+    ).json();
+    const added = await app.inject({
+      method: "POST",
+      url: `/api/workspaces/${w.id}/members`,
+      payload: { email: "sam@stomp.local", role: "viewer" },
+    });
+    expect(added.statusCode).toBe(201);
+    const members = (await get(`/api/workspaces/${w.id}/members`)).json();
+    expect(members.length).toBe(2);
+  });
+
+  it("rejects placing a todo in a workspace you're not in", async () => {
+    const outsider = (
+      await app.inject({ method: "POST", url: "/api/workspaces", payload: { name: "Not mine" } })
+    ).json();
+    // remove self isn't possible via API; instead use a random uuid
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/todos",
+      payload: { title: "sneaky", workspaceId: "11111111-1111-1111-1111-111111111111" },
+    });
+    expect(res.statusCode).toBe(403);
+    expect(outsider.id).toBeTypeOf("string");
+  });
+});
+
 describe("tags + activity", () => {
   it("tags an item, lists it on a tag page, and untags it", async () => {
     const todo = (

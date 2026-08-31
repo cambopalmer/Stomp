@@ -31,8 +31,17 @@ export const workspaceMember = z.object({
 });
 export type WorkspaceMember = z.infer<typeof workspaceMember>;
 
-export const addWorkspaceMember = z.object({
+/** Member row joined with the user, for the members list UI. */
+export const workspaceMemberView = z.object({
   userId: id,
+  displayName: z.string(),
+  email: z.string(),
+  role: workspaceRole,
+});
+export type WorkspaceMemberView = z.infer<typeof workspaceMemberView>;
+
+export const addWorkspaceMember = z.object({
+  email: z.string().email(),
   role: workspaceRole.default("editor"),
 });
 export type AddWorkspaceMember = z.infer<typeof addWorkspaceMember>;

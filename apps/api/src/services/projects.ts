@@ -1,5 +1,5 @@
 import type { CreateProject, Project, ProjectWithCounts, UpdateProject } from "@stomp/shared";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { events, incomingItems, projectMembers, projects, references, todos } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
@@ -11,10 +11,17 @@ import { logActivity } from "./activity.js";
 const slugify = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60) || "project";
 
-export async function listProjects(db: Db, ctx: Ctx): Promise<ProjectWithCounts[]> {
+export async function listProjects(
+  db: Db,
+  ctx: Ctx,
+  filter: { workspaceId?: string | null } = {},
+): Promise<ProjectWithCounts[]> {
   const ids = await accessibleProjectIds(db, ctx.userId);
   if (ids.length === 0) return [];
-  const rows = await db.select().from(projects).where(inArray(projects.id, ids)).orderBy(projects.name);
+  const conds = [inArray(projects.id, ids)];
+  if (filter.workspaceId === null) conds.push(isNull(projects.workspaceId));
+  else if (filter.workspaceId) conds.push(eq(projects.workspaceId, filter.workspaceId));
+  const rows = await db.select().from(projects).where(and(...conds)).orderBy(projects.name);
 
   const count = async (table: typeof todos | typeof events | typeof references | typeof incomingItems, extra?: unknown) => {
     const r = await db

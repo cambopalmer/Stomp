@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { dateInputToMs, msToDateInput } from "../lib/format.js";
 import { useCreateTodo, useProjects, useUpdateTodo } from "../lib/queries.js";
+import { useWorkspace } from "../lib/workspace.js";
 import { Button, Field, Input, Select, Textarea } from "./ui.js";
 
 const formSchema = z.object({
@@ -30,6 +31,7 @@ export function TodoForm({
   const projects = useProjects();
   const create = useCreateTodo();
   const update = useUpdateTodo();
+  const { active } = useWorkspace();
   const busy = create.isPending || update.isPending;
 
   const {
@@ -58,6 +60,7 @@ export function TodoForm({
       dueAt: dateInputToMs(v.dueDate ?? "") ?? undefined,
       scheduledFor: dateInputToMs(v.scheduledDate ?? "") ?? undefined,
       projectId: hideProject ? undefined : v.projectId || undefined,
+      ...(existing ? {} : { workspaceId: active ?? undefined }),
     };
     const onError = (e: unknown) => setError("title", { message: (e as Error).message });
     if (existing) {

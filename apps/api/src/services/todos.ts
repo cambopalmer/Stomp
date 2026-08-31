@@ -5,7 +5,7 @@ import { todoCollaborators, todos } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { BadRequest, Forbidden, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
-import { accessibleProjectIds, type Ctx, projectAccess } from "./access.js";
+import { accessibleProjectIds, assertWorkspaceMember, type Ctx, projectAccess } from "./access.js";
 import { logActivity } from "./activity.js";
 
 function visibleFilter(userId: string, projIds: string[], collabIds: string[]) {
@@ -29,6 +29,8 @@ export interface ListTodoFilter {
   status?: string;
   projectId?: string;
   parentTodoId?: string | null;
+  /** undefined = any workspace; null = personal only; string = that workspace. */
+  workspaceId?: string | null;
 }
 
 export async function listTodos(db: Db, ctx: Ctx, filter: ListTodoFilter = {}): Promise<Todo[]> {
@@ -41,6 +43,8 @@ export async function listTodos(db: Db, ctx: Ctx, filter: ListTodoFilter = {}): 
   if (filter.projectId) conds.push(eq(todos.projectId, filter.projectId));
   if (filter.parentTodoId === null) conds.push(isNull(todos.parentTodoId));
   else if (filter.parentTodoId) conds.push(eq(todos.parentTodoId, filter.parentTodoId));
+  if (filter.workspaceId === null) conds.push(isNull(todos.workspaceId));
+  else if (filter.workspaceId) conds.push(eq(todos.workspaceId, filter.workspaceId));
 
   return db
     .select()
@@ -90,6 +94,7 @@ export async function createTodo(db: Db, ctx: Ctx, input: CreateTodo): Promise<T
     projectId = parent.projectId;
   } else {
     await assertCanUseProject(db, ctx, projectId);
+    await assertWorkspaceMember(db, ctx.userId, workspaceId);
   }
 
   const ts = clock.now();

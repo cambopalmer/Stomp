@@ -3,6 +3,7 @@ import { type Reference, referenceStatus } from "@stomp/shared";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCreateReference, useProjects, useUpdateReference } from "../lib/queries.js";
+import { useWorkspace } from "../lib/workspace.js";
 import { Button, Field, Input, Select, Textarea } from "./ui.js";
 
 const schema = z.object({
@@ -19,6 +20,7 @@ export function ReferenceForm({ existing, onDone }: { existing?: Reference; onDo
   const projects = useProjects();
   const create = useCreateReference();
   const update = useUpdateReference();
+  const { active } = useWorkspace();
   const busy = create.isPending || update.isPending;
 
   const {
@@ -46,6 +48,7 @@ export function ReferenceForm({ existing, onDone }: { existing?: Reference; onDo
       status: v.status,
       favorite: v.favorite,
       projectId: v.projectId || undefined,
+      ...(existing ? {} : { workspaceId: active ?? undefined }),
     };
     const onError = (err: unknown) => setError("url", { message: (err as Error).message });
     if (existing) update.mutate({ id: existing.id, body }, { onSuccess: onDone, onError });

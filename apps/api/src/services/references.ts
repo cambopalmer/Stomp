@@ -1,11 +1,11 @@
 import type { CreateReference, Reference, UpdateReference } from "@stomp/shared";
-import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { referenceCollaborators, references } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { Forbidden, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
-import { accessibleProjectIds, type Ctx, projectAccess } from "./access.js";
+import { accessibleProjectIds, assertWorkspaceMember, type Ctx, projectAccess } from "./access.js";
 import { logActivity } from "./activity.js";
 
 async function visible(db: Db, userId: string) {
@@ -22,9 +22,15 @@ async function visible(db: Db, userId: string) {
   );
 }
 
-export async function listReferences(db: Db, ctx: Ctx, filter: { status?: string } = {}): Promise<Reference[]> {
+export async function listReferences(
+  db: Db,
+  ctx: Ctx,
+  filter: { status?: string; workspaceId?: string | null } = {},
+): Promise<Reference[]> {
   const conds = [await visible(db, ctx.userId)];
   if (filter.status) conds.push(eq(references.status, filter.status as Reference["status"]));
+  if (filter.workspaceId === null) conds.push(isNull(references.workspaceId));
+  else if (filter.workspaceId) conds.push(eq(references.workspaceId, filter.workspaceId));
   return db
     .select()
     .from(references)
@@ -47,6 +53,7 @@ export async function createReference(db: Db, ctx: Ctx, input: CreateReference):
     const a = await projectAccess(db, ctx.userId, input.projectId);
     if (!a.canEdit) throw Forbidden("You can't add references to that project");
   }
+  await assertWorkspaceMember(db, ctx.userId, input.workspaceId);
   const ts = clock.now();
   const row = {
     id: newId(),

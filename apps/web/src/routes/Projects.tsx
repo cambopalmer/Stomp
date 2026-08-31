@@ -6,11 +6,13 @@ import { Link } from "react-router-dom";
 import type { z } from "zod";
 import { Button, Card, EmptyState, ErrorState, Field, Input, Spinner, Textarea } from "../components/ui.js";
 import { useCreateProject, useProjects } from "../lib/queries.js";
+import { useWorkspace } from "../lib/workspace.js";
 
 type FormValues = z.infer<typeof createProject>;
 
 function NewProjectForm({ onDone }: { onDone: () => void }) {
   const create = useCreateProject();
+  const { active } = useWorkspace();
   const {
     register,
     handleSubmit,
@@ -21,10 +23,13 @@ function NewProjectForm({ onDone }: { onDone: () => void }) {
   return (
     <form
       onSubmit={handleSubmit((v) =>
-        create.mutate(v, {
-          onSuccess: onDone,
-          onError: (e) => setError("name", { message: (e as Error).message }),
-        }),
+        create.mutate(
+          { ...v, workspaceId: active ?? undefined },
+          {
+            onSuccess: onDone,
+            onError: (e) => setError("name", { message: (e as Error).message }),
+          },
+        ),
       )}
       className="flex flex-col gap-3"
     >

@@ -1,5 +1,5 @@
 import type { CreateIncoming, IncomingItem, TriageIncoming } from "@stomp/shared";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { incomingItems } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
@@ -10,11 +10,21 @@ import { logActivity } from "./activity.js";
 import { createEvent } from "./events.js";
 import { createTodo } from "./todos.js";
 
-export async function listIncoming(db: Db, ctx: Ctx, status = "unread"): Promise<IncomingItem[]> {
+export async function listIncoming(
+  db: Db,
+  ctx: Ctx,
+  opts: { status?: string; workspaceId?: string | null } = {},
+): Promise<IncomingItem[]> {
+  const conds = [
+    eq(incomingItems.forUserId, ctx.userId),
+    eq(incomingItems.status, (opts.status ?? "unread") as IncomingItem["status"]),
+  ];
+  if (opts.workspaceId === null) conds.push(isNull(incomingItems.workspaceId));
+  else if (opts.workspaceId) conds.push(eq(incomingItems.workspaceId, opts.workspaceId));
   return db
     .select()
     .from(incomingItems)
-    .where(and(eq(incomingItems.forUserId, ctx.userId), eq(incomingItems.status, status as IncomingItem["status"])))
+    .where(and(...conds))
     .orderBy(desc(incomingItems.createdAt));
 }
 

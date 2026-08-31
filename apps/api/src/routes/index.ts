@@ -15,6 +15,11 @@ import * as workspaces from "../services/workspaces.js";
 
 const idParams = z.object({ id: z.string().uuid() });
 
+/** `?workspaceId=` — a uuid scopes to that workspace, "personal" scopes to NULL, absent = any. */
+const wsQuery = z.object({ workspaceId: z.string().optional() });
+const parseWs = (v?: string): string | null | undefined =>
+  v === undefined ? undefined : v === "personal" ? null : v;
+
 export const routes: FastifyPluginAsyncZod = async (app) => {
   app.get("/health", { schema: { response: { 200: z.object({ ok: z.literal(true) }) } } }, async () => ({
     ok: true as const,
@@ -27,12 +32,22 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
   // ─── todos ──────────────────────────────────────────
   app.get(
     "/todos",
-    { schema: { querystring: z.object({ status: z.string().optional(), projectId: z.string().uuid().optional(), topLevel: z.coerce.boolean().optional() }) } },
+    {
+      schema: {
+        querystring: z.object({
+          status: z.string().optional(),
+          projectId: z.string().uuid().optional(),
+          topLevel: z.coerce.boolean().optional(),
+          workspaceId: z.string().optional(),
+        }),
+      },
+    },
     async (req) =>
       todos.listTodos(db, req.ctx, {
         status: req.query.status,
         projectId: req.query.projectId,
         parentTodoId: req.query.topLevel ? null : undefined,
+        workspaceId: parseWs(req.query.workspaceId),
       }),
   );
   app.post("/todos", { schema: { body: S.createTodo } }, async (req, reply) => {
@@ -49,7 +64,9 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
   });
 
   // ─── projects ───────────────────────────────────────
-  app.get("/projects", async (req) => projects.listProjects(db, req.ctx));
+  app.get("/projects", { schema: { querystring: wsQuery } }, async (req) =>
+    projects.listProjects(db, req.ctx, { workspaceId: parseWs(req.query.workspaceId) }),
+  );
   app.post("/projects", { schema: { body: S.createProject } }, async (req, reply) => {
     reply.code(201);
     return projects.createProject(db, req.ctx, req.body);
@@ -66,8 +83,21 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
   // ─── events ─────────────────────────────────────────
   app.get(
     "/events",
-    { schema: { querystring: z.object({ from: z.coerce.number().optional(), to: z.coerce.number().optional() }) } },
-    async (req) => events.listEvents(db, req.ctx, { from: req.query.from, to: req.query.to }),
+    {
+      schema: {
+        querystring: z.object({
+          from: z.coerce.number().optional(),
+          to: z.coerce.number().optional(),
+          workspaceId: z.string().optional(),
+        }),
+      },
+    },
+    async (req) =>
+      events.listEvents(db, req.ctx, {
+        from: req.query.from,
+        to: req.query.to,
+        workspaceId: parseWs(req.query.workspaceId),
+      }),
   );
   app.post("/events", { schema: { body: S.createEvent } }, async (req, reply) => {
     reply.code(201);
@@ -85,8 +115,12 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
   // ─── references ─────────────────────────────────────
   app.get(
     "/references",
-    { schema: { querystring: z.object({ status: z.string().optional() }) } },
-    async (req) => references.listReferences(db, req.ctx, { status: req.query.status }),
+    { schema: { querystring: z.object({ status: z.string().optional(), workspaceId: z.string().optional() }) } },
+    async (req) =>
+      references.listReferences(db, req.ctx, {
+        status: req.query.status,
+        workspaceId: parseWs(req.query.workspaceId),
+      }),
   );
   app.post("/references", { schema: { body: S.createReference } }, async (req, reply) => {
     reply.code(201);
@@ -106,8 +140,19 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
   // ─── incoming ───────────────────────────────────────
   app.get(
     "/incoming-items",
-    { schema: { querystring: z.object({ status: z.string().default("unread") }) } },
-    async (req) => incoming.listIncoming(db, req.ctx, req.query.status),
+    {
+      schema: {
+        querystring: z.object({
+          status: z.string().default("unread"),
+          workspaceId: z.string().optional(),
+        }),
+      },
+    },
+    async (req) =>
+      incoming.listIncoming(db, req.ctx, {
+        status: req.query.status,
+        workspaceId: parseWs(req.query.workspaceId),
+      }),
   );
   app.post("/incoming-items", { schema: { body: S.createIncoming } }, async (req, reply) => {
     reply.code(201);
@@ -163,6 +208,9 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
     reply.code(201);
     return workspaces.createWorkspace(db, req.ctx, req.body);
   });
+  app.get("/workspaces/:id/members", { schema: { params: idParams } }, async (req) =>
+    workspaces.membersOf(db, req.ctx, req.params.id),
+  );
   app.post(
     "/workspaces/:id/members",
     { schema: { params: idParams, body: S.addWorkspaceMember } },
