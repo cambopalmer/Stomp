@@ -2,6 +2,7 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { EventForm } from "../components/EventForm.js";
+import { ShareEditor } from "../components/ShareEditor.js";
 import { Button, Card, ErrorState, Spinner } from "../components/ui.js";
 import { fmtDateTime } from "../lib/format.js";
 import { useDeleteEvent, useEvent } from "../lib/queries.js";
@@ -52,6 +53,7 @@ export function EventDetail() {
           </div>
         )}
       </Card>
+      {!editing && <ShareEditor kind="event" id={e.id} />}
     </div>
   );
 }

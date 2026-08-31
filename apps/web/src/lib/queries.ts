@@ -18,6 +18,8 @@ import type {
   UpdateEvent,
   UpdateReference,
   UpdateTodo,
+  CollaboratorView,
+  ShareInput,
   Workspace,
   WorkspaceMemberView,
 } from "@stomp/shared";
@@ -31,7 +33,10 @@ function useWsPath(base: string): string {
   return base.includes("?") ? `${base}${qs}` : `${base}?${qs.slice(1)}`;
 }
 
-const WRITE_KEYS = ["home", "todos", "projects", "events", "references", "incoming", "tags", "activity", "workspaces"];
+const WRITE_KEYS = [
+  "home", "todos", "projects", "events", "references", "incoming",
+  "tags", "activity", "workspaces", "collab", "shared-with-me",
+];
 
 function useInvalidateAll() {
   const qc = useQueryClient();
@@ -144,6 +149,30 @@ export const useEntityTags = (entityType: string, entityId: string | undefined) 
     queryFn: () => api.get<Tag[]>(`/taggings?entityType=${entityType}&entityId=${entityId}`),
     enabled: !!entityId,
   });
+
+// ─── sharing ─────────────────────────────────────────
+export const useCollaborators = (kind: "todo" | "event" | "reference", id: string | undefined) =>
+  useQuery({
+    queryKey: ["collab", kind, id],
+    queryFn: () => api.get<CollaboratorView[]>(`/${kind}s/${id}/collaborators`),
+    enabled: !!id,
+  });
+
+export const useSharedWithMe = () =>
+  useQuery({
+    queryKey: ["shared-with-me"],
+    queryFn: () =>
+      api.get<{ todos: Todo[]; events: CalendarEvent[]; references: Reference[] }>("/shared-with-me"),
+  });
+
+export const useAddCollaborator = mutation(
+  ({ kind, id, body }: { kind: string; id: string; body: ShareInput }) =>
+    api.post(`/${kind}s/${id}/collaborators`, body),
+);
+export const useRemoveCollaborator = mutation(
+  ({ kind, id, userId }: { kind: string; id: string; userId: string }) =>
+    api.del(`/${kind}s/${id}/collaborators/${userId}`),
+);
 
 export const useActivity = (entityType: string, entityId: string | undefined) =>
   useQuery({

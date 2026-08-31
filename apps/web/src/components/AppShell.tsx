@@ -8,6 +8,7 @@ import {
   Monitor,
   Moon,
   Sun,
+  Users,
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { NavLink } from "react-router-dom";
@@ -24,6 +25,7 @@ const nav = [
   { to: "/incoming", label: "Incoming", icon: Inbox },
   { to: "/learn", label: "Learn", icon: GraduationCap },
   { to: "/projects", label: "Projects", icon: FolderKanban },
+  { to: "/shared", label: "Shared with me", icon: Users },
 ];
 
 function greeting() {

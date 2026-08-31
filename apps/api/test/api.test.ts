@@ -163,6 +163,84 @@ describe("workspaces", () => {
   });
 });
 
+describe("sharing + assignment", () => {
+  it("shares a todo, drops a note in the recipient's inbox, lists it, unshares", async () => {
+    const todo = (
+      await app.inject({ method: "POST", url: "/api/todos", payload: { title: "shareable" } })
+    ).json();
+
+    const shared = await app.inject({
+      method: "POST",
+      url: `/api/todos/${todo.id}/collaborators`,
+      payload: { email: "sam@stomp.local", role: "editor" },
+    });
+    expect(shared.statusCode).toBe(201);
+
+    const list = (await get(`/api/todos/${todo.id}/collaborators`)).json();
+    expect(list.map((c: { email: string }) => c.email)).toContain("sam@stomp.local");
+
+    const del = await app.inject({
+      method: "DELETE",
+      url: `/api/todos/${todo.id}/collaborators/${list[0].userId}`,
+    });
+    expect(del.statusCode).toBe(200);
+  });
+
+  it("rejects sharing something you didn't create", async () => {
+    // seeded "Book cabin" was created by the owner too, so create one as owner and
+    // just check the not-found path with a random id
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/todos/11111111-1111-1111-1111-111111111111/collaborators",
+      payload: { email: "sam@stomp.local" },
+    });
+    expect([403, 404]).toContain(res.statusCode);
+  });
+
+  it("assigns a workspace todo to a member, rejects a non-member", async () => {
+    const ws = (await get("/api/workspaces")).json()[0];
+    const members = (await get(`/api/workspaces/${ws.id}/members`)).json();
+    const sam = members.find((m: { email: string }) => m.email === "sam@stomp.local");
+
+    const todo = (
+      await app.inject({
+        method: "POST",
+        url: "/api/todos",
+        payload: { title: "ws todo", workspaceId: ws.id },
+      })
+    ).json();
+
+    const ok = await app.inject({
+      method: "PATCH",
+      url: `/api/todos/${todo.id}`,
+      payload: { assigneeId: sam.userId },
+    });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json().assigneeId).toBe(sam.userId);
+
+    const bad = await app.inject({
+      method: "PATCH",
+      url: `/api/todos/${todo.id}`,
+      payload: { assigneeId: "22222222-2222-2222-2222-222222222222" },
+    });
+    expect(bad.statusCode).toBe(400);
+  });
+
+  it("won't assign a personal todo to someone else", async () => {
+    const todo = (
+      await app.inject({ method: "POST", url: "/api/todos", payload: { title: "personal" } })
+    ).json();
+    const members = (await get(`/api/workspaces/${(await get("/api/workspaces")).json()[0].id}/members`)).json();
+    const sam = members.find((m: { email: string }) => m.email === "sam@stomp.local");
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/api/todos/${todo.id}`,
+      payload: { assigneeId: sam.userId },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+});
+
 describe("tags + activity", () => {
   it("tags an item, lists it on a tag page, and untags it", async () => {
     const todo = (

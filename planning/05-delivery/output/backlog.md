@@ -55,12 +55,12 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 - [x] `[2]` Active-workspace switcher (incl. "Personal") — banner dropdown, `lib/workspace.tsx`
 - [x] `[2]` Workspace scoping: `?workspaceId=` on todos/projects/events/references/incoming lists; new items default to the active workspace; membership enforced on create
 - [x] `[2]` Create/manage workspaces + members UI (`/workspaces`, add member by email)
-- [ ] `[2]` Collaborator tables into UI (share action on project/todo/event/reference)
-- [ ] `[2]` Assignee picker on todos
-- [ ] `[2]` "Shared with me" views
-- [ ] `[2]` Share → recipient gets `incoming_item` (accept → shared item, decline → dismissed)
-- [ ] `[2]` First `notifications` producers (share invite, assignment, past-due, event reminder)
-- [ ] `[2]` Notifications panel / section
+- [x] `[2]` Collaborator (share) UI on todo/event/reference detail (add by email, role, remove); `GET/POST/DELETE /{kind}s/:id/collaborators`
+- [x] `[2]` Assignee picker on todos (workspace members; membership enforced)
+- [x] `[2]` "Shared with me" view (`/shared`, `GET /shared-with-me`)
+- [x] `[2]` Share → recipient gets an `incoming_item` (kind shared_task/shared_event) in their inbox
+- [ ] `[2]` Accept/decline on that incoming item (accept = keep; decline = revoke collaborator)
+- [ ] `[2]` `notifications` table producers + panel (share invite, assignment, past-due, event reminder)
 - [ ] `[2]` Home summary + hot list scoped to the active workspace (currently global)
 
 ## Phase 3 — Auth

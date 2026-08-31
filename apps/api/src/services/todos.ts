@@ -1,12 +1,35 @@
 import type { CreateTodo, Todo, UpdateTodo } from "@stomp/shared";
 import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
-import { todoCollaborators, todos } from "../db/schema.js";
+import { todoCollaborators, todos, workspaceMembers } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { BadRequest, Forbidden, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
-import { accessibleProjectIds, assertWorkspaceMember, type Ctx, projectAccess } from "./access.js";
+import {
+  accessibleProjectIds,
+  assertWorkspaceMember,
+  type Ctx,
+  projectAccess,
+  workspaceIds,
+} from "./access.js";
 import { logActivity } from "./activity.js";
+
+/** An assignee must be reachable: yourself, or a member of the todo's workspace. */
+async function assertAssignable(
+  db: Db,
+  ctx: Ctx,
+  assigneeId: string | null | undefined,
+  workspaceId: string | null | undefined,
+) {
+  if (!assigneeId || assigneeId === ctx.userId) return;
+  if (!workspaceId) throw BadRequest("Assign to others only on a workspace todo");
+  const [member] = await db
+    .select({ userId: workspaceMembers.userId })
+    .from(workspaceMembers)
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, assigneeId)))
+    .limit(1);
+  if (!member) throw BadRequest("That person isn't in this workspace");
+}
 
 function visibleFilter(userId: string, projIds: string[], collabIds: string[]) {
   return or(
@@ -96,6 +119,7 @@ export async function createTodo(db: Db, ctx: Ctx, input: CreateTodo): Promise<T
     await assertCanUseProject(db, ctx, projectId);
     await assertWorkspaceMember(db, ctx.userId, workspaceId);
   }
+  await assertAssignable(db, ctx, input.assigneeId, workspaceId);
 
   const ts = clock.now();
   const row = {
@@ -128,6 +152,9 @@ export async function updateTodo(db: Db, ctx: Ctx, id: string, input: UpdateTodo
 
   if (input.projectId !== undefined && !current.parentTodoId) {
     await assertCanUseProject(db, ctx, input.projectId);
+  }
+  if (input.assigneeId !== undefined) {
+    await assertAssignable(db, ctx, input.assigneeId, current.workspaceId);
   }
 
   const patch: Partial<Todo> = { updatedAt: clock.now() };

@@ -18,8 +18,15 @@ export function WorkspaceSwitcher() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
+  // Stale id (workspace deleted / access lost / db reseeded) → fall back to Personal.
+  useEffect(() => {
+    if (active !== null && workspaces && !workspaces.some((w) => w.id === active)) {
+      setActive(null);
+    }
+  }, [active, workspaces, setActive]);
+
   const activeName =
-    active === null ? "Personal" : (workspaces?.find((w) => w.id === active)?.name ?? "Workspace");
+    active === null ? "Personal" : (workspaces?.find((w) => w.id === active)?.name ?? "Personal");
 
   return (
     <div className="relative" ref={ref}>

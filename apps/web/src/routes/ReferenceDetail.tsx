@@ -2,6 +2,7 @@ import { ArrowLeft, ExternalLink, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ReferenceForm } from "../components/ReferenceForm.js";
+import { ShareEditor } from "../components/ShareEditor.js";
 import { Button, Card, ErrorState, Spinner } from "../components/ui.js";
 import { useDeleteReference, useReference } from "../lib/queries.js";
 
@@ -60,6 +61,7 @@ export function ReferenceDetail() {
           </div>
         )}
       </Card>
+      {!editing && <ShareEditor kind="reference" id={r.id} />}
     </div>
   );
 }

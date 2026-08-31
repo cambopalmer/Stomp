@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "../db/client.js";
 import { buildSitemap, robotsTxt } from "../lib/sitemap.js";
 import { listActivity } from "../services/activity.js";
+import * as collab from "../services/collaborators.js";
 import * as events from "../services/events.js";
 import * as home from "../services/home.js";
 import * as incoming from "../services/incoming.js";
@@ -187,6 +188,25 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
   );
   app.post("/taggings", { schema: { body: S.applyTag } }, async (req) => tags.applyTag(db, req.ctx, req.body));
   app.delete("/taggings", { schema: { body: S.applyTag } }, async (req) => tags.removeTag(db, req.ctx, req.body));
+
+  // ─── sharing (collaborators) ────────────────────────
+  const shareBody = z.object({ email: z.string().email(), role: z.enum(["editor", "viewer"]).default("viewer") });
+  for (const kind of ["todo", "event", "reference"] as const) {
+    const base = `/${kind}s/:id/collaborators`;
+    app.get(base, { schema: { params: idParams } }, async (req) =>
+      collab.listCollaborators(db, req.ctx, kind, req.params.id),
+    );
+    app.post(base, { schema: { params: idParams, body: shareBody } }, async (req, reply) => {
+      reply.code(201);
+      return collab.addCollaborator(db, req.ctx, kind, req.params.id, req.body);
+    });
+    app.delete(
+      `${base}/:userId`,
+      { schema: { params: z.object({ id: z.string().uuid(), userId: z.string().uuid() }) } },
+      async (req) => collab.removeCollaborator(db, req.ctx, kind, req.params.id, req.params.userId),
+    );
+  }
+  app.get("/shared-with-me", async (req) => collab.sharedWithMe(db, req.ctx));
 
   // ─── activity ───────────────────────────────────────
   app.get(

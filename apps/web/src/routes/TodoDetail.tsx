@@ -2,6 +2,8 @@ import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ActivityPanel } from "../components/ActivityPanel.js";
+import { AssigneePicker } from "../components/AssigneePicker.js";
+import { ShareEditor } from "../components/ShareEditor.js";
 import { TagEditor } from "../components/TagEditor.js";
 import { TodoForm } from "../components/TodoForm.js";
 import { Button, Card, ErrorState, Input, Spinner } from "../components/ui.js";
@@ -92,9 +94,12 @@ export function TodoDetail() {
               ))}
             </div>
             <TagEditor entityType="todo" entityId={t.id} />
+            <AssigneePicker todo={t} />
           </div>
         )}
       </Card>
+
+      {!editing && <ShareEditor kind="todo" id={t.id} />}
 
       <section>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">

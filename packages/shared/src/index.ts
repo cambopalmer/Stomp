@@ -6,6 +6,7 @@ export * from "./reference.js";
 export * from "./incoming.js";
 export * from "./tag.js";
 export * from "./workspace.js";
+export * from "./share.js";
 export * from "./home.js";
 
 /** Shape of an API error body (RFC 7807-ish). */

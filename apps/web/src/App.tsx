@@ -8,6 +8,7 @@ import { Learn } from "./routes/Learn.js";
 import { ProjectDetail } from "./routes/ProjectDetail.js";
 import { Projects } from "./routes/Projects.js";
 import { ReferenceDetail } from "./routes/ReferenceDetail.js";
+import { SharedWithMe } from "./routes/SharedWithMe.js";
 import { Signup } from "./routes/Signup.js";
 import { TagPage } from "./routes/TagPage.js";
 import { TodoDetail } from "./routes/TodoDetail.js";
@@ -30,6 +31,7 @@ export function App() {
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/tags/:name" element={<TagPage />} />
         <Route path="/workspaces" element={<Workspaces />} />
+        <Route path="/shared" element={<SharedWithMe />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="*" element={<Home />} />
       </Routes>
