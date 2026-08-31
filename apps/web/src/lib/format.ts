@@ -19,12 +19,13 @@ export function relativeDay(ms: number): string {
   return fmtDate(ms);
 }
 
+// Priority colours are deliberately independent of the brand accent (MASTER O2).
 export const priorityMeta: Record<Priority, { label: string; className: string }> = {
   none: { label: "None", className: "text-muted" },
-  low: { label: "Low", className: "text-info" },
-  medium: { label: "Medium", className: "text-warning" },
-  high: { label: "High", className: "text-accent" },
-  urgent: { label: "Urgent", className: "text-danger" },
+  low: { label: "Low", className: "text-[#0284c7] dark:text-[#38bdf8]" },
+  medium: { label: "Medium", className: "text-[#b45309] dark:text-[#fbbf24]" },
+  high: { label: "High", className: "text-[#c2410c] dark:text-[#fb923c]" },
+  urgent: { label: "Urgent", className: "text-[#dc2626] dark:text-[#f87171]" },
 };
 
 /** local YYYY-MM-DD -> epoch ms at local midnight */

@@ -274,7 +274,7 @@ The generator gives light only. Dark counterparts (verify contrast on implementa
 | `--color-destructive` | `#DC2626` | `#F87171` |
 
 - **Card correction:** the generated `.card` uses `background:#F0FDFA` (same as page bg). Cards must use `--color-card` (`#FFFFFF` light) on `--color-background`. The `#99F6E4` border is a teal tint — fine for accent chips, but use a neutral `#CBD5E1` / dark `#243044` for structural borders so the UI doesn't read as "all teal".
-- **Sanctioned alternates** if the owner reacts against teal (same structure, swap primary+accent): *Micro-SaaS* indigo `#6366F1` + emerald `#059669`; *sage-neutral* `#6B7280` + cyan `#0891B2` on `#F5F5F0`. Pick one before Phase 1 polish; Phase 0 uses the generated teal.
+- **ADOPTED (2026-08-31):** the *Micro-SaaS* alternate — **indigo `#4F46E5` primary** (indigo-600 for AA on white; skill listed `#6366F1`), **emerald `#059669` accent**, on a **neutral slate ground** (`#F8FAFC` / `#0F172A`) rather than a tinted background. Dark: `#818CF8` / `#34D399`. Implemented in `apps/web/src/index.css`. The generated teal and the sage-neutral option remain one token swap away.
 - **Priority scale** (always with icon/label, never color alone): none `--color-muted-foreground` · low `#0EA5E9` · medium `#F59E0B` · high `#F97316` · urgent `#DC2626`.
 - **Status:** overdue = `--color-destructive`; due-today = `#2563EB`; done/confirmed = `#059669`.
 
