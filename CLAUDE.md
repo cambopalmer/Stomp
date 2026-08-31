@@ -2,7 +2,7 @@
 
 STOMP is a personal/shared hub: **calendar, todos, incoming (triage inbox), and a learn library**, grouped by **projects**, with a home screen of tiles and a "hot & relevant" sidebar.
 
-**Current phase:** Planning. No application code exists yet. PRD + schema + roadmap + design system written; open questions A (schema) and D (logistics) resolved (2026-08-31). `ui-ux-pro-max` + `ui-styling` skills installed (`.claude/skills/`; ADR-0004); design system generated at `design-system/stomp/MASTER.md`. Open, non-blocking: D5 (final brand color — Phase 0 uses generated teal), and the B/C question sets (auth, integrations) for their phases. `StompList/` deleted — this repo replaces it. Phase 0 build starts on the owner's go.
+**Current phase:** Phase 0 (Foundation) built on branch `phase-0-foundation` — monorepo, schema+migrations+seed, API CRUD, React shell, Docker, CI. Planning baseline is on `main`. Open, non-blocking: D5 (final brand color — using generated teal), B/C question sets (auth, integrations) for their phases.
 
 ## Where things are
 
@@ -28,17 +28,21 @@ STOMP is a personal/shared hub: **calendar, todos, incoming (triage inbox), and 
 - The planning workspace follows the **ICM pattern** (Jake Van Clief's Interpretable Context Methodology): numbered stage folders, each with a `CONTEXT.md` contract (inputs / process / outputs) and an `output/` folder. See `planning/_config/icm-conventions.md`.
 - Once the app is built, runtime change-tracking lives in the `activity_log` table (see schema).
 
-## Folders that will appear at build time (not yet created)
+## Application code
 
-| Path | What it will be |
+| Path | What it is |
 |---|---|
-| `apps/api/` | Fastify + Drizzle REST API over SQLite. |
-| `apps/web/` | Vite + React + Tailwind + shadcn/ui front end. |
-| `packages/shared/` | Zod schemas / shared types (DTOs) used by both. |
-| `infra/` | Dockerfile(s), `docker-compose.yml`, `nginx.conf`. |
+| `apps/api/` | Fastify + Drizzle REST API over libSQL/SQLite. `src/db/schema.ts` is the schema source of truth; `src/services/*` hold logic + authz (`access.ts` = visibility model); `src/routes/index.ts` = HTTP layer; `drizzle/` = generated migrations. |
+| `apps/web/` | Vite + React SPA. `src/components/AppShell.tsx` (banner+nav+sidebar), `src/routes/*` (pages), `src/lib/queries.ts` (TanStack Query hooks), `src/index.css` (design tokens). |
+| `packages/shared/` | Zod schemas / DTOs used by both (consumed as source). |
+| `infra/` | `Dockerfile.api`, `Dockerfile.web`, `docker-compose.yml`, `nginx.conf`. |
+| `.github/workflows/ci.yml` | typecheck + test + build + docker image build. |
+
+Run: `pnpm install && pnpm --filter @stomp/api db:seed && pnpm dev`. See `README.md`.
 
 ## Conventions
 
-- TypeScript everywhere. Layered API: `routes/` → `services/` → `repositories/`.
+- TypeScript everywhere. API layering: `routes/` → `services/` (logic + authz) → Drizzle.
+- SQLite: text uuid PKs, booleans as 0/1, timestamps as epoch-ms UTC. Edit `schema.ts` then `pnpm --filter @stomp/api db:generate`.
 - Each folder that needs explanation gets a short `README.md` or `_index.md`.
 - Update this file whenever a top-level folder is added or its purpose changes.

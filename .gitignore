@@ -5,6 +5,7 @@ build/
 *.db
 *.db-shm
 *.db-wal
+*.db-journal
 .env
 .env.*
 !.env.example
@@ -12,6 +13,7 @@ build/
 coverage/
 .vite/
 *.local
+*.tsbuildinfo
 __pycache__/
 *.pyc
 

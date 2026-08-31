@@ -1,0 +1,36 @@
+name: stomp
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    environment:
+      API_PORT: "3000"
+      DATABASE_URL: file:/data/stomp.db
+      WEB_ORIGIN: http://localhost:8080
+      PUBLIC_BASE_URL: http://localhost:8080
+      SEED_USER_EMAIL: owner@stomp.local
+      NODE_ENV: production
+    volumes:
+      - stomp-data:/data
+    # migrations run on boot; seed once with:
+    #   docker compose run --rm api node dist/db/seed.js
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  stomp-data:

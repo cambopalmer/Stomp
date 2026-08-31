@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1
+FROM node:20-slim AS base
+ENV PNPM_HOME=/pnpm
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+WORKDIR /repo
+
+# --- install + build ---
+FROM base AS build
+COPY . .
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @stomp/api build
+# produce a self-contained runtime dir (prod deps only) at /app
+RUN pnpm --filter @stomp/api deploy --prod --legacy /app
+
+# --- runtime ---
+FROM base AS runtime
+ENV NODE_ENV=production
+ENV DATABASE_URL=file:/data/stomp.db
+WORKDIR /app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /repo/apps/api/dist ./dist
+COPY --from=build /repo/apps/api/drizzle ./drizzle
+COPY --from=build /repo/apps/api/package.json ./package.json
+EXPOSE 3000
+VOLUME ["/data"]
+CMD ["node", "dist/server.js"]
