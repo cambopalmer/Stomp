@@ -50,6 +50,10 @@ Active-workspace switcher (incl. "Personal"). Create/manage workspaces + members
 
 Replace seeded-user with real auth: email+password (argon2) and/or Google OAuth (per open question B1). Sessions (httpOnly cookie) or JWT (B2). Wire up the "Create account" entry point from the home banner into a real signup / onboarding / invite flow. `authContext` plugin swap — services untouched. Migrate seed users to real accounts.
 
+**Security follow-ups that land with auth (from the QA pass, 2026-09-01):**
+- Scope `GET /sitemap.xml` (`apps/api/src/lib/sitemap.ts`) to the requesting user — it currently enumerates every project/todo/event/reference id for all users. Harmless single-user; must be per-user once accounts exist. `Disallow: /` in `robots.txt` stays.
+- Re-run `/security-review` against the full app (not just a branch diff) once `authContext` is real, focusing on the visibility helpers and session handling.
+
 ## Phase 4 — Inbound integrations
 
 Google OAuth connect in Settings. `GmailAdapter` (read-only pull → incoming). `GoogleCalendarAdapter` (one-way import → read-only events). Scheduled sync job + `sync_log` UI. Token encryption.

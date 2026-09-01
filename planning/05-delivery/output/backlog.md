@@ -72,6 +72,8 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 - [ ] `[3]` Wire "Create account" home entry point into the real signup/invite flow
 - [ ] `[3]` Swap `authContext` plugin
 - [ ] `[3]` Migrate seed users → real accounts
+- [ ] `[3]` 🔒 Scope `GET /sitemap.xml` to the requesting user (`lib/sitemap.ts` currently lists every user's ids — QA pass 2026-09-01)
+- [ ] `[3]` 🔒 Re-run `/security-review` over the whole app once auth is real
 
 ## Phase 4 — Inbound integrations
 

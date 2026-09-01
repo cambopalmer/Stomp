@@ -20,6 +20,9 @@ export async function buildSitemap(): Promise<string> {
   const base = config.PUBLIC_BASE_URL.replace(/\/$/, "");
   const urls: { loc: string; lastmod?: number }[] = STATIC_ROUTES.map((r) => ({ loc: base + r }));
 
+  // TODO(auth, Phase 3): scope these to the requesting user. Today it lists every
+  // user's ids — acceptable only because the deployment is single-user + robots
+  // Disallow: /. See planning/05-delivery/output/roadmap.md § Phase 3.
   const [ps, ts, es, rs, gs] = await Promise.all([
     db.select({ id: projects.id, u: projects.updatedAt }).from(projects),
     db.select({ id: todos.id, u: todos.updatedAt }).from(todos),
