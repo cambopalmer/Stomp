@@ -7,6 +7,7 @@ import { NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
 import type { Ctx } from "./access.js";
 import { logActivity } from "./activity.js";
+import { leaveShare } from "./collaborators.js";
 import { createEvent } from "./events.js";
 import { createTodo } from "./todos.js";
 
@@ -58,6 +59,20 @@ export async function triageIncoming(db: Db, ctx: Ctx, id: string, input: Triage
     .where(and(eq(incomingItems.id, id), eq(incomingItems.forUserId, ctx.userId)))
     .limit(1);
   if (!item) throw NotFound("Incoming item");
+
+  // Accept / decline a shared item (nothing new is created).
+  if (input.target === "accept" || input.target === "decline") {
+    if (input.target === "decline" && item.linkedEntityType && item.linkedEntityId) {
+      await leaveShare(db, ctx, item.linkedEntityType, item.linkedEntityId);
+    }
+    const status = input.target === "accept" ? "triaged" : "dismissed";
+    await db
+      .update(incomingItems)
+      .set({ status, triagedAt: clock.now() })
+      .where(eq(incomingItems.id, id));
+    await logActivity(db, ctx.userId, "incoming_item", id, input.target === "accept" ? "triaged" : "deleted");
+    return { ...item, status, triagedAt: clock.now() } as IncomingItem;
+  }
 
   let linkedEntityType: "todo" | "event" | null = null;
   let linkedEntityId: string | null = null;

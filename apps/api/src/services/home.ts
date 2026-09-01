@@ -1,10 +1,17 @@
 import type { HomeSummary, HotList } from "@stomp/shared";
 import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, ne, or, sql } from "drizzle-orm";
+import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import type { Db } from "../db/client.js";
 import { eventCollaborators, events, incomingItems, projects, references, todoCollaborators, todos } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { dayBounds } from "../lib/day.js";
 import { accessibleProjectIds, type Ctx } from "./access.js";
+
+/** Workspace filter for a nullable column: undefined = any, null = personal, string = that ws. */
+function wsCond(col: AnySQLiteColumn, ws: string | null | undefined) {
+  if (ws === undefined) return undefined;
+  return ws === null ? isNull(col) : eq(col, ws);
+}
 
 async function visibleTodoConds(db: Db, userId: string) {
   const projIds = await accessibleProjectIds(db, userId);
@@ -21,16 +28,30 @@ async function visibleTodoConds(db: Db, userId: string) {
   );
 }
 
-export async function homeSummary(db: Db, ctx: Ctx, timezone: string): Promise<HomeSummary> {
+export async function homeSummary(
+  db: Db,
+  ctx: Ctx,
+  timezone: string,
+  ws?: string | null,
+): Promise<HomeSummary> {
   const now = clock.now();
   const { dayStart, dayEnd } = dayBounds(now, timezone);
   const vis = await visibleTodoConds(db, ctx.userId);
-  const open = and(vis, ne(todos.status, "done"), ne(todos.status, "cancelled"), isNull(todos.parentTodoId));
+  const open = and(
+    vis,
+    ne(todos.status, "done"),
+    ne(todos.status, "cancelled"),
+    isNull(todos.parentTodoId),
+    wsCond(todos.workspaceId, ws),
+  );
 
   const projIds = await accessibleProjectIds(db, ctx.userId);
-  const evVisible = or(
-    eq(events.createdBy, ctx.userId),
-    projIds.length ? inArray(events.projectId, projIds) : sql`0`,
+  const evVisible = and(
+    or(
+      eq(events.createdBy, ctx.userId),
+      projIds.length ? inArray(events.projectId, projIds) : sql`0`,
+    ),
+    wsCond(events.workspaceId, ws),
   );
 
   const one = async (q: Promise<{ n: number }[]>) => Number((await q)[0]?.n ?? 0);
@@ -47,10 +68,10 @@ export async function homeSummary(db: Db, ctx: Ctx, timezone: string): Promise<H
     one(db.select({ n: sql<number>`count(*)` }).from(todos).where(and(open, lt(todos.dueAt, dayStart)))),
     one(db.select({ n: sql<number>`count(*)` }).from(events).where(and(evVisible, ne(events.status, "cancelled"), lt(events.startsAt, dayEnd), gte(events.endsAt, dayStart)))),
     one(db.select({ n: sql<number>`count(*)` }).from(events).where(and(evVisible, ne(events.status, "cancelled"), gte(events.startsAt, dayEnd)))),
-    one(db.select({ n: sql<number>`count(*)` }).from(incomingItems).where(and(eq(incomingItems.forUserId, ctx.userId), eq(incomingItems.status, "unread")))),
-    one(db.select({ n: sql<number>`count(*)` }).from(references).where(await refVisible(db, ctx.userId))),
-    one(db.select({ n: sql<number>`count(*)` }).from(references).where(and(await refVisible(db, ctx.userId), eq(references.status, "learning")))),
-    one(db.select({ n: sql<number>`count(*)` }).from(projects).where(projIds.length ? and(inArray(projects.id, projIds), eq(projects.status, "active")) : sql`0`)),
+    one(db.select({ n: sql<number>`count(*)` }).from(incomingItems).where(and(eq(incomingItems.forUserId, ctx.userId), eq(incomingItems.status, "unread"), wsCond(incomingItems.workspaceId, ws)))),
+    one(db.select({ n: sql<number>`count(*)` }).from(references).where(and(await refVisible(db, ctx.userId), wsCond(references.workspaceId, ws)))),
+    one(db.select({ n: sql<number>`count(*)` }).from(references).where(and(await refVisible(db, ctx.userId), eq(references.status, "learning"), wsCond(references.workspaceId, ws)))),
+    one(db.select({ n: sql<number>`count(*)` }).from(projects).where(projIds.length ? and(inArray(projects.id, projIds), eq(projects.status, "active"), wsCond(projects.workspaceId, ws)) : sql`0`)),
   ]);
 
   return {
@@ -70,11 +91,22 @@ async function refVisible(db: Db, userId: string) {
   );
 }
 
-export async function hotList(db: Db, ctx: Ctx, timezone: string): Promise<HotList> {
+export async function hotList(
+  db: Db,
+  ctx: Ctx,
+  timezone: string,
+  ws?: string | null,
+): Promise<HotList> {
   const now = clock.now();
   const { dayStart, dayEnd } = dayBounds(now, timezone);
   const vis = await visibleTodoConds(db, ctx.userId);
-  const open = and(vis, ne(todos.status, "done"), ne(todos.status, "cancelled"), isNull(todos.parentTodoId));
+  const open = and(
+    vis,
+    ne(todos.status, "done"),
+    ne(todos.status, "cancelled"),
+    isNull(todos.parentTodoId),
+    wsCond(todos.workspaceId, ws),
+  );
 
   const rows = await db
     .select()
@@ -109,7 +141,7 @@ export async function hotList(db: Db, ctx: Ctx, timezone: string): Promise<HotLi
   const incoming = await db
     .select({ id: incomingItems.id, title: incomingItems.title, kind: incomingItems.kind, createdAt: incomingItems.createdAt })
     .from(incomingItems)
-    .where(and(eq(incomingItems.forUserId, ctx.userId), eq(incomingItems.status, "unread")))
+    .where(and(eq(incomingItems.forUserId, ctx.userId), eq(incomingItems.status, "unread"), wsCond(incomingItems.workspaceId, ws)))
     .orderBy(desc(incomingItems.createdAt))
     .limit(20);
 
@@ -123,6 +155,7 @@ export async function hotList(db: Db, ctx: Ctx, timezone: string): Promise<HotLi
         lt(events.startsAt, dayEnd),
         gte(events.endsAt, dayStart),
         or(eq(events.createdBy, ctx.userId), projIds.length ? inArray(events.projectId, projIds) : sql`0`),
+        wsCond(events.workspaceId, ws),
       ),
     )
     .orderBy(asc(events.startsAt));

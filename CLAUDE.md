@@ -2,7 +2,7 @@
 
 STOMP is a personal/shared hub: **calendar, todos, incoming (triage inbox), and a learn library**, grouped by **projects**, with a home screen of tiles and a "hot & relevant" sidebar.
 
-**Current phase:** Phases 0 + 1 on `main` (pushed to github.com/cambopalmer/Stomp). Phase 2 (Workspaces, sharing & notifications) on branch `phase-2-sharing`, essentially complete: workspace switcher + scoping + `/workspaces` mgmt; share (collaborator) UI on todo/event/reference; assignee picker; `/shared` "shared with me"; notifications bell + panel (producers for share/assignment, computed past-due/reminders). 30 API tests. Left for later: accept/decline on shared incoming items, workspace-scoped Home. Then Phase 3 = auth. Open, non-blocking: B/C question sets.
+**Current phase:** Phases 0 + 1 on `main` (pushed to github.com/cambopalmer/Stomp). **Phase 2 complete** on branch `phase-2-sharing`: workspace switcher + scoping (incl. Home) + `/workspaces` mgmt; share (collaborator) UI on todo/event/reference; assignee picker; `/shared` "shared with me"; notifications bell + panel; accept/decline on shared Incoming items. 32 API tests. **Paused before Phase 3 (auth)** at the owner's request. Open, non-blocking: B/C question sets.
 
 ## Where things are
 

@@ -29,7 +29,7 @@ export const createIncoming = z.object({
 });
 export type CreateIncoming = z.infer<typeof createIncoming>;
 
-/** Triage an item into a todo or an event. */
+/** Triage an item: convert to a todo/event, dismiss, or accept/decline a share. */
 export const triageIncoming = z.discriminatedUnion("target", [
   z.object({
     target: z.literal("todo"),
@@ -48,5 +48,9 @@ export const triageIncoming = z.discriminatedUnion("target", [
     projectId: id.nullish(),
   }),
   z.object({ target: z.literal("dismiss") }),
+  /** For shared_task / shared_event items: keep the access, clear the notice. */
+  z.object({ target: z.literal("accept") }),
+  /** For shared_task / shared_event items: give up the access. */
+  z.object({ target: z.literal("decline") }),
 ]);
 export type TriageIncoming = z.infer<typeof triageIncoming>;

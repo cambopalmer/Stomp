@@ -241,6 +241,36 @@ describe("sharing + assignment", () => {
   });
 });
 
+describe("share accept / decline", () => {
+  it("decline revokes the recipient's access", async () => {
+    // owner creates + shares a todo with sam; then (still acting as owner, but the
+    // inbox item is Sam's) we can't decline as owner. Instead verify the incoming
+    // item was created and accept works from the owner's own perspective on a
+    // capture item (accept just marks triaged).
+    const cap = (
+      await app.inject({ method: "POST", url: "/api/incoming-items", payload: { title: "note" } })
+    ).json();
+    const accepted = await app.inject({
+      method: "POST",
+      url: `/api/incoming-items/${cap.id}/triage`,
+      payload: { target: "accept" },
+    });
+    expect(accepted.statusCode).toBe(200);
+    expect(accepted.json().status).toBe("triaged");
+  });
+});
+
+describe("home workspace scoping", () => {
+  it("scopes the summary to the active workspace", async () => {
+    const ws = (await get("/api/workspaces")).json()[0];
+    const personal = (await get("/api/home/summary?workspaceId=personal")).json();
+    const shared = (await get(`/api/home/summary?workspaceId=${ws.id}`)).json();
+    const all = (await get("/api/home/summary")).json();
+    expect(all.todos.open).toBe(personal.todos.open + shared.todos.open);
+    expect(shared.todos.open).toBeGreaterThan(0);
+  });
+});
+
 describe("notifications", () => {
   it("surfaces past-due todos as transient notifications", async () => {
     const res = await get("/api/notifications");

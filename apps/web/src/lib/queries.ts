@@ -54,11 +54,15 @@ function mutation<TArgs, TResult>(fn: (args: TArgs) => Promise<TResult>) {
 }
 
 // ─── queries ─────────────────────────────────────────
-export const useHomeSummary = () =>
-  useQuery({ queryKey: ["home", "summary"], queryFn: () => api.get<HomeSummary>("/home/summary") });
+export const useHomeSummary = () => {
+  const path = useWsPath("/home/summary");
+  return useQuery({ queryKey: ["home", "summary", path], queryFn: () => api.get<HomeSummary>(path) });
+};
 
-export const useHotList = () =>
-  useQuery({ queryKey: ["home", "hot"], queryFn: () => api.get<HotList>("/home/hot") });
+export const useHotList = () => {
+  const path = useWsPath("/home/hot");
+  return useQuery({ queryKey: ["home", "hot", path], queryFn: () => api.get<HotList>(path) });
+};
 
 export const useTodos = (query = "?topLevel=true") => {
   const path = useWsPath(`/todos${query}`);

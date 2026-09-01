@@ -60,8 +60,10 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 - [x] `[2]` "Shared with me" view (`/shared`, `GET /shared-with-me`)
 - [x] `[2]` Share → recipient gets an `incoming_item` (kind shared_task/shared_event) in their inbox
 - [x] `[2]` `notifications` — producers (share_invite, assignment) + on-read computed (past_due, event_reminder) + banner bell/panel with unread count, mark read / mark all
-- [ ] `[2]` Accept/decline on the shared incoming item (accept = keep; decline = revoke collaborator)
-- [ ] `[2]` Home summary + hot list scoped to the active workspace (currently global)
+- [x] `[2]` Accept/decline on the shared incoming item (accept = keep + clear; decline = leave the share)
+- [x] `[2]` Home summary + hot list scoped to the active workspace (`?workspaceId=` on `/home/*`)
+
+**Phase 2 complete.**
 
 ## Phase 3 — Auth
 

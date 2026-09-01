@@ -1,5 +1,6 @@
 import type { IncomingItem } from "@stomp/shared";
-import { CalendarPlus, ListPlus, X } from "lucide-react";
+import { CalendarPlus, Check, ListPlus, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import { type FormEvent, useState } from "react";
 import { Button, Card, EmptyState, ErrorState, Field, Input, Spinner, Textarea } from "../components/ui.js";
 import { dateInputToMs } from "../lib/format.js";
@@ -15,6 +16,13 @@ const kindLabel: Record<string, string> = {
 
 type Mode = null | "todo" | "event";
 
+const linkFor = (item: IncomingItem) => {
+  if (!item.linkedEntityId) return null;
+  if (item.linkedEntityType === "todo") return `/todos/${item.linkedEntityId}`;
+  if (item.linkedEntityType === "event") return `/calendar/${item.linkedEntityId}`;
+  return null;
+};
+
 function Item({ item }: { item: IncomingItem }) {
   const triage = useTriage();
   const [mode, setMode] = useState<Mode>(null);
@@ -23,6 +31,8 @@ function Item({ item }: { item: IncomingItem }) {
   const [due, setDue] = useState("");
   const [date, setDate] = useState("");
   const busy = triage.isPending;
+  const isShare = item.kind === "shared_task" || item.kind === "shared_event";
+  const to = linkFor(item);
 
   const submitTodo = (e: FormEvent) => {
     e.preventDefault();
@@ -45,10 +55,34 @@ function Item({ item }: { item: IncomingItem }) {
       <span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted">
         {kindLabel[item.kind] ?? item.kind}
       </span>
-      <p className="mt-1 font-medium">{item.title}</p>
+      <p className="mt-1 font-medium">
+        {to ? (
+          <Link to={to} className="hover:underline">
+            {item.title}
+          </Link>
+        ) : (
+          item.title
+        )}
+      </p>
       {item.body && <p className="mt-0.5 text-sm text-muted">{item.body}</p>}
 
-      {mode === null && (
+      {isShare ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            disabled={busy}
+            onClick={() => triage.mutate({ id: item.id, body: { target: "accept" } })}
+          >
+            <Check size={16} aria-hidden="true" /> Accept
+          </Button>
+          <Button
+            variant="danger"
+            disabled={busy}
+            onClick={() => triage.mutate({ id: item.id, body: { target: "decline" } })}
+          >
+            <X size={16} aria-hidden="true" /> Decline
+          </Button>
+        </div>
+      ) : mode === null ? (
         <div className="mt-3 flex flex-wrap gap-2">
           <Button disabled={busy} onClick={() => setMode("todo")}>
             <ListPlus size={16} aria-hidden="true" /> To todo
@@ -64,7 +98,7 @@ function Item({ item }: { item: IncomingItem }) {
             <X size={16} aria-hidden="true" /> Dismiss
           </Button>
         </div>
-      )}
+      ) : null}
 
       {mode === "todo" && (
         <form onSubmit={submitTodo} className="mt-3 flex flex-col gap-3 border-t border-border pt-3">

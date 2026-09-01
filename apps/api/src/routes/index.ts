@@ -28,8 +28,12 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
   }));
 
   // ─── home ───────────────────────────────────────────
-  app.get("/home/summary", async (req) => home.homeSummary(db, req.ctx, req.currentUser.timezone));
-  app.get("/home/hot", async (req) => home.hotList(db, req.ctx, req.currentUser.timezone));
+  app.get("/home/summary", { schema: { querystring: wsQuery } }, async (req) =>
+    home.homeSummary(db, req.ctx, req.currentUser.timezone, parseWs(req.query.workspaceId)),
+  );
+  app.get("/home/hot", { schema: { querystring: wsQuery } }, async (req) =>
+    home.hotList(db, req.ctx, req.currentUser.timezone, parseWs(req.query.workspaceId)),
+  );
 
   // ─── todos ──────────────────────────────────────────
   app.get(

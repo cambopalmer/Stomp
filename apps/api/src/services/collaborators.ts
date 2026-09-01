@@ -150,6 +150,13 @@ export async function removeCollaborator(
   return { ok: true };
 }
 
+/** Give up your own access to a shared item (used when declining a share). */
+export async function leaveShare(db: Db, ctx: Ctx, kind: ShareKind, id: string) {
+  const c = config[kind];
+  await db.delete(c.collab).where(and(eq(c.fk, id), eq(c.collab.userId, ctx.userId)));
+  return { ok: true };
+}
+
 /** Items shared *to* the current user (they're a collaborator or assignee, but not the creator). */
 export async function sharedWithMe(db: Db, ctx: Ctx) {
   const uid = ctx.userId;
