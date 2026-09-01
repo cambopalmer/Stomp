@@ -13,6 +13,9 @@ build/
 coverage/
 .vite/
 *.local
+test-results/
+playwright-report/
+playwright/.cache/
 *.tsbuildinfo
 __pycache__/
 *.pyc

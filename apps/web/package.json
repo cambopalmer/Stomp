@@ -8,7 +8,9 @@
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo \"(web tests: none in Phase 0)\"",
+    "test": "echo \"(web unit tests: none yet)\"",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
     "lint": "echo \"(no lint configured)\""
   },
   "dependencies": {
@@ -23,6 +25,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",

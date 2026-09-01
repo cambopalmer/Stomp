@@ -1,9 +1,10 @@
-import type {
-  ButtonHTMLAttributes,
-  InputHTMLAttributes,
-  ReactNode,
-  SelectHTMLAttributes,
-  TextareaHTMLAttributes,
+import {
+  type ButtonHTMLAttributes,
+  forwardRef,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
 } from "react";
 
 const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(" ");
@@ -86,15 +87,23 @@ export function Field({
 const inputCls =
   "rounded-md border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-muted";
 
-export const Input = (p: InputHTMLAttributes<HTMLInputElement>) => (
-  <input {...p} className={cx(inputCls, p.className)} />
+// forwardRef so react-hook-form's register() ref reaches the DOM element.
+export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
+  ({ className, ...p }, ref) => <input ref={ref} {...p} className={cx(inputCls, className)} />,
 );
-export const Textarea = (p: TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-  <textarea {...p} className={cx(inputCls, "min-h-[80px]", p.className)} />
+Input.displayName = "Input";
+
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
+  ({ className, ...p }, ref) => (
+    <textarea ref={ref} {...p} className={cx(inputCls, "min-h-[80px]", className)} />
+  ),
 );
-export const Select = (p: SelectHTMLAttributes<HTMLSelectElement>) => (
-  <select {...p} className={cx(inputCls, p.className)} />
+Textarea.displayName = "Textarea";
+
+export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(
+  ({ className, ...p }, ref) => <select ref={ref} {...p} className={cx(inputCls, className)} />,
 );
+Select.displayName = "Select";
 
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
