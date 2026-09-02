@@ -72,3 +72,14 @@ Sections **B** and **C** are answerable as their phase approaches. Section **D**
 8. **Avatar hosting** — URL field only; no upload.
 9. **i18n / l10n** — English only, not designed for translation.
 10. **Guest (cross-workspace) UX** — `project_members` on a workspace project is supported by the model; the invite/label UX for "someone outside this workspace" is a Phase 2 design task.
+
+## F. From the `/code-review` pass (2026-09-02)
+
+**Fixed in that pass:** hot-list priority sorted alphabetically not by urgency; Home/hot events query missed collaborator-shared events; hard delete left orphan `taggings` rows; `tags.workspace_id` was `ON DELETE CASCADE` (now `SET NULL`, migration `0001`).
+
+**Deferred:**
+1. **No DB-level `CHECK` constraints on enums.** `text('x',{enum:[...]})` in Drizzle is compile-time only; the migration emits no `CHECK`. Zod guards the API boundary, so a bad value only lands via a service bug or raw SQL. Add hand-written `CHECK`s (or `.check()`) if we ever want the DB as the last line of defense.
+2. **`references` is a SQL reserved word.** Fine through Drizzle (auto-quoted) and the generated migration. Any *hand-written* raw SQL must double-quote `"references"`.
+3. **All-day events + timezone.** `events.timezone` exists but range queries compare raw UTC-ms; there's no all-day storage convention. No live bug (the UI can't create all-day events yet), but define the convention before that lands.
+4. **User-deletion policy is inconsistent** — `created_by`/`owner_id` are `RESTRICT`, `tags.owner_id` is `CASCADE`, `incoming_items.created_by` is `SET NULL`. No user-delete flow exists yet; pick one policy and document the procedure in Phase 3.
+5. **Visibility logic is duplicated** across `home.ts` / `todos.ts` / `events.ts` / `references.ts`. `visibleEventsCond` is now shared; the todo/reference ones could be consolidated similarly to prevent drift.

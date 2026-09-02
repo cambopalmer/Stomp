@@ -7,8 +7,10 @@ import { Forbidden, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
 import { accessibleProjectIds, assertWorkspaceMember, type Ctx, projectAccess } from "./access.js";
 import { logActivity } from "./activity.js";
+import { purgePolymorphicRefs } from "./cleanup.js";
 
-async function visible(db: Db, userId: string) {
+/** SQL condition: events visible to `userId` (creator, accessible project, or collaborator). */
+export async function visibleEventsCond(db: Db, userId: string) {
   const projIds = await accessibleProjectIds(db, userId);
   const collab = await db
     .select({ id: eventCollaborators.eventId })
@@ -21,6 +23,7 @@ async function visible(db: Db, userId: string) {
     collabIds.length ? inArray(events.id, collabIds) : sql`0`,
   );
 }
+const visible = visibleEventsCond;
 
 export async function listEvents(
   db: Db,
@@ -100,6 +103,7 @@ export async function updateEvent(db: Db, ctx: Ctx, id: string, input: UpdateEve
 export async function deleteEvent(db: Db, ctx: Ctx, id: string): Promise<void> {
   const current = await getEvent(db, ctx, id);
   if (current.createdBy !== ctx.userId) throw Forbidden("Only the creator can delete this event");
+  await purgePolymorphicRefs(db, "event", id);
   await db.delete(events).where(eq(events.id, id));
   await logActivity(db, ctx.userId, "event", id, "deleted");
 }

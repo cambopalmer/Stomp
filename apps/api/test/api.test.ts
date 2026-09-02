@@ -52,6 +52,26 @@ describe("health + read endpoints", () => {
     expect(hot.todos[0].bucket).toBe("overdue");
   });
 
+  it("hot list orders by priority within a bucket (not alphabetically)", async () => {
+    const yesterday = Date.now() - 86_400_000;
+    const low = await app.inject({
+      method: "POST",
+      url: "/api/todos",
+      payload: { title: "zzz overdue low", priority: "low", dueAt: yesterday },
+    });
+    const high = await app.inject({
+      method: "POST",
+      url: "/api/todos",
+      payload: { title: "aaa overdue high", priority: "high", dueAt: yesterday },
+    });
+    const hot = (await get("/api/home/hot")).json();
+    const overdue = hot.todos.filter((t: { bucket: string }) => t.bucket === "overdue");
+    const iHigh = overdue.findIndex((t: { id: string }) => t.id === high.json().id);
+    const iLow = overdue.findIndex((t: { id: string }) => t.id === low.json().id);
+    expect(iHigh).toBeGreaterThanOrEqual(0);
+    expect(iHigh).toBeLessThan(iLow); // "high" must not sort below "low"
+  });
+
   it("sitemap lists project + todo urls", async () => {
     const r = await get("/api/sitemap.xml");
     expect(r.statusCode).toBe(200);
@@ -340,6 +360,25 @@ describe("tags + activity", () => {
       payload: { tagId: tag.id, entityType: "todo", entityId: todo.id },
     });
     expect(removed.statusCode).toBe(200);
+  });
+
+  it("deleting a tagged todo purges its taggings (no orphans on the tag page)", async () => {
+    const todo = (
+      await app.inject({ method: "POST", url: "/api/todos", payload: { title: "purge me" } })
+    ).json();
+    const tag = (await app.inject({ method: "POST", url: "/api/tags", payload: { name: "purge-tag" } })).json();
+    await app.inject({
+      method: "POST",
+      url: "/api/taggings",
+      payload: { tagId: tag.id, entityType: "todo", entityId: todo.id },
+    });
+
+    await app.inject({ method: "DELETE", url: `/api/todos/${todo.id}` });
+
+    const items = (await get(`/api/tags/${tag.id}/items`)).json();
+    expect(items.todos.map((t: { id: string }) => t.id)).not.toContain(todo.id);
+    const onEntity = (await get(`/api/taggings?entityType=todo&entityId=${todo.id}`)).json();
+    expect(onEntity).toHaveLength(0);
   });
 
   it("records activity for a todo", async () => {

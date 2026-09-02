@@ -7,6 +7,7 @@ import { Forbidden, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
 import { accessibleProjectIds, assertWorkspaceMember, type Ctx, projectAccess } from "./access.js";
 import { logActivity } from "./activity.js";
+import { purgePolymorphicRefs } from "./cleanup.js";
 
 async function visible(db: Db, userId: string) {
   const projIds = await accessibleProjectIds(db, userId);
@@ -92,6 +93,7 @@ export async function updateReference(db: Db, ctx: Ctx, id: string, input: Updat
 export async function deleteReference(db: Db, ctx: Ctx, id: string): Promise<void> {
   const current = await getReference(db, ctx, id);
   if (current.addedBy !== ctx.userId) throw Forbidden("Only the creator can delete this reference");
+  await purgePolymorphicRefs(db, "reference", id);
   await db.delete(references).where(eq(references.id, id));
   await logActivity(db, ctx.userId, "reference", id, "deleted");
 }

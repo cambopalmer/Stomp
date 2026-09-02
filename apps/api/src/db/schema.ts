@@ -264,7 +264,9 @@ export const tags = sqliteTable(
   "tags",
   {
     id: text("id").primaryKey(),
-    workspaceId: text("workspace_id").references(() => workspaces.id, { onDelete: "cascade" }),
+    // SET NULL like every other workspace-scoped table — deleting a workspace
+    // must not destroy its tags (and, via taggings cascade, every association).
+    workspaceId: text("workspace_id").references(() => workspaces.id, { onDelete: "set null" }),
     ownerId: text("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     color: text("color"),

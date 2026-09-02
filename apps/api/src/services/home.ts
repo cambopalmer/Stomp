@@ -2,10 +2,11 @@ import type { HomeSummary, HotList } from "@stomp/shared";
 import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, ne, or, sql } from "drizzle-orm";
 import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import type { Db } from "../db/client.js";
-import { eventCollaborators, events, incomingItems, projects, references, todoCollaborators, todos } from "../db/schema.js";
+import { events, incomingItems, projects, references, todoCollaborators, todos } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { dayBounds } from "../lib/day.js";
 import { accessibleProjectIds, type Ctx } from "./access.js";
+import { visibleEventsCond } from "./events.js";
 
 /** Workspace filter for a nullable column: undefined = any, null = personal, string = that ws. */
 function wsCond(col: AnySQLiteColumn, ws: string | null | undefined) {
@@ -46,13 +47,8 @@ export async function homeSummary(
   );
 
   const projIds = await accessibleProjectIds(db, ctx.userId);
-  const evVisible = and(
-    or(
-      eq(events.createdBy, ctx.userId),
-      projIds.length ? inArray(events.projectId, projIds) : sql`0`,
-    ),
-    wsCond(events.workspaceId, ws),
-  );
+  // same visibility rule as the Calendar list (creator / project / collaborator)
+  const evVisible = and(await visibleEventsCond(db, ctx.userId), wsCond(events.workspaceId, ws));
 
   const one = async (q: Promise<{ n: number }[]>) => Number((await q)[0]?.n ?? 0);
 
@@ -108,6 +104,10 @@ export async function hotList(
     wsCond(todos.workspaceId, ws),
   );
 
+  // text priority won't sort by urgency in SQL — rank it explicitly.
+  const priorityRank = sql<number>`case ${todos.priority}
+    when 'urgent' then 4 when 'high' then 3 when 'medium' then 2 when 'low' then 1 else 0 end`;
+
   const rows = await db
     .select()
     .from(todos)
@@ -121,22 +121,30 @@ export async function hotList(
         ),
       ),
     )
-    .orderBy(asc(todos.dueAt), desc(todos.priority))
+    .orderBy(sql`${priorityRank} desc`, sql`${todos.dueAt} asc nulls last`)
     .limit(50);
 
-  const bucketed = rows.map((t) => {
-    let bucket: HotList["todos"][number]["bucket"] = "scheduled_today";
-    if (t.dueAt != null && t.dueAt < dayStart) bucket = "overdue";
-    else if (t.priority === "urgent") bucket = "urgent";
-    else if (t.dueAt != null && t.dueAt >= dayStart && t.dueAt < dayEnd) bucket = "due_today";
-    else if (t.priority === "high") bucket = "high";
-    return {
-      id: t.id, title: t.title, priority: t.priority,
-      dueAt: t.dueAt, scheduledFor: t.scheduledFor, bucket,
-    };
-  });
-  const order = { overdue: 0, urgent: 1, due_today: 2, high: 3, scheduled_today: 4 };
-  bucketed.sort((a, b) => order[a.bucket] - order[b.bucket]);
+  const rankOf = { none: 0, low: 1, medium: 2, high: 3, urgent: 4 } as const;
+  const bucketOrder = { overdue: 0, urgent: 1, due_today: 2, high: 3, scheduled_today: 4 } as const;
+
+  const bucketed = rows
+    .map((t) => {
+      let bucket: HotList["todos"][number]["bucket"] = "scheduled_today";
+      if (t.dueAt != null && t.dueAt < dayStart) bucket = "overdue";
+      else if (t.priority === "urgent") bucket = "urgent";
+      else if (t.dueAt != null && t.dueAt >= dayStart && t.dueAt < dayEnd) bucket = "due_today";
+      else if (t.priority === "high") bucket = "high";
+      return {
+        id: t.id, title: t.title, priority: t.priority,
+        dueAt: t.dueAt, scheduledFor: t.scheduledFor, bucket,
+      };
+    })
+    .sort(
+      (a, b) =>
+        bucketOrder[a.bucket] - bucketOrder[b.bucket] ||
+        rankOf[b.priority] - rankOf[a.priority] ||
+        (a.dueAt ?? Infinity) - (b.dueAt ?? Infinity),
+    );
 
   const incoming = await db
     .select({ id: incomingItems.id, title: incomingItems.title, kind: incomingItems.kind, createdAt: incomingItems.createdAt })
@@ -145,7 +153,6 @@ export async function hotList(
     .orderBy(desc(incomingItems.createdAt))
     .limit(20);
 
-  const projIds = await accessibleProjectIds(db, ctx.userId);
   const todayEvents = await db
     .select({ id: events.id, title: events.title, startsAt: events.startsAt, endsAt: events.endsAt, allDay: events.allDay })
     .from(events)
@@ -154,7 +161,7 @@ export async function hotList(
         ne(events.status, "cancelled"),
         lt(events.startsAt, dayEnd),
         gte(events.endsAt, dayStart),
-        or(eq(events.createdBy, ctx.userId), projIds.length ? inArray(events.projectId, projIds) : sql`0`),
+        await visibleEventsCond(db, ctx.userId),
         wsCond(events.workspaceId, ws),
       ),
     )

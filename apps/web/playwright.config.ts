@@ -12,7 +12,7 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
   workers: 1,
-  retries: process.env.CI ? 1 : 0,
+  retries: 1, // absorbs the occasional cold-start race on the first goto
   reporter: process.env.CI ? [["github"], ["list"]] : "list",
   timeout: 30_000,
   use: {

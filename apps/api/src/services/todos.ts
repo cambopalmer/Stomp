@@ -13,6 +13,7 @@ import {
   workspaceIds,
 } from "./access.js";
 import { logActivity } from "./activity.js";
+import { purgePolymorphicRefs } from "./cleanup.js";
 import { notify } from "./notifications.js";
 
 /** An assignee must be reachable: yourself, or a member of the todo's workspace. */
@@ -205,6 +206,9 @@ export async function updateTodo(db: Db, ctx: Ctx, id: string, input: UpdateTodo
 export async function deleteTodo(db: Db, ctx: Ctx, id: string): Promise<void> {
   const current = await loadVisible(db, ctx, id);
   await assertCanEdit(db, ctx, current);
+  // clean subtasks' polymorphic refs before the FK cascade removes them
+  const children = await db.select({ id: todos.id }).from(todos).where(eq(todos.parentTodoId, id));
+  for (const c of [...children, { id }]) await purgePolymorphicRefs(db, "todo", c.id);
   await db.delete(todos).where(eq(todos.id, id)); // subtasks cascade via FK
   await logActivity(db, ctx.userId, "todo", id, "deleted");
 }

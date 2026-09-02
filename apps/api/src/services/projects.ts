@@ -7,6 +7,7 @@ import { BadRequest, Forbidden, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
 import { accessibleProjectIds, type Ctx, projectAccess, workspaceIds } from "./access.js";
 import { logActivity } from "./activity.js";
+import { purgePolymorphicRefs } from "./cleanup.js";
 
 const slugify = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60) || "project";
@@ -106,7 +107,8 @@ export async function updateProject(db: Db, ctx: Ctx, id: string, input: UpdateP
 export async function deleteProject(db: Db, ctx: Ctx, id: string): Promise<void> {
   const current = await getProject(db, ctx, id);
   if (current.ownerId !== ctx.userId) throw Forbidden("Only the owner can delete a project");
-  await db.delete(projects).where(eq(projects.id, id));
+  await purgePolymorphicRefs(db, "project", id);
+  await db.delete(projects).where(eq(projects.id, id)); // items ON DELETE SET NULL -> become personal
   await logActivity(db, ctx.userId, "project", id, "deleted");
 }
 
