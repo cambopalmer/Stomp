@@ -308,7 +308,7 @@ export const incomingItems = sqliteTable(
     title: text("title").notNull(),
     body: text("body"),
     kind: text("kind", {
-      enum: ["capture", "email", "shared_task", "shared_event", "system"],
+      enum: ["capture", "email", "shared_task", "shared_event", "shared_reference", "system"],
     }).notNull().default("capture"),
     status: text("status", { enum: ["unread", "triaged", "dismissed"] }).notNull().default("unread"),
     forUserId: text("for_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -316,7 +316,7 @@ export const incomingItems = sqliteTable(
     projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
     sourceRef: text("source_ref"),
     sourceMeta: text("source_meta"),
-    linkedEntityType: text("linked_entity_type", { enum: ["todo", "event"] }),
+    linkedEntityType: text("linked_entity_type", { enum: ["todo", "event", "reference"] }),
     linkedEntityId: text("linked_entity_id"),
     createdAt: ts("created_at").notNull().default(now),
     triagedAt: ts("triaged_at"),
@@ -336,7 +336,9 @@ export const notifications = sqliteTable(
     }).notNull(),
     title: text("title").notNull(),
     body: text("body"),
-    entityType: text("entity_type", { enum: ["todo", "event", "project", "incoming_item", "workspace"] }),
+    entityType: text("entity_type", {
+      enum: ["todo", "event", "reference", "project", "incoming_item", "workspace"],
+    }),
     entityId: text("entity_id"),
     deliverAt: ts("deliver_at"),
     readAt: ts("read_at"),

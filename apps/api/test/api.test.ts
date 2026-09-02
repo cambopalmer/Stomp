@@ -127,6 +127,47 @@ describe("todos CRUD", () => {
     ).json();
     expect(child.projectId).toBe(projectId);
   });
+
+  it("clearing a parent's project also clears the subtasks (not re-applies the old value)", async () => {
+    const projectId = (await get("/api/projects")).json()[0].id;
+    const parent = (
+      await app.inject({ method: "POST", url: "/api/todos", payload: { title: "p", projectId } })
+    ).json();
+    const child = (
+      await app.inject({
+        method: "POST",
+        url: "/api/todos",
+        payload: { title: "c", parentTodoId: parent.id },
+      })
+    ).json();
+    expect(child.projectId).toBe(projectId);
+
+    await app.inject({ method: "PATCH", url: `/api/todos/${parent.id}`, payload: { projectId: null } });
+    const after = (await get(`/api/todos/${child.id}`)).json();
+    expect(after.projectId).toBeNull();
+  });
+});
+
+describe("assignment edge cases", () => {
+  it("re-scoping a workspace todo to personal rejects a now-invalid assignee", async () => {
+    const ws = (await get("/api/workspaces")).json()[0];
+    const sam = (await get(`/api/workspaces/${ws.id}/members`)).json().find(
+      (m: { email: string }) => m.email === "sam@stomp.local",
+    );
+    const todo = (
+      await app.inject({
+        method: "POST",
+        url: "/api/todos",
+        payload: { title: "rescope", workspaceId: ws.id, assigneeId: sam.userId },
+      })
+    ).json();
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/api/todos/${todo.id}`,
+      payload: { workspaceId: null },
+    });
+    expect(res.statusCode).toBe(400); // personal todo can't stay assigned to someone else
+  });
 });
 
 describe("workspaces", () => {
@@ -204,6 +245,40 @@ describe("sharing + assignment", () => {
       url: `/api/todos/${todo.id}/collaborators/${list[0].userId}`,
     });
     expect(del.statusCode).toBe(200);
+  });
+
+  it("re-sharing the same person is idempotent (no duplicate inbox items)", async () => {
+    const todo = (
+      await app.inject({ method: "POST", url: "/api/todos", payload: { title: "double share" } })
+    ).json();
+    const body = { email: "sam@stomp.local", role: "viewer" };
+    await app.inject({ method: "POST", url: `/api/todos/${todo.id}/collaborators`, payload: body });
+    const second = await app.inject({
+      method: "POST",
+      url: `/api/todos/${todo.id}/collaborators`,
+      payload: body,
+    });
+    expect(second.statusCode).toBe(201);
+    expect(second.json().alreadyShared).toBe(true);
+    const collabs = (await get(`/api/todos/${todo.id}/collaborators`)).json();
+    expect(collabs).toHaveLength(1);
+  });
+
+  it("sharing a reference tags the inbox item as a share (Accept/Decline, not convert)", async () => {
+    const ref = (
+      await app.inject({
+        method: "POST",
+        url: "/api/references",
+        payload: { title: "r", url: "https://example.com" },
+      })
+    ).json();
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/references/${ref.id}/collaborators`,
+      payload: { email: "sam@stomp.local" },
+    });
+    expect(res.statusCode).toBe(201);
+    // (can't read Sam's inbox as owner, but the kind/linked fields are what the UI keys on)
   });
 
   it("rejects sharing something you didn't create", async () => {

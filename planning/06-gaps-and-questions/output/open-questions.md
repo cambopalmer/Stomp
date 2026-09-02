@@ -73,9 +73,20 @@ Sections **B** and **C** are answerable as their phase approaches. Section **D**
 9. **i18n / l10n** — English only, not designed for translation.
 10. **Guest (cross-workspace) UX** — `project_members` on a workspace project is supported by the model; the invite/label UX for "someone outside this workspace" is a Phase 2 design task.
 
-## F. From the `/code-review` pass (2026-09-02)
+## F. From the `/code-review` passes (2026-09-02)
 
-**Fixed in that pass:** hot-list priority sorted alphabetically not by urgency; Home/hot events query missed collaborator-shared events; hard delete left orphan `taggings` rows; `tags.workspace_id` was `ON DELETE CASCADE` (now `SET NULL`, migration `0001`).
+**Pass 1 (spec / early impl) — fixed:** hot-list priority sorted alphabetically not by urgency; Home/hot events query missed collaborator-shared events; hard delete left orphan `taggings` rows; `tags.workspace_id` was `ON DELETE CASCADE` (now `SET NULL`, migration `0001`).
+
+**Pass 2 (implementation, `ecdf53c..HEAD`) — fixed:**
+- subtask cascade used `patch.x ?? current.x`, so clearing a parent's project/workspace re-applied the old value to subtasks — now resolves the target scope explicitly and applies nulls
+- `updateTodo` validated the assignee against the *old* workspace and skipped re-validation on a workspace re-scope — could leave a personal todo assigned to someone else — now validates against the resulting scope
+- `listCollaborators` had no authz (any user could enumerate any item's collaborators + emails by id) — now `assertCanView` (creator / collaborator / project member)
+- the share's Incoming notice used the item's `workspace_id`, so a cross-workspace recipient never saw it and couldn't decline — now goes to their personal inbox (`workspace_id = null`)
+- `notifications.computeTransient` event-reminder query missed collaborators (same bug as Home) — now reuses `visibleEventsCond`
+- re-sharing wasn't idempotent — dup inbox items + notifications on every click — now no-ops (optionally bumps role) if already shared
+- `sharedWithMe` loaded whole `todos`/`events`/`references` tables into memory — now an indexed SQL filter
+- `homeSummary` recomputed `accessibleProjectIds` ~5× (twice serially) — now computed once and threaded
+- a shared **reference** produced a `system` inbox item (convert-to-todo buttons, no decline path) — added `shared_reference` kind + `linked_entity_type = 'reference'`; Accept/Decline now works
 
 **Deferred:**
 1. **No DB-level `CHECK` constraints on enums.** `text('x',{enum:[...]})` in Drizzle is compile-time only; the migration emits no `CHECK`. Zod guards the API boundary, so a bad value only lands via a service bug or raw SQL. Add hand-written `CHECK`s (or `.check()`) if we ever want the DB as the last line of defense.

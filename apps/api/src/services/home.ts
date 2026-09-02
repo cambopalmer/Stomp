@@ -14,8 +14,7 @@ function wsCond(col: AnySQLiteColumn, ws: string | null | undefined) {
   return ws === null ? isNull(col) : eq(col, ws);
 }
 
-async function visibleTodoConds(db: Db, userId: string) {
-  const projIds = await accessibleProjectIds(db, userId);
+async function visibleTodoConds(db: Db, userId: string, projIds: string[]) {
   const collab = await db
     .select({ id: todoCollaborators.todoId })
     .from(todoCollaborators)
@@ -29,6 +28,13 @@ async function visibleTodoConds(db: Db, userId: string) {
   );
 }
 
+function refVisible(userId: string, projIds: string[]) {
+  return or(
+    eq(references.addedBy, userId),
+    projIds.length ? inArray(references.projectId, projIds) : sql`0`,
+  );
+}
+
 export async function homeSummary(
   db: Db,
   ctx: Ctx,
@@ -37,7 +43,9 @@ export async function homeSummary(
 ): Promise<HomeSummary> {
   const now = clock.now();
   const { dayStart, dayEnd } = dayBounds(now, timezone);
-  const vis = await visibleTodoConds(db, ctx.userId);
+  const projIds = await accessibleProjectIds(db, ctx.userId); // computed once, threaded everywhere
+
+  const vis = await visibleTodoConds(db, ctx.userId, projIds);
   const open = and(
     vis,
     ne(todos.status, "done"),
@@ -46,9 +54,9 @@ export async function homeSummary(
     wsCond(todos.workspaceId, ws),
   );
 
-  const projIds = await accessibleProjectIds(db, ctx.userId);
   // same visibility rule as the Calendar list (creator / project / collaborator)
-  const evVisible = and(await visibleEventsCond(db, ctx.userId), wsCond(events.workspaceId, ws));
+  const evVisible = and(await visibleEventsCond(db, ctx.userId, projIds), wsCond(events.workspaceId, ws));
+  const refVis = refVisible(ctx.userId, projIds);
 
   const one = async (q: Promise<{ n: number }[]>) => Number((await q)[0]?.n ?? 0);
 
@@ -65,8 +73,8 @@ export async function homeSummary(
     one(db.select({ n: sql<number>`count(*)` }).from(events).where(and(evVisible, ne(events.status, "cancelled"), lt(events.startsAt, dayEnd), gte(events.endsAt, dayStart)))),
     one(db.select({ n: sql<number>`count(*)` }).from(events).where(and(evVisible, ne(events.status, "cancelled"), gte(events.startsAt, dayEnd)))),
     one(db.select({ n: sql<number>`count(*)` }).from(incomingItems).where(and(eq(incomingItems.forUserId, ctx.userId), eq(incomingItems.status, "unread"), wsCond(incomingItems.workspaceId, ws)))),
-    one(db.select({ n: sql<number>`count(*)` }).from(references).where(and(await refVisible(db, ctx.userId), wsCond(references.workspaceId, ws)))),
-    one(db.select({ n: sql<number>`count(*)` }).from(references).where(and(await refVisible(db, ctx.userId), eq(references.status, "learning"), wsCond(references.workspaceId, ws)))),
+    one(db.select({ n: sql<number>`count(*)` }).from(references).where(and(refVis, wsCond(references.workspaceId, ws)))),
+    one(db.select({ n: sql<number>`count(*)` }).from(references).where(and(refVis, eq(references.status, "learning"), wsCond(references.workspaceId, ws)))),
     one(db.select({ n: sql<number>`count(*)` }).from(projects).where(projIds.length ? and(inArray(projects.id, projIds), eq(projects.status, "active"), wsCond(projects.workspaceId, ws)) : sql`0`)),
   ]);
 
@@ -79,14 +87,6 @@ export async function homeSummary(
   };
 }
 
-async function refVisible(db: Db, userId: string) {
-  const projIds = await accessibleProjectIds(db, userId);
-  return or(
-    eq(references.addedBy, userId),
-    projIds.length ? inArray(references.projectId, projIds) : sql`0`,
-  );
-}
-
 export async function hotList(
   db: Db,
   ctx: Ctx,
@@ -95,7 +95,8 @@ export async function hotList(
 ): Promise<HotList> {
   const now = clock.now();
   const { dayStart, dayEnd } = dayBounds(now, timezone);
-  const vis = await visibleTodoConds(db, ctx.userId);
+  const projIds = await accessibleProjectIds(db, ctx.userId);
+  const vis = await visibleTodoConds(db, ctx.userId, projIds);
   const open = and(
     vis,
     ne(todos.status, "done"),
@@ -161,7 +162,7 @@ export async function hotList(
         ne(events.status, "cancelled"),
         lt(events.startsAt, dayEnd),
         gte(events.endsAt, dayStart),
-        await visibleEventsCond(db, ctx.userId),
+        await visibleEventsCond(db, ctx.userId, projIds),
         wsCond(events.workspaceId, ws),
       ),
     )

@@ -11,6 +11,7 @@ const kindLabel: Record<string, string> = {
   email: "Email",
   shared_task: "Shared task",
   shared_event: "Shared event",
+  shared_reference: "Shared reference",
   system: "System",
 };
 
@@ -20,6 +21,7 @@ const linkFor = (item: IncomingItem) => {
   if (!item.linkedEntityId) return null;
   if (item.linkedEntityType === "todo") return `/todos/${item.linkedEntityId}`;
   if (item.linkedEntityType === "event") return `/calendar/${item.linkedEntityId}`;
+  if (item.linkedEntityType === "reference") return `/learn/${item.linkedEntityId}`;
   return null;
 };
 
@@ -31,7 +33,8 @@ function Item({ item }: { item: IncomingItem }) {
   const [due, setDue] = useState("");
   const [date, setDate] = useState("");
   const busy = triage.isPending;
-  const isShare = item.kind === "shared_task" || item.kind === "shared_event";
+  const isShare =
+    item.kind === "shared_task" || item.kind === "shared_event" || item.kind === "shared_reference";
   const to = linkFor(item);
 
   const submitTodo = (e: FormEvent) => {

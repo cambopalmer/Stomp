@@ -152,11 +152,21 @@ export async function updateTodo(db: Db, ctx: Ctx, id: string, input: UpdateTodo
   const current = await loadVisible(db, ctx, id);
   await assertCanEdit(db, ctx, current);
 
-  if (input.projectId !== undefined && !current.parentTodoId) {
-    await assertCanUseProject(db, ctx, input.projectId);
-  }
-  if (input.assigneeId !== undefined) {
-    await assertAssignable(db, ctx, input.assigneeId, current.workspaceId);
+  const isSubtask = !!current.parentTodoId;
+  const rescopingProject = input.projectId !== undefined && !isSubtask;
+  const rescopingWorkspace = input.workspaceId !== undefined && !isSubtask;
+
+  // Resolve the target scope (post-patch) so validation sees the real end state.
+  const nextProjectId = rescopingProject ? (input.projectId ?? null) : current.projectId;
+  const nextWorkspaceId = rescopingWorkspace ? (input.workspaceId ?? null) : current.workspaceId;
+  const nextAssigneeId =
+    input.assigneeId !== undefined ? (input.assigneeId ?? null) : current.assigneeId;
+
+  if (rescopingProject) await assertCanUseProject(db, ctx, input.projectId);
+  if (rescopingWorkspace) await assertWorkspaceMember(db, ctx.userId, input.workspaceId);
+  // re-check the assignee against the *resulting* workspace (covers a workspace re-scope)
+  if (input.assigneeId !== undefined || rescopingWorkspace) {
+    await assertAssignable(db, ctx, nextAssigneeId, nextWorkspaceId);
   }
 
   const patch: Partial<Todo> = { updatedAt: clock.now() };
@@ -165,8 +175,8 @@ export async function updateTodo(db: Db, ctx: Ctx, id: string, input: UpdateTodo
     "assigneeId", "sortOrder", "completedAt",
   ];
   for (const f of fields) if (input[f] !== undefined) (patch as Record<string, unknown>)[f] = input[f];
-  if (input.projectId !== undefined && !current.parentTodoId) patch.projectId = input.projectId ?? null;
-  if (input.workspaceId !== undefined && !current.parentTodoId) patch.workspaceId = input.workspaceId ?? null;
+  if (rescopingProject) patch.projectId = nextProjectId;
+  if (rescopingWorkspace) patch.workspaceId = nextWorkspaceId;
 
   // Auto-manage completedAt when status flips to/from done.
   if (input.status === "done" && current.status !== "done") patch.completedAt = clock.now();
@@ -174,15 +184,11 @@ export async function updateTodo(db: Db, ctx: Ctx, id: string, input: UpdateTodo
 
   await db.update(todos).set(patch).where(eq(todos.id, id));
 
-  // Cascade workspace/project to subtasks if this is a parent.
-  if ((patch.projectId !== undefined || patch.workspaceId !== undefined) && !current.parentTodoId) {
+  // Cascade the resolved scope to subtasks (must apply nulls, not the old value).
+  if (rescopingProject || rescopingWorkspace) {
     await db
       .update(todos)
-      .set({
-        projectId: patch.projectId ?? current.projectId,
-        workspaceId: patch.workspaceId ?? current.workspaceId,
-        updatedAt: clock.now(),
-      })
+      .set({ projectId: nextProjectId, workspaceId: nextWorkspaceId, updatedAt: clock.now() })
       .where(eq(todos.parentTodoId, id));
   }
 

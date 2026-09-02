@@ -1,11 +1,11 @@
-import { and, desc, eq, isNull, lt, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { events, notifications, todoCollaborators, todos } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { dayBounds } from "../lib/day.js";
 import { newId } from "../lib/ids.js";
 import { accessibleProjectIds, type Ctx } from "./access.js";
-import { inArray } from "drizzle-orm";
+import { visibleEventsCond } from "./events.js";
 
 type NType =
   | "share_invite"
@@ -83,7 +83,7 @@ async function computeTransient(db: Db, ctx: Ctx, timezone: string): Promise<Not
     .where(
       and(
         ne(events.status, "cancelled"),
-        or(eq(events.createdBy, ctx.userId), projIds.length ? inArray(events.projectId, projIds) : sql`0`),
+        await visibleEventsCond(db, ctx.userId), // creator / project / collaborator
         sql`${events.startsAt} >= ${now}`,
         lt(events.startsAt, dayEnd),
       ),

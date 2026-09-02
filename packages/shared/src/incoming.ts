@@ -13,7 +13,7 @@ export const incomingItem = z.object({
   projectId: id.nullable(),
   sourceRef: z.string().nullable(),
   sourceMeta: z.string().nullable(),
-  linkedEntityType: z.enum(["todo", "event"]).nullable(),
+  linkedEntityType: z.enum(["todo", "event", "reference"]).nullable(),
   linkedEntityId: id.nullable(),
   createdAt: epochMs,
   triagedAt: epochMs.nullable(),

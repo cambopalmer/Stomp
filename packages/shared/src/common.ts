@@ -22,7 +22,14 @@ export const eventStatus = z.enum(["confirmed", "tentative", "cancelled"]);
 export const referenceStatus = z.enum(["to_learn", "learning", "learned", "archived"]);
 export type ReferenceStatus = z.infer<typeof referenceStatus>;
 
-export const incomingKind = z.enum(["capture", "email", "shared_task", "shared_event", "system"]);
+export const incomingKind = z.enum([
+  "capture",
+  "email",
+  "shared_task",
+  "shared_event",
+  "shared_reference",
+  "system",
+]);
 export const incomingStatus = z.enum(["unread", "triaged", "dismissed"]);
 
 export const projectStatus = z.enum(["active", "archived"]);

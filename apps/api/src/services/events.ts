@@ -10,8 +10,8 @@ import { logActivity } from "./activity.js";
 import { purgePolymorphicRefs } from "./cleanup.js";
 
 /** SQL condition: events visible to `userId` (creator, accessible project, or collaborator). */
-export async function visibleEventsCond(db: Db, userId: string) {
-  const projIds = await accessibleProjectIds(db, userId);
+export async function visibleEventsCond(db: Db, userId: string, knownProjIds?: string[]) {
+  const projIds = knownProjIds ?? (await accessibleProjectIds(db, userId));
   const collab = await db
     .select({ id: eventCollaborators.eventId })
     .from(eventCollaborators)
