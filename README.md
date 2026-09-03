@@ -30,7 +30,7 @@ Open http://localhost:5173 and sign in as the seeded owner (`owner@stomp.local` 
 
 ### Authentication
 
-Email/password is always on. Google OAuth is optional — set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `.env` (authorized redirect URI `{PUBLIC_BASE_URL}/api/auth/google/callback`) and a "Continue with Google" button appears. `ALLOW_SIGNUP=false` closes open signup (the first-ever user is always allowed). Sessions are a signed httpOnly cookie (`stomp_session`, 30-day TTL); set a strong `SESSION_SECRET` in production. Tests run with `AUTH_TEST_BYPASS=true`.
+Email/password is always on. Google OAuth is optional — see [`docs/GOOGLE-OAUTH.md`](docs/GOOGLE-OAUTH.md) for the full Cloud Console walkthrough; in short, set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `.env` and a "Continue with Google" button appears. `ALLOW_SIGNUP=false` closes open signup (the first-ever user is always allowed). Sessions are a signed httpOnly cookie (`stomp_session`, 30-day TTL); set a strong `SESSION_SECRET` in production. Tests run with `AUTH_TEST_BYPASS=true`.
 
 Useful:
 
