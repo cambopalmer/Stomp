@@ -40,6 +40,12 @@ STOMP is a personal/shared hub: **calendar, todos, incoming (triage inbox), and 
 
 Run: `pnpm install && pnpm --filter @stomp/api db:seed && pnpm dev`. See `README.md`.
 
+## Versioning & commits
+
+- **Conventional Commits** on the subject line: `feat:`, `fix:`, `perf:`, `refactor:`, `test:`, `docs:`, `build:`, `chore:` (+ optional scope, e.g. `feat(api):`). Breaking: `feat!:` or a `BREAKING CHANGE:` footer. Keep the `Co-Authored-By` / `Claude-Session` trailers.
+- **release-please** watches `main` and opens a "release PR" that bumps the version + `CHANGELOG.md` from those commits. Merging that PR tags `vX.Y.Z`. Config: `release-please-config.json`, `.release-please-manifest.json`.
+- Pre-1.0: `feat:` → minor bump (`0.3.0` → `0.4.0`), `fix:`/`perf:` → patch. Current: **0.3.0** (Phase 2).
+
 ## Conventions
 
 - TypeScript everywhere. API layering: `routes/` → `services/` (logic + authz) → Drizzle.
