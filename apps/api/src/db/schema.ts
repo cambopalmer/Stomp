@@ -52,12 +52,27 @@ export const users = sqliteTable("users", {
   timezone: text("timezone").notNull().default("UTC"),
   createdAt: ts("created_at").notNull().default(now),
   updatedAt: ts("updated_at").notNull().default(now),
-  // reserved for auth (Phase 3)
+  // auth (Phase 3)
   passwordHash: text("password_hash"),
-  authProvider: text("auth_provider"),
-  authProviderId: text("auth_provider_id"),
+  googleId: text("google_id").unique(),
   lastLoginAt: ts("last_login_at"),
+  authProvider: text("auth_provider"), // legacy, unused — kept to avoid a rename migration
+  authProviderId: text("auth_provider_id"),
 });
+
+export const sessions = sqliteTable(
+  "sessions",
+  {
+    id: text("id").primaryKey(), // random token, also the cookie value
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: ts("expires_at").notNull(),
+    createdAt: ts("created_at").notNull().default(now),
+    lastSeenAt: ts("last_seen_at").notNull().default(now),
+    userAgent: text("user_agent"),
+    ip: text("ip"),
+  },
+  (t) => ({ byUser: index("idx_sessions_user").on(t.userId) }),
+);
 
 // ─────────────────────────────────────── projects
 

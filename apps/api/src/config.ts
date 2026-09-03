@@ -20,6 +20,15 @@ const schema = z.object({
   OTEL_MODE: z.enum(["off", "console", "otlp"]).default("off"),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().default("http://localhost:4318"),
   SERVICE_NAME: z.string().default("stomp-api"),
+
+  // ─── auth (Phase 3) ───
+  SESSION_SECRET: z.string().min(16).default("dev-session-secret-not-for-production-use-only"),
+  SEED_USER_PASSWORD: z.string().default("stomp-dev-password"),
+  ALLOW_SIGNUP: z.coerce.boolean().default(true),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  /** tests only: fall back to SEED_USER_EMAIL when no session cookie is present */
+  AUTH_TEST_BYPASS: z.coerce.boolean().default(false),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -28,10 +37,19 @@ if (!parsed.success) {
   process.exit(1);
 }
 
+const env = parsed.data;
+
+if (env.NODE_ENV === "production" && env.SESSION_SECRET.startsWith("dev-session-secret")) {
+  console.error("SESSION_SECRET must be set to a strong value in production");
+  process.exit(1);
+}
+
 export const config = {
-  ...parsed.data,
-  sqlitePath: parsed.data.DATABASE_URL.replace(/^file:/, ""),
-  isTest: parsed.data.NODE_ENV === "test",
-  isDev: parsed.data.NODE_ENV === "development",
+  ...env,
+  sqlitePath: env.DATABASE_URL.replace(/^file:/, ""),
+  isTest: env.NODE_ENV === "test",
+  isDev: env.NODE_ENV === "development",
+  isProd: env.NODE_ENV === "production",
   version: process.env.BUILD_VERSION ?? process.env.npm_package_version ?? "0.0.0",
+  googleOAuthConfigured: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
 };

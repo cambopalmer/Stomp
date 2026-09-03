@@ -72,10 +72,17 @@ describe("health + read endpoints", () => {
     expect(iHigh).toBeLessThan(iLow); // "high" must not sort below "low"
   });
 
-  it("sitemap lists project + todo urls", async () => {
+  it("public sitemap lists only static routes (no per-item urls)", async () => {
     const r = await get("/api/sitemap.xml");
     expect(r.statusCode).toBe(200);
-    expect(r.body).toContain("/projects/");
+    expect(r.body).toContain("<loc>http://localhost:8080/todos</loc>");
+    expect(r.body).not.toContain("/projects/");
+    expect(r.body).not.toContain("/todos/");
+  });
+
+  it("authenticated per-user sitemap lists the caller's items", async () => {
+    const r = await get("/api/sitemap-me.xml");
+    expect(r.statusCode).toBe(200);
     expect(r.body).toContain("/todos/");
   });
 });

@@ -2,7 +2,7 @@ import * as S from "@stomp/shared";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { db } from "../db/client.js";
-import { buildSitemap, robotsTxt } from "../lib/sitemap.js";
+import { buildSitemap, buildUserSitemap, robotsTxt } from "../lib/sitemap.js";
 import { listActivity } from "../services/activity.js";
 import * as collab from "../services/collaborators.js";
 import * as events from "../services/events.js";
@@ -29,10 +29,10 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
 
   // ─── home ───────────────────────────────────────────
   app.get("/home/summary", { schema: { querystring: wsQuery } }, async (req) =>
-    home.homeSummary(db, req.ctx, req.currentUser.timezone, parseWs(req.query.workspaceId)),
+    home.homeSummary(db, req.ctx, req.currentUser!.timezone, parseWs(req.query.workspaceId)),
   );
   app.get("/home/hot", { schema: { querystring: wsQuery } }, async (req) =>
-    home.hotList(db, req.ctx, req.currentUser.timezone, parseWs(req.query.workspaceId)),
+    home.hotList(db, req.ctx, req.currentUser!.timezone, parseWs(req.query.workspaceId)),
   );
 
   // ─── todos ──────────────────────────────────────────
@@ -215,7 +215,7 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
 
   // ─── notifications ──────────────────────────────────
   app.get("/notifications", async (req) =>
-    notifications.listNotifications(db, req.ctx, req.currentUser.timezone),
+    notifications.listNotifications(db, req.ctx, req.currentUser!.timezone),
   );
   app.post("/notifications/read-all", async (req) => notifications.markAllRead(db, req.ctx));
   app.post("/notifications/:id/read", { schema: { params: idParams } }, async (req) =>
@@ -255,11 +255,17 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
   );
 
   // ─── sitemap ────────────────────────────────────────
-  app.get("/sitemap.xml", async (_req, reply) => {
+  // Public: static routes only — per-item URLs would leak private data.
+  app.get("/sitemap.xml", (_req, reply) => {
     reply.header("content-type", "application/xml");
     return buildSitemap();
   });
-  app.get("/robots.txt", async (_req, reply) => {
+  // Authenticated: the caller's own items.
+  app.get("/sitemap-me.xml", async (req, reply) => {
+    reply.header("content-type", "application/xml");
+    return buildUserSitemap(req.ctx.userId);
+  });
+  app.get("/robots.txt", (_req, reply) => {
     reply.header("content-type", "text/plain");
     return robotsTxt;
   });

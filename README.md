@@ -26,7 +26,11 @@ pnpm --filter @stomp/api db:seed     # migrate + seed 2 users, a shared workspac
 pnpm dev                             # api on :3000, web on :5173 (proxies /api)
 ```
 
-Open http://localhost:5173.
+Open http://localhost:5173 and sign in as the seeded owner (`owner@stomp.local` / `stomp-dev-password`, override via `SEED_USER_PASSWORD`).
+
+### Authentication
+
+Email/password is always on. Google OAuth is optional — set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `.env` (authorized redirect URI `{PUBLIC_BASE_URL}/api/auth/google/callback`) and a "Continue with Google" button appears. `ALLOW_SIGNUP=false` closes open signup (the first-ever user is always allowed). Sessions are a signed httpOnly cookie (`stomp_session`, 30-day TTL); set a strong `SESSION_SECRET` in production. Tests run with `AUTH_TEST_BYPASS=true`.
 
 Useful:
 

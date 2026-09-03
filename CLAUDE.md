@@ -2,7 +2,7 @@
 
 STOMP is a personal/shared hub: **calendar, todos, incoming (triage inbox), and a learn library**, grouped by **projects**, with a home screen of tiles and a "hot & relevant" sidebar.
 
-**Current phase:** Phases 0 + 1 on `main` (pushed to github.com/cambopalmer/Stomp). **Phase 2 complete** on branch `phase-2-sharing`: workspace switcher + scoping (incl. Home) + `/workspaces` mgmt; share (collaborator) UI on todo/event/reference; assignee picker; `/shared` "shared with me"; notifications bell + panel; accept/decline on shared Incoming items. 32 API tests. **Paused before Phase 3 (auth)** at the owner's request. Open, non-blocking: B/C question sets.
+**Current phase:** Phases 0–2 + QA + observability on `main` (pushed to github.com/cambopalmer/Stomp), version `0.3.0`. **Phase 3 (auth) tranche B complete** on branch `phase-3-auth`, awaiting owner review/merge: Google OAuth (optional) + email/password (argon2id), `sessions` table + signed httpOnly cookie, `authContext` 401s non-public routes (`AUTH_TEST_BYPASS` for tests), `/login` `/signup` + `UserMenu`, `ALLOW_SIGNUP` env. Public sitemap de-scoped; authed `/api/sitemap-me.xml` added. 45 API tests, 16 e2e. Open: legacy auth-column cleanup, user-deletion FK pass, owner to create Google OAuth creds, full-app `/security-review` rerun.
 
 ## Where things are
 

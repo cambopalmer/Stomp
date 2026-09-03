@@ -1,41 +1,46 @@
+import { eq } from "drizzle-orm";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
-import { events, projects, references, tags, todos } from "../db/schema.js";
+import { events, projects, references, todos } from "../db/schema.js";
 
-const STATIC_ROUTES = ["/", "/calendar", "/todos", "/incoming", "/learn", "/projects", "/signup"];
+const STATIC_ROUTES = ["/", "/calendar", "/todos", "/incoming", "/learn", "/projects", "/shared", "/workspaces", "/login", "/signup"];
 
-let cache: { xml: string; at: number } | null = null;
-let writeCounter = 0;
-const TTL_MS = 5 * 60 * 1000;
-
-/** Called by services after any mutation to invalidate the sitemap cache. */
-export function bumpSitemap(): void {
-  writeCounter++;
-  cache = null;
+/**
+ * The public sitemap only lists static routes — STOMP is a private hub, so
+ * per-item URLs would leak other users' data. `buildUserSitemap` (authenticated)
+ * returns the caller's own items.
+ */
+export function buildSitemap(): string {
+  const base = config.PUBLIC_BASE_URL.replace(/\/$/, "");
+  return xmlDoc(STATIC_ROUTES.map((r) => ({ loc: base + r })));
 }
 
-export async function buildSitemap(): Promise<string> {
-  if (cache && Date.now() - cache.at < TTL_MS) return cache.xml;
-
+export async function buildUserSitemap(userId: string): Promise<string> {
   const base = config.PUBLIC_BASE_URL.replace(/\/$/, "");
-  const urls: { loc: string; lastmod?: number }[] = STATIC_ROUTES.map((r) => ({ loc: base + r }));
+  const urls: SitemapUrl[] = STATIC_ROUTES.map((r) => ({ loc: base + r }));
 
-  // TODO(auth, Phase 3): scope these to the requesting user. Today it lists every
-  // user's ids — acceptable only because the deployment is single-user + robots
-  // Disallow: /. See planning/05-delivery/output/roadmap.md § Phase 3.
-  const [ps, ts, es, rs, gs] = await Promise.all([
-    db.select({ id: projects.id, u: projects.updatedAt }).from(projects),
-    db.select({ id: todos.id, u: todos.updatedAt }).from(todos),
-    db.select({ id: events.id, u: events.updatedAt }).from(events),
-    db.select({ id: references.id, u: references.updatedAt }).from(references),
-    db.select({ id: tags.id, name: tags.name }).from(tags),
+  const [ts, es, rs, ps] = await Promise.all([
+    db.select({ id: todos.id, u: todos.updatedAt }).from(todos).where(eq(todos.createdBy, userId)),
+    db.select({ id: events.id, u: events.updatedAt }).from(events).where(eq(events.createdBy, userId)),
+    db
+      .select({ id: references.id, u: references.updatedAt })
+      .from(references)
+      .where(eq(references.addedBy, userId)),
+    db.select({ id: projects.id, u: projects.updatedAt }).from(projects).where(eq(projects.ownerId, userId)),
   ]);
-  for (const p of ps) urls.push({ loc: `${base}/projects/${p.id}`, lastmod: p.u });
   for (const t of ts) urls.push({ loc: `${base}/todos/${t.id}`, lastmod: t.u });
   for (const e of es) urls.push({ loc: `${base}/calendar/${e.id}`, lastmod: e.u });
   for (const r of rs) urls.push({ loc: `${base}/learn/${r.id}`, lastmod: r.u });
-  for (const g of gs) urls.push({ loc: `${base}/tags/${encodeURIComponent(g.name)}` });
+  for (const p of ps) urls.push({ loc: `${base}/projects/${p.id}`, lastmod: p.u });
+  return xmlDoc(urls);
+}
 
+interface SitemapUrl {
+  loc: string;
+  lastmod?: number;
+}
+
+function xmlDoc(urls: SitemapUrl[]): string {
   const body = urls
     .map(
       (u) =>
@@ -44,9 +49,7 @@ export async function buildSitemap(): Promise<string> {
         }</url>`,
     )
     .join("\n");
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
-  cache = { xml, at: Date.now() };
-  return xml;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
 
 export const robotsTxt = `User-agent: *\nDisallow: /\n`;

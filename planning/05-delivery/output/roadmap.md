@@ -48,11 +48,13 @@ Active-workspace switcher (incl. "Personal"). Create/manage workspaces + members
 
 ## Phase 3 — Authentication
 
-Replace seeded-user with real auth: email+password (argon2) and/or Google OAuth (per open question B1). Sessions (httpOnly cookie) or JWT (B2). Wire up the "Create account" entry point from the home banner into a real signup / onboarding / invite flow. `authContext` plugin swap — services untouched. Migrate seed users to real accounts.
+**Tranche B — done (2026-09-02, branch `phase-3-auth`):** Google OAuth (`@fastify/oauth2`, optional — no-op until `GOOGLE_CLIENT_ID`/`SECRET` set) + email/password fallback (argon2id via `@node-rs/argon2`). `sessions` table, signed httpOnly cookie `stomp_session` (30-day TTL). `authContext` plugin resolves the session and 401s non-public routes; `AUTH_TEST_BYPASS` env keeps API/e2e tests running as the seeded user. Web: `AuthProvider` + `/login` `/signup` screens, `UserMenu` (avatar + sign out), 401→login redirect. `ALLOW_SIGNUP` env gates open signup (first user always allowed). 45 API tests, 16 e2e (incl. an unauthenticated `auth` project).
 
-**Security follow-ups that land with auth (from the QA pass, 2026-09-01):**
-- Scope `GET /sitemap.xml` (`apps/api/src/lib/sitemap.ts`) to the requesting user — it currently enumerates every project/todo/event/reference id for all users. Harmless single-user; must be per-user once accounts exist. `Disallow: /` in `robots.txt` stays.
-- Re-run `/security-review` against the full app (not just a branch diff) once `authContext` is real, focusing on the visibility helpers and session handling.
+Still open: migrate/prune the legacy `auth_provider`/`auth_provider_id` columns; user-deletion FK-policy consistency pass; the owner must create Google Cloud OAuth credentials (redirect URI `{PUBLIC_BASE_URL}/api/auth/google/callback`).
+
+**Security follow-ups (from the QA pass, 2026-09-01):**
+- ~~Scope `GET /sitemap.xml` to the requesting user~~ — **done (2026-09-02):** public `/api/sitemap.xml` now lists static routes only; authenticated `/api/sitemap-me.xml` returns the caller's own items. `Disallow: /` in `robots.txt` stays.
+- Re-run `/security-review` against the full app (not just a branch diff) now that `authContext` is real, focusing on the visibility helpers and session handling.
 
 ## Phase 4 — Inbound integrations
 

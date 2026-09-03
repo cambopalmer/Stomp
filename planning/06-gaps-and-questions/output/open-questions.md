@@ -28,12 +28,12 @@ Sections **B** and **C** are answerable as their phase approaches. Section **D**
 
 ---
 
-## B. Phase 3 blockers (auth) — answer later
+## B. Phase 3 blockers (auth) — RESOLVED (2026-09-02, branch `phase-3-auth`)
 
-- **B1** Auth method: email+password, Google OAuth, or both? Magic link? *(Leaning: Google + password fallback — you'll want Google anyway for Gmail/Calendar.)*
-- **B2** Session strategy: httpOnly cookie session vs JWT. *(Leaning: cookie session — simpler, revocable.)*
-- **B3** Signup model: open signup, invite-only, or you manually create accounts? *(Leaning: invite-only.)*
-- **B4** Do the 2 seeded users become real accounts (email claim + set password), or are they wiped and re-created?
+- **B1** Auth method → **Google OAuth (optional) + email/password fallback**, argon2id. No magic link.
+- **B2** Session strategy → **httpOnly cookie session** (`sessions` table, signed `stomp_session` cookie, 30-day TTL, server-revocable).
+- **B3** Signup model → **`ALLOW_SIGNUP` env flag** (default open for dev; set `false` for invite-only). First-ever user always allowed. Explicit invite flow deferred.
+- **B4** Seeded users → **kept as real accounts**: seed sets `passwordHash` from `SEED_USER_PASSWORD`; Google links on first login by matching email. Not wiped.
 
 ---
 

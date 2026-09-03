@@ -17,6 +17,7 @@ import { useTheme } from "../lib/theme.js";
 import { Button, Input } from "./ui.js";
 import { HotSidebar } from "./HotSidebar.js";
 import { NotificationsBell } from "./NotificationsBell.js";
+import { UserMenu } from "./UserMenu.js";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher.js";
 
 const nav = [
@@ -90,9 +91,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <ThemeIcon size={16} aria-hidden="true" />
           </button>
-          <NavLink to="/signup" className="hidden text-sm text-muted underline hover:text-text sm:inline">
-            Create account
-          </NavLink>
+          <UserMenu />
         </div>
       </header>
 

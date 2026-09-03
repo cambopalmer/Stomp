@@ -1,34 +1,65 @@
 import { eq } from "drizzle-orm";
-import type { FastifyPluginAsync } from "fastify";
+import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
 import { users } from "../db/schema.js";
+import { SESSION_COOKIE } from "../lib/cookies.js";
+import { AppError } from "../lib/errors.js";
 import type { Ctx } from "../services/access.js";
+import { resolveSession } from "../services/auth.js";
 
 declare module "fastify" {
   interface FastifyRequest {
+    /** Guaranteed set for any route that isn't in PUBLIC_PREFIXES. */
     ctx: Ctx;
-    /** The acting user's row (timezone etc). */
-    currentUser: typeof users.$inferSelect;
+    currentUser: typeof users.$inferSelect | undefined;
   }
 }
 
-/**
- * Phase 0: every request acts as the seeded user (SEED_USER_EMAIL).
- * Phase 3 swaps only this plugin for real session/JWT verification —
- * services and routes take `request.ctx` and are untouched.
- */
-export const authContext: FastifyPluginAsync = fp(async (app) => {
-  let cached: typeof users.$inferSelect | null = null;
+/** Paths (after the /api prefix) reachable without a session. */
+const PUBLIC_PREFIXES = [
+  "/api/health",
+  "/api/auth/login",
+  "/api/auth/signup",
+  "/api/auth/logout",
+  "/api/auth/me",
+  "/api/auth/google",
+  "/api/sitemap.xml",
+  "/api/robots.txt",
+];
+const isPublic = (url: string) => PUBLIC_PREFIXES.some((p) => url === p || url.startsWith(`${p}?`) || url.startsWith(`${p}/`));
 
-  app.addHook("onRequest", async (request) => {
-    if (!cached) {
-      const [u] = await db.select().from(users).where(eq(users.email, config.SEED_USER_EMAIL)).limit(1);
-      if (!u) throw new Error(`Seed user ${config.SEED_USER_EMAIL} not found — run \`pnpm db:seed\``);
-      cached = u;
+async function testBypassUser() {
+  const [u] = await db.select().from(users).where(eq(users.email, config.SEED_USER_EMAIL)).limit(1);
+  return u;
+}
+
+export interface AuthContextOptions {
+  /** override config.AUTH_TEST_BYPASS (tests only) */
+  testBypass?: boolean;
+}
+
+export const authContext = fp<AuthContextOptions>(async (app, opts) => {
+  const bypass = opts.testBypass ?? config.AUTH_TEST_BYPASS;
+
+  app.addHook("onRequest", async (request: FastifyRequest) => {
+    const raw = request.cookies[SESSION_COOKIE];
+    const unsigned = raw ? request.unsignCookie(raw) : { valid: false as const, value: null };
+
+    let user: typeof users.$inferSelect | undefined;
+    if (unsigned.valid && unsigned.value) {
+      user = (await resolveSession(db, unsigned.value)) ?? undefined;
     }
-    request.currentUser = cached;
-    request.ctx = { userId: cached.id };
+    if (!user && bypass) {
+      user = (await testBypassUser()) ?? undefined;
+    }
+
+    request.currentUser = user;
+    if (user) request.ctx = { userId: user.id };
+
+    if (!user && !isPublic(request.url)) {
+      throw new AppError(401, "unauthenticated", "Sign in to continue");
+    }
   });
 });

@@ -15,6 +15,8 @@ await build({
   external: [
     "@libsql/client",
     "libsql",
+    "@node-rs/argon2", // native .node binary
+    "@node-rs/*",
     // OTel auto-instrumentation patches require() — must stay external
     "@opentelemetry/*",
     // pino spawns transport workers that re-resolve these from node_modules
