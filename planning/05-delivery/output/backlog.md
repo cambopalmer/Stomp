@@ -67,13 +67,20 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 
 ## Phase 3 — Auth
 
-- [ ] `[3]` ⏳ Auth method: password / Google / both (open question B1)
-- [ ] `[3]` Session or JWT (B2), login + onboarding
-- [ ] `[3]` Wire "Create account" home entry point into the real signup/invite flow
-- [ ] `[3]` Swap `authContext` plugin
-- [ ] `[3]` Migrate seed users → real accounts
-- [ ] `[3]` 🔒 Scope `GET /sitemap.xml` to the requesting user (`lib/sitemap.ts` currently lists every user's ids — QA pass 2026-09-01)
-- [ ] `[3]` 🔒 Re-run `/security-review` over the whole app once auth is real
+- [x] `[3]` Auth method: **Google OAuth (optional) + email/password** (argon2id) — B1 resolved
+- [x] `[3]` **Session** (`sessions` table, signed httpOnly `stomp_session` cookie, 30-day TTL) + `/login` `/signup` — B2 resolved
+- [x] `[3]` Wire "Create account" home entry point into the real signup flow (`UserMenu` replaces the stub link)
+- [x] `[3]` Swap `authContext` plugin (resolves session, 401s non-public routes, `AUTH_TEST_BYPASS` for tests)
+- [x] `[3]` Seed users kept as real accounts (`passwordHash` from `SEED_USER_PASSWORD`; Google links by email) — B4 resolved
+- [x] `[3]` 🔒 Scope the public sitemap (`lib/sitemap.ts`) — `/api/sitemap.xml` static-only; authed `/api/sitemap-me.xml` per-user
+- [x] `[3]` `db:studio` script — Drizzle Studio DB browser for dev inspection
+- [x] `[3]` `pamcalmer@stomp.local` / `pamcalmer` dev/test account — seeded only when `NODE_ENV !== production`
+- [ ] `[3]` 🔒 Re-run `/security-review` over the whole app now that auth is real *(run 2026-09-03: 2 MEDIUM findings below)*
+- [ ] `[3]` 🔒 **Enforce `ALLOW_SIGNUP` on the Google OAuth path** — `upsertGoogleUser` creates new accounts unconditionally; the password `signup()` path gates on the flag but the OAuth callback does not. Add the same first-user/`ALLOW_SIGNUP` check before inserting a new user in `services/auth.ts:upsertGoogleUser` (linking to an existing account stays allowed). *(security-review 2026-09-03, MEDIUM)*
+- [ ] `[3]` 🔒 **Production guard for `SEED_USER_PASSWORD`** — it defaults to the public string `stomp-dev-password` and `seed.ts` gives both demo accounts that password; unlike `SESSION_SECRET` there is no `NODE_ENV=production` check. Refuse to seed non-dev accounts in production unless `SEED_USER_PASSWORD` is explicitly set (or generate + print a random one). *(security-review 2026-09-03, MEDIUM)*
+- [ ] `[3]` ⏳ In-app **admin role** — `users.role` (`member` | `admin`) + migration, `admin@stomp.local` dev account, admin-only read routes that bypass the visibility model, minimal `/admin` table browser in the SPA. Prod-gated seed. Its own authz surface — review before merge.
+- [ ] `[3]` Legacy `auth_provider` / `auth_provider_id` column cleanup (kept to avoid a rename migration)
+- [ ] `[3]` User-deletion FK-policy consistency pass
 
 ## Phase 4 — Inbound integrations
 

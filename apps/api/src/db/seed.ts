@@ -31,6 +31,22 @@ export async function seed(): Promise<void> {
   const partner = { id: newId(), email: "sam@stomp.local", displayName: "Sam", timezone: "America/Denver", passwordHash: pwHash, lastLoginAt: now, createdAt: now, updatedAt: now };
   await db.insert(t.users).values([owner, partner]);
 
+  // Dev/test-only accounts — never created when NODE_ENV=production.
+  // `pamcalmer@stomp.local` / password `pamcalmer` — a clean account for testing
+  // the fresh-user experience and cross-account sharing.
+  if (!config.isProd) {
+    await db.insert(t.users).values({
+      id: newId(),
+      email: "pamcalmer@stomp.local",
+      displayName: "Pam Calmer",
+      timezone: "America/Denver",
+      passwordHash: await hashPassword("pamcalmer"),
+      lastLoginAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
   // Shared workspace
   const ws = { id: newId(), name: "Household", slug: "household", description: "Shared plans", color: "#0D9488", createdBy: owner.id, status: "active" as const, createdAt: now, updatedAt: now };
   await db.insert(t.workspaces).values(ws);
@@ -97,8 +113,9 @@ export async function seed(): Promise<void> {
   await db.insert(t.tags).values(tag);
   await db.insert(t.taggings).values({ id: newId(), tagId: tag.id, entityType: "reference", entityId: (await db.select({ id: t.references.id }).from(t.references).limit(1))[0]!.id, createdAt: now });
 
-  const counts = await db.select({ c: sql<number>`count(*)` }).from(t.todos);
-  console.log(`Seeded: 2 users, 1 workspace, 2 projects, ${counts[0]?.c ?? 0} todos, events, references, incoming.`);
+  const [{ c: todoCount } = { c: 0 }] = await db.select({ c: sql<number>`count(*)` }).from(t.todos);
+  const [{ c: userCount } = { c: 0 }] = await db.select({ c: sql<number>`count(*)` }).from(t.users);
+  console.log(`Seeded: ${userCount} users, 1 workspace, 2 projects, ${todoCount} todos, events, references, incoming.`);
 }
 
 if (argv[1] && import.meta.url === pathToFileURL(argv[1]).href) {

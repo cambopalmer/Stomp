@@ -89,6 +89,16 @@ describe("auth", () => {
     expect(after.statusCode).toBe(401);
   });
 
+  it("logs in with the pamcalmer dev account", async () => {
+    const login = await app.inject({
+      method: "POST",
+      url: "/api/auth/login",
+      payload: { email: "pamcalmer@stomp.local", password: "pamcalmer" },
+    });
+    expect(login.statusCode).toBe(200);
+    expect(login.json().email).toBe("pamcalmer@stomp.local");
+  });
+
   it("rejects a wrong password", async () => {
     const r = await app.inject({
       method: "POST",

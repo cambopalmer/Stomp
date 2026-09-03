@@ -22,11 +22,21 @@ Prereqs: Node 20+, pnpm 9 (`npm i -g pnpm`).
 ```bash
 pnpm install
 cp .env.example .env
-pnpm --filter @stomp/api db:seed     # migrate + seed 2 users, a shared workspace, demo data
+pnpm --filter @stomp/api db:seed     # migrate + seed users, a shared workspace, demo data
 pnpm dev                             # api on :3000, web on :5173 (proxies /api)
 ```
 
-Open http://localhost:5173 and sign in as the seeded owner (`owner@stomp.local` / `stomp-dev-password`, override via `SEED_USER_PASSWORD`).
+> Windows: the combined `pnpm dev` can hang the API under `tsx watch`. Run the two
+> servers in separate terminals instead: `pnpm --filter @stomp/api dev` and
+> `pnpm --filter @stomp/web dev`.
+
+Open http://localhost:5173 and sign in. Seeded accounts (all created by `db:seed`):
+
+| Account | Password | Notes |
+|---|---|---|
+| `owner@stomp.local` | `stomp-dev-password` (`SEED_USER_PASSWORD`) | owner of the shared workspace + demo data |
+| `sam@stomp.local` | same as owner | second member of the shared workspace |
+| `pamcalmer@stomp.local` | `pamcalmer` | **dev/test only** — skipped when `NODE_ENV=production`. A clean account for testing the new-user experience and cross-account sharing. |
 
 ### Authentication
 
@@ -35,10 +45,11 @@ Email/password is always on. Google OAuth is optional — see [`docs/GOOGLE-OAUT
 Useful:
 
 ```bash
-pnpm typecheck        # all packages
-pnpm test             # shared + api (21 tests)
-pnpm build            # api bundle + web static build
-pnpm --filter @stomp/api db:generate   # regenerate migration after editing src/db/schema.ts
+pnpm typecheck                          # all packages
+pnpm test                               # shared + api
+pnpm build                              # api bundle + web static build
+pnpm --filter @stomp/api db:generate    # regenerate migration after editing src/db/schema.ts
+pnpm --filter @stomp/api db:studio      # Drizzle Studio — browse/edit every table in a GUI
 ```
 
 ## Containers
