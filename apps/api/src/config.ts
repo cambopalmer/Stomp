@@ -13,6 +13,13 @@ const schema = z.object({
   SEED_USER_EMAIL: z.string().email().default("owner@stomp.local"),
   PUBLIC_BASE_URL: z.string().default("http://localhost:8080"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+
+  // ─── observability ───
+  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+  /** "off" (default) | "console" | "otlp" */
+  OTEL_MODE: z.enum(["off", "console", "otlp"]).default("off"),
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().default("http://localhost:4318"),
+  SERVICE_NAME: z.string().default("stomp-api"),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -23,7 +30,8 @@ if (!parsed.success) {
 
 export const config = {
   ...parsed.data,
-  /** Filesystem path for better-sqlite3 (strips the file: prefix). */
   sqlitePath: parsed.data.DATABASE_URL.replace(/^file:/, ""),
   isTest: parsed.data.NODE_ENV === "test",
+  isDev: parsed.data.NODE_ENV === "development",
+  version: process.env.BUILD_VERSION ?? process.env.npm_package_version ?? "0.0.0",
 };

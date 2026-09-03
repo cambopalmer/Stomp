@@ -6,13 +6,14 @@ import {
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import { config } from "./config.js";
+import { loggerOptions } from "./lib/logger.js";
 import { authContext } from "./plugins/authContext.js";
 import { errorHandler } from "./plugins/errorHandler.js";
 import { routes } from "./routes/index.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: config.isTest ? false : { level: "info" },
+    logger: config.isTest ? false : loggerOptions,
   }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);

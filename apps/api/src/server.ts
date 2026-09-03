@@ -1,7 +1,9 @@
-import { config } from "./config.js";
-import { enableForeignKeys, client } from "./db/client.js";
-import { runMigrations } from "./db/migrate.js";
+import "./instrumentation.js"; // must be first — patches http/fastify for tracing
 import { buildApp } from "./app.js";
+import { config } from "./config.js";
+import { client, enableForeignKeys } from "./db/client.js";
+import { runMigrations } from "./db/migrate.js";
+import { logger } from "./lib/logger.js";
 
 async function main() {
   await runMigrations();
@@ -9,10 +11,13 @@ async function main() {
 
   const app = await buildApp();
   await app.listen({ port: config.API_PORT, host: "0.0.0.0" });
-  app.log.info(`STOMP API on :${config.API_PORT}`);
+  logger.info(
+    { port: config.API_PORT, version: config.version, otel: config.OTEL_MODE },
+    "STOMP API listening",
+  );
 }
 
 main().catch((err) => {
-  console.error(err);
+  logger.fatal({ err }, "failed to start");
   process.exit(1);
 });

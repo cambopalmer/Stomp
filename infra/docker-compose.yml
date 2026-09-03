@@ -12,6 +12,10 @@ services:
       PUBLIC_BASE_URL: http://localhost:8080
       SEED_USER_EMAIL: owner@stomp.local
       NODE_ENV: production
+      LOG_LEVEL: info
+      # tracing: set to "otlp" and point at a collector (see docs/OBSERVABILITY.md)
+      OTEL_MODE: "off"
+      # OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     volumes:
       - stomp-data:/data
     # migrations run on boot; seed once with:
