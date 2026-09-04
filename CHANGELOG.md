@@ -5,6 +5,19 @@ versioning per [SemVer](https://semver.org/). Pre-1.0: minor = feature milestone
 (≈ a phase), patch = fixes within one. Releases from **v0.4.0** onward are cut by
 [release-please](https://github.com/googleapis/release-please) from Conventional Commits.
 
+## [0.4.0](https://github.com/cambopalmer/Stomp/compare/v0.3.0...v0.4.0) (2026-09-04)
+
+
+### Features
+
+* **auth:** Google OAuth + email/password sessions ([97250ae](https://github.com/cambopalmer/Stomp/commit/97250aeceace26de85e1c0beb3b9b0c95facbee6))
+* **obs:** structured logging + OpenTelemetry tracing ([ef1d2f8](https://github.com/cambopalmer/Stomp/commit/ef1d2f83e725cd1416d9a265ddea4f94b54f1114))
+
+
+### Documentation
+
+* Google OAuth setup walkthrough ([9693005](https://github.com/cambopalmer/Stomp/commit/96930055a408e0a9bbe0a7231a871bd2f10bb5a3))
+
 ## [0.3.0] — 2026-09-02 — Phase 2: Workspaces, sharing & notifications
 
 ### Features

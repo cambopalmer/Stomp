@@ -1,6 +1,6 @@
 {
   "name": "stomp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Short Term Outside Memory Planner — personal + shared hub for calendar, todos, incoming, and a learn library",
   "engines": {
