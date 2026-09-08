@@ -2,7 +2,7 @@
 
 STOMP is a personal/shared hub: **calendar, todos, incoming (triage inbox), and a learn library**, grouped by **projects**, with a home screen of tiles and a "hot & relevant" sidebar.
 
-**Current phase:** Phases 0–2 + QA + observability on `main` (pushed to github.com/cambopalmer/Stomp), version `0.3.0`. **Phase 3 (auth) tranche B complete** on branch `phase-3-auth`, awaiting owner review/merge: Google OAuth (optional) + email/password (argon2id), `sessions` table + signed httpOnly cookie, `authContext` 401s non-public routes (`AUTH_TEST_BYPASS` for tests), `/login` `/signup` + `UserMenu`, `ALLOW_SIGNUP` env. Public sitemap de-scoped; authed `/api/sitemap-me.xml` added. 45 API tests, 16 e2e. Open: legacy auth-column cleanup, user-deletion FK pass, owner to create Google OAuth creds, full-app `/security-review` rerun.
+**Current phase:** Phases 0–3 + QA + observability on `main` (pushed to github.com/cambopalmer/Stomp); release-please PR bumps `0.3.0` → `0.4.0`. **Phase 3 (auth) merged 2026-09-08:** Google OAuth (optional) + email/password (argon2id), `sessions` table + signed httpOnly cookie, `authContext` 401s non-public routes (`AUTH_TEST_BYPASS` for tests), `/login` `/signup` + `UserMenu`, `ALLOW_SIGNUP` env. Public sitemap de-scoped; authed `/api/sitemap-me.xml`. Dev-only `pamcalmer@stomp.local` seed account; `pnpm --filter @stomp/api db:studio` for DB browsing. 46 API tests, 16 e2e. Trunk-only — merged branches are pruned. Open (see `planning/05-delivery/output/backlog.md`): owner to create Google OAuth creds; 2 MEDIUM security-review findings (ALLOW_SIGNUP not enforced on Google path; no prod guard on `SEED_USER_PASSWORD`); in-app admin role; legacy auth-column cleanup; user-deletion FK pass.
 
 ## Where things are
 
