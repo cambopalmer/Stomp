@@ -39,7 +39,8 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 
 ## Phase 1 — Fill the UI
 
-- [x] `[1]` Event detail/edit (`/calendar/:id` + `EventForm`) — day grid still TODO
+- [x] `[1]` Event detail/edit (`/calendar/:id` + `EventForm`)
+- [x] `[1]` Calendar views — month grid, week time-grid, list-by-day; `?view=` + `?date=` in the URL, prev/today/next, click-a-day to add (2026-09-09)
 - [x] `[1]` Reference detail/edit (`/learn/:id` + `ReferenceForm`)
 - [x] `[1]` Incoming full triage UI (inline → Todo / → Event forms + Dismiss)
 - [x] `[1]` Todo detail (`/todos/:id`) + subtasks UI
@@ -105,6 +106,5 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 - [ ] PWA / offline
 - [ ] Attachments on todos & references (needs a storage decision — open question C5)
 - [ ] Full-text search across sections
-- [ ] Calendar week/month grid
 - [ ] Bulk actions, keyboard-first navigation
 - [ ] Importers (Todoist, Google Tasks, .ics, bookmarks HTML)

@@ -2,10 +2,46 @@ import type { Priority } from "@stomp/shared";
 
 const dtf = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
 const tf = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+const monthYearF = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" });
+const weekdayLongF = new Intl.DateTimeFormat(undefined, { weekday: "long" });
+const weekdayShortF = new Intl.DateTimeFormat(undefined, { weekday: "short" });
+const agendaDayF = new Intl.DateTimeFormat(undefined, {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+});
 
 export const fmtDate = (ms: number) => dtf.format(ms);
 export const fmtTime = (ms: number) => tf.format(ms);
 export const fmtDateTime = (ms: number) => `${dtf.format(ms)}, ${tf.format(ms)}`;
+
+const hourF = new Intl.DateTimeFormat(undefined, { hour: "numeric" });
+/** hour-of-day 0–23 → "12 AM", "9 AM", "12 PM" */
+export const fmtHour = (h: number) => hourF.format(new Date(2024, 0, 1, h));
+
+type When = number | Date;
+export const fmtMonthYear = (d: When) => monthYearF.format(d);
+export const fmtWeekdayLong = (d: When) => weekdayLongF.format(d);
+export const fmtWeekdayShort = (d: When) => weekdayShortF.format(d);
+export const fmtAgendaDay = (d: When) => agendaDayF.format(d);
+
+/** "9:00 – 10:30 AM" — collapses a same-meridiem range. */
+export function fmtTimeRange(startMs: number, endMs: number): string {
+  const a = tf.format(startMs);
+  const b = tf.format(endMs);
+  const mer = (s: string) => s.match(/[AP]M$/i)?.[0] ?? "";
+  return mer(a) && mer(a) === mer(b) ? `${a.replace(/\s*[AP]M$/i, "")} – ${b}` : `${a} – ${b}`;
+}
+
+/** "Mar 3" or "Mar 3 – 9" or "Mar 30 – Apr 5" for a week range. */
+export function fmtWeekRange(startMs: number, endMs: number): string {
+  const s = new Date(startMs);
+  const e = new Date(endMs);
+  if (s.getMonth() === e.getMonth()) {
+    return `${dtf.format(startMs)} – ${e.getDate()}`;
+  }
+  return `${dtf.format(startMs)} – ${dtf.format(endMs)}`;
+}
 
 export function relativeDay(ms: number): string {
   const today = new Date();

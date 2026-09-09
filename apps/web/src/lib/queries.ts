@@ -88,8 +88,9 @@ export const useProject = (id: string | undefined) =>
     enabled: !!id,
   });
 
-export const useEvents = () => {
-  const path = useWsPath("/events");
+export const useEvents = (range?: { from: number; to: number }) => {
+  const base = range ? `/events?from=${range.from}&to=${range.to}` : "/events";
+  const path = useWsPath(base);
   return useQuery({ queryKey: ["events", "list", path], queryFn: () => api.get<CalendarEvent[]>(path) });
 };
 

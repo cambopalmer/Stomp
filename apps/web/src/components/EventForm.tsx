@@ -29,7 +29,15 @@ const toLocalParts = (ms: number) => {
 };
 const combine = (date: string, time: string) => new Date(`${date}T${time}`).getTime();
 
-export function EventForm({ existing, onDone }: { existing?: CalendarEvent; onDone: () => void }) {
+export function EventForm({
+  existing,
+  defaultDate,
+  onDone,
+}: {
+  existing?: CalendarEvent;
+  defaultDate?: string;
+  onDone: () => void;
+}) {
   const projects = useProjects();
   const create = useCreateEvent();
   const update = useUpdateEvent();
@@ -50,7 +58,7 @@ export function EventForm({ existing, onDone }: { existing?: CalendarEvent; onDo
       title: existing?.title ?? "",
       description: existing?.description ?? "",
       location: existing?.location ?? "",
-      date: s?.date ?? "",
+      date: s?.date ?? defaultDate ?? "",
       startTime: s?.time ?? "09:00",
       endTime: e?.time ?? "10:00",
       projectId: existing?.projectId ?? "",
