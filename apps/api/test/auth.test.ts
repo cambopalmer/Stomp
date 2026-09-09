@@ -1,7 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
+import { db } from "../src/db/client.js";
 import { seed } from "../src/db/seed.js";
+import * as authSvc from "../src/services/auth.js";
 
 // A second app instance with the test bypass OFF — exercises the real session flow.
 let app: FastifyInstance;
@@ -106,5 +108,36 @@ describe("auth", () => {
       payload: { email: "owner@stomp.local", password: "not-the-password" },
     });
     expect(r.statusCode).toBe(400);
+  });
+});
+
+describe("Google OAuth signup gate", () => {
+  it("links Google to an existing account even when signups are closed", async () => {
+    const u = await authSvc.upsertGoogleUser(
+      db,
+      { sub: "g-owner-1", email: "owner@stomp.local", name: "Cam" },
+      { allowSignup: false },
+    );
+    expect(u.email).toBe("owner@stomp.local");
+    expect(u.googleId).toBe("g-owner-1");
+  });
+
+  it("refuses a brand-new Google account when signups are closed", async () => {
+    await expect(
+      authSvc.upsertGoogleUser(
+        db,
+        { sub: "g-stranger", email: "stranger@example.com", name: "Stranger" },
+        { allowSignup: false },
+      ),
+    ).rejects.toThrow(/closed/i);
+  });
+
+  it("allows a brand-new Google account when signups are open", async () => {
+    const u = await authSvc.upsertGoogleUser(
+      db,
+      { sub: "g-newbie", email: "newbie@example.com", name: "New" },
+      { allowSignup: true },
+    );
+    expect(u.googleId).toBe("g-newbie");
   });
 });

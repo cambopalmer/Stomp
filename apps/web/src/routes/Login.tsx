@@ -7,10 +7,16 @@ import type { z } from "zod";
 import { Button, Card, Field, Input } from "../components/ui.js";
 import { useAuth } from "../lib/auth.js";
 
+const ERROR_MESSAGES: Record<string, string> = {
+  signup_closed: "Sign-ups are closed. Ask an existing member to invite you.",
+};
+
 export function Login({ mode }: { mode: "login" | "signup" }) {
   const auth = useAuth();
   const loc = useLocation();
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(
+    () => ERROR_MESSAGES[new URLSearchParams(loc.search).get("error") ?? ""] ?? null,
+  );
 
   if (auth.user) return <Navigate to="/" replace />;
 

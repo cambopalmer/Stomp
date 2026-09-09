@@ -3,7 +3,7 @@ import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
 import { clearSessionCookie, SESSION_COOKIE, setSessionCookie } from "../lib/cookies.js";
-import { BadRequest } from "../lib/errors.js";
+import { AppError, BadRequest } from "../lib/errors.js";
 import * as auth from "../services/auth.js";
 
 const meta = (req: { headers: Record<string, unknown>; ip: string }) => ({
@@ -71,7 +71,17 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
       if (!profile.email || profile.email_verified === false) {
         throw BadRequest("Your Google account has no verified email");
       }
-      const user = await auth.upsertGoogleUser(db, profile);
+      let user;
+      try {
+        user = await auth.upsertGoogleUser(db, profile, { allowSignup: config.ALLOW_SIGNUP });
+      } catch (e) {
+        // Signups closed + no existing account for this email — send them back
+        // to /login with a message instead of a raw JSON error.
+        if (e instanceof AppError && e.statusCode === 403) {
+          return reply.redirect(`${config.WEB_ORIGIN}/login?error=signup_closed`);
+        }
+        throw e;
+      }
       const sessionToken = await auth.createSession(db, user.id, meta(req));
       setSessionCookie(reply, sessionToken);
       return reply.redirect(config.WEB_ORIGIN + "/");

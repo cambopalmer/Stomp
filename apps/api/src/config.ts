@@ -6,6 +6,9 @@ import { z } from "zod";
 loadEnv({ path: fileURLToPath(new URL("../../../.env", import.meta.url)) });
 loadEnv();
 
+/** Public dev default — seeding with this in production is refused (see seed.ts). */
+export const DEFAULT_SEED_PASSWORD = "stomp-dev-password";
+
 const schema = z.object({
   API_PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.string().default("file:./.data/stomp.db"),
@@ -23,7 +26,7 @@ const schema = z.object({
 
   // ─── auth (Phase 3) ───
   SESSION_SECRET: z.string().min(16).default("dev-session-secret-not-for-production-use-only"),
-  SEED_USER_PASSWORD: z.string().default("stomp-dev-password"),
+  SEED_USER_PASSWORD: z.string().default(DEFAULT_SEED_PASSWORD),
   ALLOW_SIGNUP: z.coerce.boolean().default(true),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
@@ -52,4 +55,5 @@ export const config = {
   isProd: env.NODE_ENV === "production",
   version: process.env.BUILD_VERSION ?? process.env.npm_package_version ?? "0.0.0",
   googleOAuthConfigured: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
+  seedUserPasswordIsDefault: env.SEED_USER_PASSWORD === DEFAULT_SEED_PASSWORD,
 };

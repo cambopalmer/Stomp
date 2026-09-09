@@ -48,13 +48,13 @@ Active-workspace switcher (incl. "Personal"). Create/manage workspaces + members
 
 ## Phase 3 — Authentication
 
-**Tranche B — done (2026-09-02, branch `phase-3-auth`):** Google OAuth (`@fastify/oauth2`, optional — no-op until `GOOGLE_CLIENT_ID`/`SECRET` set) + email/password fallback (argon2id via `@node-rs/argon2`). `sessions` table, signed httpOnly cookie `stomp_session` (30-day TTL). `authContext` plugin resolves the session and 401s non-public routes; `AUTH_TEST_BYPASS` env keeps API/e2e tests running as the seeded user. Web: `AuthProvider` + `/login` `/signup` screens, `UserMenu` (avatar + sign out), 401→login redirect. `ALLOW_SIGNUP` env gates open signup (first user always allowed). 45 API tests, 16 e2e (incl. an unauthenticated `auth` project).
+**Done (merged to `main` 2026-09-08):** Google OAuth (`@fastify/oauth2`, optional — no-op until `GOOGLE_CLIENT_ID`/`SECRET` set) + email/password fallback (argon2id via `@node-rs/argon2`). `sessions` table, signed httpOnly cookie `stomp_session` (30-day TTL). `authContext` plugin resolves the session and 401s non-public routes; `AUTH_TEST_BYPASS` env keeps API/e2e tests running as the seeded user. Web: `AuthProvider` + `/login` `/signup` screens, `UserMenu` (avatar + sign out), 401→login redirect. `ALLOW_SIGNUP` env gates open signup (first user always allowed). Dev-only `pamcalmer@stomp.local` seed account; `db:studio` for DB browsing. 49 API tests, 16 e2e.
 
-Still open: migrate/prune the legacy `auth_provider`/`auth_provider_id` columns; user-deletion FK-policy consistency pass; the owner must create Google Cloud OAuth credentials (redirect URI `{PUBLIC_BASE_URL}/api/auth/google/callback`).
+Still open: migrate/prune the legacy `auth_provider`/`auth_provider_id` columns; user-deletion FK-policy consistency pass; in-app admin role + `/admin`; the owner must create Google Cloud OAuth credentials (redirect URI `{PUBLIC_BASE_URL}/api/auth/google/callback`).
 
-**Security follow-ups (from the QA pass, 2026-09-01):**
-- ~~Scope `GET /sitemap.xml` to the requesting user~~ — **done (2026-09-02):** public `/api/sitemap.xml` now lists static routes only; authenticated `/api/sitemap-me.xml` returns the caller's own items. `Disallow: /` in `robots.txt` stays.
-- Re-run `/security-review` against the full app (not just a branch diff) now that `authContext` is real, focusing on the visibility helpers and session handling.
+**Security follow-ups — all resolved:**
+- ~~Scope `GET /sitemap.xml` to the requesting user~~ — **done (2026-09-02):** public `/api/sitemap.xml` lists static routes only; authenticated `/api/sitemap-me.xml` returns the caller's own items. `Disallow: /` in `robots.txt` stays.
+- ~~Re-run `/security-review` over the full app~~ — **done (2026-09-03):** 2 MEDIUM findings, both fixed 2026-09-09 — (1) `ALLOW_SIGNUP` now enforced on the Google OAuth path via `assertSignupAllowed()`; (2) `seed()` refuses to run in production while `SEED_USER_PASSWORD` is the public dev default.
 
 ## Phase 4 — Inbound integrations
 

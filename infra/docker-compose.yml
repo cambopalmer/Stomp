@@ -13,12 +13,16 @@ services:
       SEED_USER_EMAIL: owner@stomp.local
       NODE_ENV: production
       LOG_LEVEL: info
+      # REQUIRED in production — the API refuses to boot with the dev default:
+      #   SESSION_SECRET: "<64+ random chars>"
+      # REQUIRED before seeding in production (db:seed refuses the dev default):
+      #   SEED_USER_PASSWORD: "<a strong password>"
       # tracing: set to "otlp" and point at a collector (see docs/OBSERVABILITY.md)
       OTEL_MODE: "off"
       # OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     volumes:
       - stomp-data:/data
-    # migrations run on boot; seed once with:
+    # migrations run on boot; seed once (set SEED_USER_PASSWORD first) with:
     #   docker compose run --rm api node dist/db/seed.js
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]

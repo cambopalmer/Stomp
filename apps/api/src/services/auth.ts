@@ -82,16 +82,25 @@ export async function pruneExpiredSessions(db: Db): Promise<void> {
 
 // ─────────────────────────────────────── password auth
 
+/**
+ * Guard for creating a *new* account. Signups are always allowed for the very
+ * first user (bootstrap); after that they need `ALLOW_SIGNUP`. Linking a new
+ * auth method to an *existing* account is not gated by this.
+ */
+export async function assertSignupAllowed(db: Db, allowSignup: boolean): Promise<void> {
+  if (allowSignup) return;
+  const [existing] = await db.select({ id: users.id }).from(users).limit(1);
+  if (existing) {
+    throw Forbidden("Sign-ups are closed. Ask an existing member to invite you.");
+  }
+}
+
 export async function signup(
   db: Db,
   input: SignupInput,
   opts: { allowSignup: boolean },
 ): Promise<UserRow> {
-  const existingUsers = await db.select({ id: users.id }).from(users).limit(1);
-  const isFirstUser = existingUsers.length === 0;
-  if (!opts.allowSignup && !isFirstUser) {
-    throw Forbidden("Sign-ups are closed. Ask an existing member to invite you.");
-  }
+  await assertSignupAllowed(db, opts.allowSignup);
   if (await userByEmail(db, input.email)) throw Conflict("That email is already registered");
 
   const now = clock.now();
@@ -127,10 +136,15 @@ export async function login(db: Db, email: string, password: string): Promise<Us
 
 // ─────────────────────────────────────── google
 
-/** Upsert a user from a verified Google profile; link by google_id then email. */
+/**
+ * Upsert a user from a verified Google profile; link by google_id then email.
+ * Creating a brand-new account goes through the same `ALLOW_SIGNUP` gate as
+ * password signup; linking Google to an account that already exists does not.
+ */
 export async function upsertGoogleUser(
   db: Db,
   profile: { sub: string; email: string; name?: string; picture?: string },
+  opts: { allowSignup: boolean },
 ): Promise<UserRow> {
   const byGoogle = (
     await db.select().from(users).where(eq(users.googleId, profile.sub)).limit(1)
@@ -146,6 +160,8 @@ export async function upsertGoogleUser(
       .where(eq(users.id, byEmail.id));
     return { ...byEmail, googleId: profile.sub };
   }
+
+  await assertSignupAllowed(db, opts.allowSignup);
 
   const row: typeof users.$inferInsert = {
     id: newId(),

@@ -11,6 +11,13 @@ import * as t from "./schema.js";
 const DAY = 86_400_000;
 
 export async function seed(): Promise<void> {
+  if (config.isProd && config.seedUserPasswordIsDefault) {
+    throw new Error(
+      "Refusing to seed in production with the default SEED_USER_PASSWORD " +
+        "('stomp-dev-password' is public). Set SEED_USER_PASSWORD to a strong value first.",
+    );
+  }
+
   await runMigrations();
 
   // Idempotent: wipe user data (keeps schema).
