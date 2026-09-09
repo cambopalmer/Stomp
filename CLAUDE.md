@@ -12,7 +12,7 @@ STOMP is a personal/shared hub: **calendar, todos, incoming (triage inbox), and 
 | `planning/IDENTITY.md` | ICM Layer 0 — what STOMP is and is not. |
 | `planning/CONTEXT.md` | ICM Layer 1 — stage index + routing. |
 | `planning/00-prd/` | **PRD** — goals/non-goals, personas, user stories, functional + non-functional requirements. |
-| `planning/01-architecture/` | Stack decision, deployment model, ADRs. |
+| `planning/01-architecture/` | `architecture.md` (topology, layering, conventions) + `c4-model.md` / `c4-model.html` (C4 model, interactive). Stack decision + deployment model. |
 | `planning/02-data-model/` | **The schema.** 19 tables, workspace + sharing/visibility model, SQLite/Drizzle DDL, "today" query. |
 | `planning/03-ui-ux/` | Information architecture, screen inventory, wireframe notes, sitemap strategy. |
 | `design-system/stomp/MASTER.md` | The design system — tokens, type, spacing, motion, a11y floor. Derived from the `ui-ux-pro-max` skill. |

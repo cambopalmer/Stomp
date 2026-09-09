@@ -14,7 +14,9 @@
 6. List cross-cutting concerns: config, logging, error handling, auth seam.
 
 ## Outputs
-- `output/architecture.md`
+- `output/architecture.md` — prose: topology, layering, cross-cutting conventions
+- `output/c4-model.md` — the C4 model (Context / Container / Component / Code) as Mermaid
+- `output/c4-model.html` — interactive click-through version of the C4 model
 
 ## Review gate
 User confirms topology and deployment model. ADRs updated if anything changes.
