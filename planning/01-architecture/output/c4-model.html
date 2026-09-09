@@ -4,39 +4,46 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
   rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+  href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
 />
 
 <style>
   /* ─────────────────────────────────────────────────────────────
-     STOMP Architecture Map — a click-through C4 model.
-     Palette + type inherited from the app's own design system
-     (design-system/stomp/MASTER.md · apps/web/src/index.css):
-     indigo #4f46e5 primary, emerald #059669 accent, slate ground,
-     Plus Jakarta Sans. IBM Plex Mono carries the "code register".
+     STOMP Architecture Map — a click-through C4 model drawn in the
+     conventional C4 notation (c4model.com): solid boxes with a
+     name, a [Type: Technology] line and a description; labelled
+     arrows carrying "[Technology]"; a dashed boundary per scope.
+     Diagram palette = the C4 blue family. The app chrome (nav,
+     rail) carries STOMP's own indigo (design-system/stomp).
      ───────────────────────────────────────────────────────────── */
 
   :root {
-    --ground: #f5f7fa;
+    --ground: #f4f6f9;
     --surface: #ffffff;
-    --canvas: #fbfcfe;
-    --ink: #0f172a;
-    --ink-soft: #33405a;
-    --muted: #5a6577;
-    --hair: #e3e8ef;
-    --hair-strong: #cdd5e1;
+    --canvas: #eef1f5;
+    --ink: #16202e;
+    --ink-soft: #37455b;
+    --muted: #5c6879;
+    --hair: #dfe4ec;
+    --hair-strong: #c6cedb;
 
     --indigo: #4f46e5;
-    --indigo-soft: #eef0fe;
-    --emerald: #059669;
-    --emerald-soft: #e6f5ef;
-    --amber: #b45309;
-    --amber-soft: #fbeee0;
-    --slate-ext: #64748b;
-    --slate-ext-soft: #eef1f5;
+    --indigo-soft: #eceafe;
 
-    --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px -12px rgba(15, 23, 42, 0.14);
-    --radius: 10px;
+    /* C4 element fills (white text on all) */
+    --c4-person: #0a4a86;
+    --c4-system: #0f5aa0;
+    --c4-container: #1470bf;
+    --c4-component: #3f83c6;
+    --c4-external: #8a8a8a;
+    --c4-boundary: #9aa4b2;
+    --c4-store: #1470bf;
+
+    --edge: #6a7180;
+    --gate-auth: #b45309;
+    --gate-authz: #0f8a5f;
+
+    --shadow: 0 1px 2px rgba(16, 32, 46, 0.08), 0 10px 26px -14px rgba(16, 32, 46, 0.22);
 
     --font-sans: "Plus Jakarta Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
     --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -44,54 +51,61 @@
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --ground: #0a1018;
+      --ground: #0a0f18;
       --surface: #111a2b;
-      --canvas: #0d1524;
-      --ink: #e8eef6;
-      --ink-soft: #c4cfde;
-      --muted: #8f9bad;
-      --hair: #223049;
-      --hair-strong: #2f3f5c;
+      --canvas: #0f1626;
+      --ink: #e9eef6;
+      --ink-soft: #c3cddd;
+      --muted: #8b98ac;
+      --hair: #212f45;
+      --hair-strong: #2e3d59;
 
       --indigo: #8b93f8;
-      --indigo-soft: #1c2547;
-      --emerald: #34d399;
-      --emerald-soft: #123227;
-      --amber: #fbbf24;
-      --amber-soft: #3a2c12;
-      --slate-ext: #8a99ad;
-      --slate-ext-soft: #1a2537;
+      --indigo-soft: #1b2446;
 
-      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+      --c4-person: #2f6fae;
+      --c4-system: #2c73b4;
+      --c4-container: #2f81c8;
+      --c4-component: #4a8fce;
+      --c4-external: #7c7c7c;
+      --c4-boundary: #5a6474;
+      --c4-store: #2f81c8;
+
+      --edge: #7f8798;
+      --gate-auth: #e0973b;
+      --gate-authz: #37c98c;
+
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px -16px rgba(0, 0, 0, 0.7);
     }
   }
 
   :root[data-theme="dark"] {
-    --ground: #0a1018;
+    --ground: #0a0f18;
     --surface: #111a2b;
-    --canvas: #0d1524;
-    --ink: #e8eef6;
-    --ink-soft: #c4cfde;
-    --muted: #8f9bad;
-    --hair: #223049;
-    --hair-strong: #2f3f5c;
-
+    --canvas: #0f1626;
+    --ink: #e9eef6;
+    --ink-soft: #c3cddd;
+    --muted: #8b98ac;
+    --hair: #212f45;
+    --hair-strong: #2e3d59;
     --indigo: #8b93f8;
-    --indigo-soft: #1c2547;
-    --emerald: #34d399;
-    --emerald-soft: #123227;
-    --amber: #fbbf24;
-    --amber-soft: #3a2c12;
-    --slate-ext: #8a99ad;
-    --slate-ext-soft: #1a2537;
-
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+    --indigo-soft: #1b2446;
+    --c4-person: #2f6fae;
+    --c4-system: #2c73b4;
+    --c4-container: #2f81c8;
+    --c4-component: #4a8fce;
+    --c4-external: #7c7c7c;
+    --c4-boundary: #5a6474;
+    --c4-store: #2f81c8;
+    --edge: #7f8798;
+    --gate-auth: #e0973b;
+    --gate-authz: #37c98c;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px -16px rgba(0, 0, 0, 0.7);
   }
 
   * {
     box-sizing: border-box;
   }
-
   body {
     margin: 0;
     background: var(--ground);
@@ -100,21 +114,18 @@
     -webkit-font-smoothing: antialiased;
     line-height: 1.5;
   }
-
   a {
     color: var(--indigo);
   }
-
   :where(a, button, [tabindex]):focus-visible {
     outline: 2px solid var(--indigo);
     outline-offset: 2px;
     border-radius: 4px;
   }
 
-  /* ── shell ────────────────────────────────────────────── */
   .app {
     display: grid;
-    grid-template-columns: 236px minmax(0, 1fr) 320px;
+    grid-template-columns: 232px minmax(0, 1fr) 322px;
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas:
       "brand topbar topbar"
@@ -151,11 +162,10 @@
     border-bottom: 1px solid var(--hair);
     overflow-x: auto;
   }
-
   .crumbs {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     font-size: 13px;
     white-space: nowrap;
   }
@@ -178,9 +188,7 @@
   }
   .crumbs .sep {
     color: var(--hair-strong);
-    user-select: none;
   }
-
   .topbar .spacer {
     flex: 1;
   }
@@ -199,7 +207,6 @@
     padding: 1px 5px;
   }
 
-  /* ── left nav (the C4 ladder) ─────────────────────────── */
   .nav {
     grid-area: nav;
     border-right: 1px solid var(--hair);
@@ -209,7 +216,6 @@
     flex-direction: column;
     gap: 20px;
   }
-
   .ladder-label,
   .legend h2 {
     margin: 0 0 8px 6px;
@@ -219,7 +225,6 @@
     text-transform: uppercase;
     color: var(--muted);
   }
-
   .ladder {
     display: flex;
     flex-direction: column;
@@ -244,7 +249,6 @@
     font-size: 10px;
     font-family: var(--font-mono);
     color: var(--muted);
-    letter-spacing: 0.02em;
   }
   .ladder button .nm {
     font-size: 13px;
@@ -289,48 +293,40 @@
   .legend dl {
     margin: 0;
     display: grid;
-    grid-template-columns: 18px 1fr;
-    gap: 7px 8px;
+    grid-template-columns: 22px 1fr;
+    gap: 8px;
     align-items: center;
     font-size: 11.5px;
   }
   .legend .sw {
-    width: 18px;
-    height: 14px;
-    border-radius: 4px;
-    border: 1.5px solid var(--hair-strong);
+    width: 22px;
+    height: 15px;
+    border-radius: 3px;
   }
   .legend .sw.person {
-    background: var(--indigo-soft);
-    border-color: var(--indigo);
+    background: var(--c4-person);
   }
-  .legend .sw.focus {
-    background: var(--indigo);
-    border-color: var(--indigo);
+  .legend .sw.system {
+    background: var(--c4-system);
   }
-  .legend .sw.internal {
-    background: var(--surface);
-    border-left: 4px solid var(--indigo);
+  .legend .sw.container {
+    background: var(--c4-container);
+  }
+  .legend .sw.component {
+    background: var(--c4-component);
   }
   .legend .sw.external {
-    background: var(--slate-ext-soft);
-    border-color: var(--slate-ext);
-  }
-  .legend .sw.store {
-    background: var(--surface);
-    border-left: 4px solid var(--emerald);
-    border-radius: 4px 4px 8px 8px;
+    background: var(--c4-external);
   }
   .legend .sw.planned {
-    background: var(--amber-soft);
-    border: 1.5px dashed var(--amber);
+    background: var(--c4-external);
+    border: 1.5px dashed var(--ink);
   }
   .legend dd {
     margin: 0;
     color: var(--ink-soft);
   }
 
-  /* ── canvas ───────────────────────────────────────────── */
   .canvas {
     grid-area: canvas;
     overflow: auto;
@@ -339,31 +335,27 @@
   }
   .stage {
     min-height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
   }
   .stage-head h2 {
     margin: 0;
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 800;
     letter-spacing: -0.015em;
     text-wrap: balance;
   }
   .stage-head p {
-    margin: 3px 0 14px;
+    margin: 3px 0 16px;
     font-size: 13px;
     color: var(--muted);
-    max-width: 60ch;
+    max-width: 66ch;
   }
-
   .diagram-wrap {
     background: var(--canvas);
     border: 1px solid var(--hair);
-    border-radius: var(--radius);
+    border-radius: 10px;
     box-shadow: var(--shadow);
-    padding: 14px;
-    align-self: flex-start;
+    padding: 18px;
+    display: inline-block;
     max-width: 100%;
     overflow-x: auto;
   }
@@ -376,131 +368,117 @@
     .stage {
       animation: fade 0.16s ease-out;
     }
-  }
-  @keyframes fade {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
+    @keyframes fade {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
     }
   }
 
-  /* nodes inside the svg (styled from the page, never inside <svg>) */
+  /* ── C4 boxes (styled from the page, never inside <svg>) ── */
   .node {
     cursor: pointer;
   }
-  .node .box {
-    fill: var(--surface);
-    stroke: var(--hair-strong);
-    stroke-width: 1.5;
+  .node .shape {
+    stroke: rgba(0, 0, 0, 0.28);
+    stroke-width: 1;
   }
-  .node .accent {
-    fill: var(--indigo);
+  .node.n-person .shape {
+    fill: var(--c4-person);
   }
-  .node .nm {
-    fill: var(--ink);
-    font-family: var(--font-sans);
-    font-weight: 600;
-    font-size: 13px;
+  .node.n-system .shape {
+    fill: var(--c4-system);
   }
-  .node .st {
-    fill: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 10.5px;
+  .node.n-container .shape,
+  .node.n-store .shape {
+    fill: var(--c4-container);
   }
-  .node .sub {
-    fill: var(--ink-soft);
-    font-family: var(--font-mono);
-    font-size: 10px;
+  .node.n-component .shape {
+    fill: var(--c4-component);
   }
-  .node .drill {
-    fill: var(--indigo);
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 600;
+  .node.n-external .shape {
+    fill: var(--c4-external);
   }
-  .node:hover .box {
-    stroke: var(--indigo);
-  }
-  .node.is-selected .box {
-    stroke: var(--indigo);
-    stroke-width: 2.5;
-  }
-
-  .node.n-person .box {
-    fill: var(--indigo-soft);
-    stroke: var(--indigo);
-  }
-  .node.n-focus .box {
-    fill: var(--indigo);
-    stroke: var(--indigo);
-  }
-  .node.n-focus .nm {
-    fill: #fff;
-  }
-  .node.n-focus .st {
-    fill: rgba(255, 255, 255, 0.8);
-  }
-  .node.n-internal .accent-bar {
-    fill: var(--indigo);
-  }
-  .node.n-store .box {
-    stroke: var(--emerald);
-  }
-  .node.n-store .accent-bar {
-    fill: var(--emerald);
-  }
-  .node.n-external .box {
-    fill: var(--slate-ext-soft);
-    stroke: var(--slate-ext);
-  }
-  .node.n-external .st {
-    fill: var(--slate-ext);
-  }
-  .node.s-planned .box {
-    fill: var(--amber-soft);
-    stroke: var(--amber);
+  .node.s-planned .shape {
+    fill: var(--c4-external);
+    stroke: var(--ink);
+    stroke-width: 1.4;
     stroke-dasharray: 5 3;
   }
-  .node.s-planned .st {
-    fill: var(--amber);
+  .node .t-name {
+    fill: #fff;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 13.5px;
   }
-  .node.s-optional .box {
-    stroke-dasharray: 3 3;
+  .node .t-type {
+    fill: rgba(255, 255, 255, 0.82);
+    font-family: var(--font-sans);
+    font-size: 10px;
   }
-  .node.is-origin .box {
-    stroke: var(--emerald);
-    stroke-width: 2.5;
+  .node .t-desc {
+    fill: rgba(255, 255, 255, 0.92);
+    font-family: var(--font-sans);
+    font-size: 10.5px;
+  }
+  .node .t-drill {
+    fill: #fff;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .node:hover .shape {
+    stroke: var(--indigo);
+    stroke-width: 2;
+  }
+  .node.is-selected .shape {
+    stroke: var(--indigo);
+    stroke-width: 3;
+    stroke-dasharray: none;
+  }
+
+  .boundary {
+    fill: none;
+    stroke: var(--c4-boundary);
+    stroke-width: 1.4;
+    stroke-dasharray: 7 5;
+  }
+  .boundary-label {
+    fill: var(--muted);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 11px;
   }
 
   .edge {
     fill: none;
-    stroke: var(--hair-strong);
-    stroke-width: 1.6;
+    stroke: var(--edge);
+    stroke-width: 1.5;
   }
-  .edge.e-planned {
-    stroke: var(--amber);
-    stroke-dasharray: 5 3;
-  }
+  .edge.e-planned,
   .edge.e-optional {
-    stroke-dasharray: 3 3;
+    stroke-dasharray: 6 4;
+  }
+  .arrow {
+    fill: var(--edge);
   }
   .elabel {
+    fill: var(--ink-soft);
+    font-family: var(--font-sans);
+    font-size: 10.5px;
+  }
+  .elabel-tech {
     fill: var(--muted);
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: 9.5px;
   }
   .elabel-bg {
     fill: var(--canvas);
-    opacity: 0.92;
-  }
-  .arrow {
-    fill: var(--hair-strong);
-  }
-  .arrow.a-planned {
-    fill: var(--amber);
+    opacity: 0.94;
   }
 
-  /* sequence diagram */
+  /* sequence (code level) */
   .lifeline {
     stroke: var(--hair-strong);
     stroke-width: 1.3;
@@ -511,20 +489,20 @@
     stroke-width: 1.5;
     fill: none;
   }
-  .msg.gate-auth {
-    stroke: var(--amber);
+  .msg.g-auth {
+    stroke: var(--gate-auth);
   }
-  .msg.gate-authz {
-    stroke: var(--emerald);
+  .msg.g-authz {
+    stroke: var(--gate-authz);
   }
   .msg-arrow {
     fill: var(--ink-soft);
   }
-  .msg-arrow.gate-auth {
-    fill: var(--amber);
+  .msg-arrow.g-auth {
+    fill: var(--gate-auth);
   }
-  .msg-arrow.gate-authz {
-    fill: var(--emerald);
+  .msg-arrow.g-authz {
+    fill: var(--gate-authz);
   }
   .mlabel {
     fill: var(--ink-soft);
@@ -537,8 +515,22 @@
     font-size: 10px;
     font-style: italic;
   }
+  .gate-band {
+    fill: var(--gate-auth);
+    opacity: 0.09;
+  }
+  .gate-band.authz {
+    fill: var(--gate-authz);
+  }
+  .gate-tag {
+    fill: var(--muted);
+    font-family: var(--font-sans);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
 
-  /* ── detail rail ──────────────────────────────────────── */
   .detail {
     grid-area: detail;
     border-left: 1px solid var(--hair);
@@ -555,21 +547,25 @@
     display: inline-block;
     font-family: var(--font-mono);
     font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
+    font-weight: 500;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    padding: 3px 7px;
+    padding: 3px 8px;
     border-radius: 999px;
-    background: var(--indigo-soft);
-    color: var(--indigo);
+    color: #fff;
+    background: var(--c4-container);
+  }
+  .detail .kind-tag.person {
+    background: var(--c4-person);
+  }
+  .detail .kind-tag.system {
+    background: var(--c4-system);
   }
   .detail .kind-tag.external {
-    background: var(--slate-ext-soft);
-    color: var(--slate-ext);
+    background: var(--c4-external);
   }
-  .detail .kind-tag.planned {
-    background: var(--amber-soft);
-    color: var(--amber);
+  .detail .kind-tag.component {
+    background: var(--c4-component);
   }
   .detail h3 {
     margin: 12px 0 2px;
@@ -610,7 +606,7 @@
     flex-wrap: wrap;
     gap: 5px;
   }
-  .detail .meta ul.paths {
+  .detail .meta ul.stack {
     flex-direction: column;
     gap: 3px;
   }
@@ -626,9 +622,9 @@
   .detail .drill-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     width: 100%;
-    justify-content: center;
     margin-top: 6px;
     padding: 10px 14px;
     border-radius: 8px;
@@ -662,8 +658,7 @@
     color: var(--ink);
   }
 
-  /* ── responsive ───────────────────────────────────────── */
-  @media (max-width: 1080px) {
+  @media (max-width: 1100px) {
     .app {
       grid-template-columns: 210px minmax(0, 1fr);
       grid-template-areas:
@@ -677,27 +672,17 @@
     .detail {
       border-left: 0;
       border-top: 1px solid var(--hair);
-      max-height: 46vh;
+      max-height: 48vh;
     }
   }
   @media (max-width: 720px) {
     .app {
       grid-template-columns: minmax(0, 1fr);
-      grid-template-areas:
-        "brand"
-        "topbar"
-        "nav"
-        "canvas"
-        "detail";
+      grid-template-areas: "brand" "topbar" "nav" "canvas" "detail";
     }
     .nav {
       border-right: 0;
       border-bottom: 1px solid var(--hair);
-      flex-direction: row;
-      flex-wrap: wrap;
-    }
-    .legend {
-      display: none;
     }
   }
 </style>
@@ -711,7 +696,7 @@
   <div class="topbar">
     <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
     <span class="spacer"></span>
-    <span class="hint">Click a box with <kbd>↳</kbd> to go deeper · <kbd>Esc</kbd> steps up</span>
+    <span class="hint">Click a box marked <kbd>↳ open</kbd> to zoom in · <kbd>Esc</kbd> zooms out</span>
   </div>
 
   <div class="nav">
@@ -723,11 +708,11 @@
       <h2>Notation</h2>
       <dl>
         <span class="sw person"></span><dd>Person</dd>
-        <span class="sw focus"></span><dd>System in focus</dd>
-        <span class="sw internal"></span><dd>Container / component (ours)</dd>
-        <span class="sw store"></span><dd>Data store</dd>
+        <span class="sw system"></span><dd>Software system (in focus)</dd>
+        <span class="sw container"></span><dd>Container</dd>
+        <span class="sw component"></span><dd>Component</dd>
         <span class="sw external"></span><dd>External system</dd>
-        <span class="sw planned"></span><dd>Planned (Phase 4)</dd>
+        <span class="sw planned"></span><dd>Planned — Phase 4</dd>
       </dl>
     </div>
   </div>
@@ -743,61 +728,68 @@
   "use strict";
 
   /* ───────────────────────── the model ─────────────────────────
-     Every level is a set of nodes on a (layer, lane) grid plus
-     labelled edges. `drill` on a node names the level it opens.
-     Facts pulled from the repo at v0.4.0 (Phases 0–3 on main).
+     Each level is a set of nodes placed on a (layer, lane) grid and
+     a set of labelled edges. `drill` names the level a node opens.
+     `desc` is the short text drawn inside the box; `blurb` is the
+     fuller text shown in the side rail. Facts as of v0.4.0.
      ──────────────────────────────────────────────────────────── */
 
   const LEVELS = {
     context: {
       crumb: "Context",
       ladder: { lv: "Level 1", nm: "System Context", depth: 0 },
-      title: "System Context",
-      lead: "STOMP as one box, and the people and outside systems it touches. Everything inside STOMP is drawn at the next level down.",
-      box: [236, 84],
-      layerGap: 140,
-      laneGap: 268,
+      title: "Level 1 — System Context",
+      lead: "The big picture: STOMP as a single box, and the people and external systems it interacts with.",
+      box: 244,
+      layerGap: 178,
+      laneGap: 280,
+      descMax: 3,
       nodes: [
         {
           id: "member", kind: "person", layer: 0, lane: 1, name: "Hub member",
-          stereo: "person",
+          type: "Person",
+          desc: "Shares a household hub with 1–2 others.",
           blurb:
             "One of the 2–3 people who share a household hub. Uses STOMP to run their calendar, todos, triage inbox and learn library, and to share items with the others.",
         },
         {
-          id: "stomp", kind: "focus", layer: 1, lane: 1, name: "STOMP", drill: "containers",
-          stereo: "software system",
+          id: "stomp", kind: "system", layer: 1, lane: 1, name: "STOMP", drill: "containers",
+          type: "Software System",
+          desc: "Personal + shared hub for calendar, todos, an incoming triage inbox and a learn library, grouped by projects inside optional workspaces.",
           blurb:
-            "Self-hostable personal + shared hub: calendar, todos, an incoming triage inbox and a learn library — grouped by projects inside optional workspaces. Home screen of tiles plus a “hot & relevant” sidebar.",
-          tech: ["TypeScript", "self-hosted", "Docker / docker-compose"],
+            "Self-hostable personal + shared hub. Home screen of tiles per section plus a “hot & relevant” sidebar (due-today / overdue / high-priority).",
+          tech: ["TypeScript", "self-hosted", "Docker"],
         },
         {
           id: "google-id", kind: "external", state: "optional", layer: 2, lane: 0,
-          name: "Google Identity", stereo: "OAuth 2.0 / OIDC",
+          name: "Google Identity", type: "External System",
+          desc: "OAuth 2.0 / OpenID Connect. Optional single sign-on.",
           blurb:
-            "Optional single sign-on. When GOOGLE_CLIENT_ID/SECRET are set, STOMP redirects here, then reads the verified profile from the userinfo endpoint and links it to an account by email. Email/password works with or without it.",
+            "When GOOGLE_CLIENT_ID/SECRET are set, STOMP redirects here and reads the verified profile from the userinfo endpoint, linking it to an account by email. Email/password auth works with or without it.",
           tech: ["@fastify/oauth2", "openidconnect.googleapis.com"],
         },
         {
           id: "workspace-apis", kind: "external", state: "planned", layer: 2, lane: 1,
-          name: "Gmail &\nGoogle Calendar APIs", stereo: "planned · Phase 4",
+          name: "Gmail & Google Calendar", type: "External System · planned",
+          desc: "Read-only inbound pull of mail and calendar events. Phase 4 — designed, not built.",
           blurb:
-            "Read-only inbound pull (designed, not built): new mail becomes incoming items; calendar events become read-only events. Tokens per user in integration_accounts; a scheduled sync writes sync_log.",
+            "Mail becomes incoming items; calendar events become read-only events. Tokens per user in integration_accounts; a scheduled sync writes sync_log.",
           tech: ["Gmail API", "Google Calendar API", "integration_accounts", "sync_log"],
         },
         {
           id: "otel", kind: "external", state: "optional", layer: 2, lane: 2,
-          name: "OpenTelemetry collector", stereo: "optional",
+          name: "OpenTelemetry Collector", type: "External System · optional",
+          desc: "Receives request traces when OTEL_MODE=otlp.",
           blurb:
-            "When OTEL_MODE=otlp, the API exports request traces here over OTLP/HTTP — any collector (SigNoz, Grafana Tempo, Jaeger). Off by default with zero overhead.",
+            "Any OTLP collector — SigNoz, Grafana Tempo, Jaeger. Off by default with zero overhead.",
           tech: ["OTLP/HTTP :4318", "@opentelemetry/sdk-node"],
         },
       ],
       edges: [
-        { from: "member", to: "stomp", label: "uses · HTTPS" },
-        { from: "stomp", to: "google-id", label: "authenticates via", state: "optional" },
-        { from: "stomp", to: "workspace-apis", label: "pulls mail & events", state: "planned" },
-        { from: "stomp", to: "otel", label: "exports traces", state: "optional" },
+        { from: "member", to: "stomp", label: "Uses", tech: "HTTPS" },
+        { from: "stomp", to: "google-id", label: "Authenticates users with", tech: "OAuth 2.0", state: "optional" },
+        { from: "stomp", to: "workspace-apis", label: "Pulls mail & events from", tech: "REST, planned", state: "planned" },
+        { from: "stomp", to: "otel", label: "Sends traces to", tech: "OTLP/HTTP", state: "optional" },
       ],
     },
 
@@ -805,76 +797,83 @@
       crumb: "Containers",
       ladder: { lv: "Level 2", nm: "Containers", depth: 1 },
       parent: "stomp",
-      title: "Containers — inside STOMP",
-      lead: "The separately runnable / deployable pieces. `docker compose up` starts the web and api containers; the database is a file on a named volume. In dev, Vite replaces nginx and proxies /api.",
-      box: [216, 84],
-      layerGap: 138,
-      laneGap: 250,
+      title: "Level 2 — Containers",
+      lead: "Zooms into STOMP. Each box is a separately runnable / deployable thing. `docker compose up` starts the web and api containers; the database is a file on a volume. In dev, Vite replaces nginx and proxies /api.",
+      box: 224,
+      layerGap: 170,
+      laneGap: 262,
+      descMax: 2,
+      boundary: { label: "STOMP — Software System", ids: ["spa", "nginx", "api", "db", "shared"] },
       nodes: [
         {
-          id: "member", kind: "person", layer: 0, lane: 1, name: "Hub member", stereo: "person",
-          blurb: "Works in a browser. Same person as at the Context level.",
+          id: "member", kind: "person", layer: 0, lane: 1, name: "Hub member", type: "Person",
+          desc: "Works in a browser.",
+          blurb: "The same person as at the Context level.",
         },
         {
-          id: "spa", kind: "internal", layer: 1, lane: 1, name: "Web SPA", drill: "web",
-          stereo: "container: React + Vite",
+          id: "spa", kind: "container", layer: 1, lane: 1, name: "Web SPA", drill: "web",
+          type: "Container: React + Vite",
+          desc: "Single-page app in the browser. Sections, forms, the hot sidebar, workspace switching.",
           blurb:
-            "Single-page app that runs in the browser. React 18, React Router 6, TanStack Query for server state, React Hook Form + Zod for forms, Tailwind on the design-token CSS. Built to static assets.",
+            "React 18, React Router 6, TanStack Query for server state, React Hook Form + Zod for forms, Tailwind on the design-token CSS. Built to static assets.",
           tech: ["React 18", "Vite 5", "React Router 6", "TanStack Query", "Tailwind"],
           paths: ["apps/web/"],
         },
         {
-          id: "nginx", kind: "internal", layer: 2, lane: 1, name: "web (nginx)",
-          stereo: "container: nginx",
-          blurb:
-            "Serves the built SPA and reverse-proxies /api, /sitemap.xml and /robots.txt to the api container. Listens on :8080. SPA-fallback routing for client-side routes.",
+          id: "nginx", kind: "container", layer: 2, lane: 1, name: "web", type: "Container: nginx",
+          desc: "Serves the built SPA and reverse-proxies /api, /sitemap.xml and /robots.txt. Listens on :8080.",
+          blurb: "SPA-fallback routing for client-side routes; everything under /api goes to the api container.",
           tech: ["nginx", ":8080"],
           paths: ["infra/nginx.conf", "infra/Dockerfile.web"],
         },
         {
-          id: "api", kind: "internal", layer: 3, lane: 1, name: "API", drill: "api",
-          stereo: "container: Fastify / Node 20",
+          id: "api", kind: "container", layer: 3, lane: 1, name: "API", drill: "api",
+          type: "Container: Fastify / Node 20",
+          desc: "REST/JSON over /api. Layered routes → services (logic + authz) → Drizzle. Runs migrations on boot, then listens on :3000.",
           blurb:
-            "REST/JSON over /api. Fastify 5 with fastify-type-provider-zod for request/response validation, Drizzle ORM for data access, layered routes → services (logic + authz) → Drizzle. Runs migrations on boot, then listens on :3000.",
-          tech: ["Fastify 5", "Drizzle ORM", "Zod", "argon2id", "pino", "Node 20"],
+            "Fastify 5 with fastify-type-provider-zod for request/response validation, Drizzle ORM, argon2id passwords, pino logging, optional OpenTelemetry.",
+          tech: ["Fastify 5", "Drizzle ORM", "Zod", "argon2id", "pino"],
           paths: ["apps/api/", "apps/api/src/server.ts"],
         },
         {
-          id: "db", kind: "store", layer: 4, lane: 1, name: "Database",
-          stereo: "libSQL / SQLite file",
+          id: "db", kind: "store", layer: 4, lane: 1, name: "Database", type: "Container: libSQL / SQLite",
+          desc: "20 tables. A file on a named Docker volume in prod; apps/api/.data/stomp.db in dev.",
           blurb:
-            "20 tables (workspaces, users, sessions, projects, todos, events, references, tags, incoming_items, notifications, activity_log …). A file on a named Docker volume in prod; apps/api/.data/stomp.db in dev. Swap to hosted Turso by changing DATABASE_URL (ADR-0002).",
+            "workspaces, users, sessions, projects, todos, events, references, tags, incoming_items, notifications, activity_log … Swap to hosted Turso by changing DATABASE_URL (ADR-0002).",
           tech: ["@libsql/client", "WAL", "PRAGMA foreign_keys = ON", "20 tables"],
           paths: ["apps/api/src/db/schema.ts", "apps/api/drizzle/"],
         },
         {
-          id: "shared", kind: "internal", layer: 2, lane: 2, name: "@stomp/shared",
-          stereo: "build-time library",
+          id: "shared", kind: "container", layer: 2, lane: 2.15, name: "@stomp/shared",
+          type: "Build-time library",
+          desc: "Zod schemas + inferred DTO types imported as source by both the SPA and the API — one definition of every contract.",
           blurb:
-            "Zod schemas and inferred DTO types imported as source by BOTH the SPA and the API — one definition of every request/response contract. Not a running process. Dependency direction: web → shared ← api.",
+            "Not a running process. Dependency direction: web → shared ← api. The web never imports from the api.",
           tech: ["Zod", "workspace:*"],
           paths: ["packages/shared/src/"],
         },
         {
-          id: "google-id", kind: "external", state: "optional", layer: 3, lane: 2,
-          name: "Google Identity", stereo: "OAuth 2.0 / OIDC",
-          blurb: "Optional SSO — see the Context level.",
+          id: "google-id", kind: "external", state: "optional", layer: 4, lane: 2.35,
+          name: "Google Identity", type: "External System",
+          desc: "Optional SSO — see the Context level.",
+          blurb: "OAuth 2.0 / OIDC.",
         },
         {
-          id: "otel", kind: "external", state: "optional", layer: 4, lane: 2.55,
-          name: "OTel collector", stereo: "optional",
-          blurb: "Trace sink when OTEL_MODE=otlp — see the Context level.",
+          id: "otel", kind: "external", state: "optional", layer: 4, lane: 3.5,
+          name: "OTel Collector", type: "External System · optional",
+          desc: "Trace sink when OTEL_MODE=otlp.",
+          blurb: "See the Context level.",
         },
       ],
       edges: [
-        { from: "member", to: "spa", label: "views & operates" },
-        { from: "spa", to: "nginx", label: "loads SPA · /api calls\n(+ session cookie)" },
-        { from: "nginx", to: "api", label: "proxies /api → :3000" },
-        { from: "api", to: "db", label: "reads / writes" },
-        { from: "shared", to: "spa", label: "", state: "optional" },
-        { from: "shared", to: "api", label: "", state: "optional" },
-        { from: "api", to: "google-id", label: "OAuth", state: "optional" },
-        { from: "api", to: "otel", label: "OTLP", state: "optional" },
+        { from: "member", to: "spa", label: "Views and operates", tech: "HTTPS" },
+        { from: "spa", to: "nginx", label: "Loads the SPA from, makes API calls to", tech: "JSON/HTTPS · session cookie" },
+        { from: "nginx", to: "api", label: "Proxies /api to", tech: "HTTP :3000" },
+        { from: "api", to: "db", label: "Reads from and writes to", tech: "Drizzle → SQL" },
+        { from: "shared", to: "spa", label: "", tech: "", state: "optional" },
+        { from: "shared", to: "api", label: "Shared contracts", tech: "build-time", state: "optional" },
+        { from: "api", to: "google-id", label: "Authenticates via", tech: "OAuth", state: "optional" },
+        { from: "api", to: "otel", label: "Exports traces", tech: "OTLP", state: "optional" },
       ],
     },
 
@@ -882,109 +881,97 @@
       crumb: "API",
       ladder: { lv: "Level 3", nm: "Components · API", depth: 2 },
       parent: "api",
-      title: "Components — the API container",
-      lead: "How a request moves through the Fastify app: bootstrap wires plugins in order, the plugin chain authenticates, the route layer validates, the service layer holds the logic and the authorization checks, and the data layer is the only place that touches SQL.",
-      box: [200, 58],
-      layerGap: 106,
-      laneGap: 220,
+      title: "Level 3 — Components of the API container",
+      lead: "Zooms into the API. A request falls through the plugin chain (which authenticates it), the route layer (which validates it), the service layer (logic + every authorization check), and the data layer (the only place that touches SQL).",
+      box: 210,
+      layerGap: 166,
+      laneGap: 232,
+      descMax: 2,
+      boundary: {
+        label: "API — Container",
+        ids: ["bootstrap", "instr", "plugins", "authctx", "routes-auth", "routes-index", "services", "access", "data", "lib"],
+      },
       nodes: [
         {
-          id: "bootstrap", kind: "internal", layer: 0, lane: 1, name: "App bootstrap",
-          stereo: "server.ts · app.ts",
-          blurb:
-            "server.ts runs migrations, enables FK enforcement, builds the app and listens. app.ts registers plugins in a fixed order: cors → cookie → errorHandler → googleOAuth → authContext → auth routes → entity routes.",
-          paths: ["apps/api/src/server.ts", "apps/api/src/app.ts"],
-        },
-        {
-          id: "instr", kind: "internal", layer: 0, lane: 0, name: "Instrumentation",
-          stereo: "instrumentation.ts",
-          blurb:
-            "Imported first in server.ts so OpenTelemetry can patch http/fastify before they load. OTEL_MODE = off (default) | console | otlp. Also feeds trace_id/span_id into every log line via a pino mixin.",
+          id: "instr", kind: "component", layer: 0, lane: 0, name: "Instrumentation", type: "Component: instrumentation.ts",
+          desc: "Starts OpenTelemetry before http/fastify load. OTEL_MODE off | console | otlp.",
+          blurb: "Also feeds trace_id/span_id into every log line via a pino mixin.",
           paths: ["apps/api/src/instrumentation.ts"],
         },
         {
-          id: "plugins", kind: "internal", layer: 1, lane: 1, name: "Fastify plugin chain",
-          stereo: "plugins/*",
-          sub: ["cors · cookie", "errorHandler", "googleOAuth", "authContext"],
-          blurb:
-            "cors (locked to WEB_ORIGIN, credentials on) · cookie (signs stomp_session with SESSION_SECRET) · errorHandler (AppError → JSON problem body) · googleOAuth (no-op unless configured) · authContext (the auth gate).",
+          id: "bootstrap", kind: "component", layer: 0, lane: 1, name: "App bootstrap", type: "Component: server.ts · app.ts",
+          desc: "Runs migrations, enables FK enforcement, registers plugins in a fixed order, listens on :3000.",
+          blurb: "Order: cors → cookie → errorHandler → googleOAuth → authContext → auth routes → entity routes.",
+          paths: ["apps/api/src/server.ts", "apps/api/src/app.ts"],
+        },
+        {
+          id: "plugins", kind: "component", layer: 1, lane: 1, name: "Fastify plugin chain", type: "Component: plugins/*",
+          desc: "cors (locked to WEB_ORIGIN) · cookie (signs stomp_session) · errorHandler (AppError → JSON) · googleOAuth (no-op unless configured).",
+          blurb: "Registered onto the Fastify instance in bootstrap; run per request in order.",
           paths: ["apps/api/src/plugins/"],
         },
         {
-          id: "authctx", kind: "internal", layer: 1, lane: 2, name: "authContext",
-          stereo: "plugins/authContext.ts",
-          blurb:
-            "onRequest hook: reads and unsigns the stomp_session cookie, resolves it to a live session + user, sets request.ctx = { userId }. Throws 401 for any route not on the public allow-list. AUTH_TEST_BYPASS lets test suites run as the seed user.",
+          id: "authctx", kind: "component", layer: 1, lane: 2, name: "authContext", type: "Component: plugins/authContext.ts",
+          desc: "onRequest hook: unsigns the session cookie, resolves it to a user, sets request.ctx. 401s any non-public route.",
+          blurb: "AUTH_TEST_BYPASS lets the test suites run as the seed user without a cookie.",
           paths: ["apps/api/src/plugins/authContext.ts"],
         },
         {
-          id: "routes-auth", kind: "internal", layer: 2, lane: 0, name: "Auth routes",
-          stereo: "routes/auth.ts",
-          blurb:
-            "/api/auth/* — me, signup, login, logout, and the Google OAuth callback. Sets / clears the session cookie. Closed-signup Google callback redirects to /login?error=signup_closed.",
+          id: "routes-auth", kind: "component", layer: 2, lane: 0, name: "Auth routes", type: "Component: routes/auth.ts",
+          desc: "/api/auth/* — me, signup, login, logout, and the Google OAuth callback. Sets / clears the session cookie.",
+          blurb: "Closed-signup Google callback redirects to /login?error=signup_closed.",
           paths: ["apps/api/src/routes/auth.ts"],
         },
         {
-          id: "routes-index", kind: "internal", layer: 2, lane: 1.5, name: "Entity routes",
-          stereo: "routes/index.ts",
-          sub: ["todos · events · references", "projects · workspaces", "incoming · tags", "notifications · home · sitemap"],
-          blurb:
-            "The REST surface for every entity plus /home/summary, /home/hot, /shared-with-me, collaborators, taggings, and the sitemap. Each handler Zod-validates params/body, then calls a service with (db, req.ctx, …). Thin — no logic here.",
+          id: "routes-index", kind: "component", layer: 2, lane: 1.5, name: "Entity routes", type: "Component: routes/index.ts",
+          desc: "REST for every entity plus /home/*, /shared-with-me, collaborators, taggings and the sitemap. Zod-validates, then calls a service. No logic here.",
+          blurb: "todos · events · references · projects · workspaces · incoming · tags · notifications · home · sitemap.",
           paths: ["apps/api/src/routes/index.ts"],
         },
         {
-          id: "services", kind: "internal", layer: 3, lane: 1, name: "Service layer",
-          stereo: "services/*  (logic + authz)",
-          sub: [
-            "todos · events · references",
-            "projects · workspaces · incoming",
-            "tags · notifications · home",
-            "collaborators · activity · auth · cleanup",
-          ],
+          id: "services", kind: "component", layer: 3, lane: 1, name: "Service layer", type: "Component: services/*",
+          desc: "Business logic and every authorization decision. Each function is (db, ctx, …): check visibility, do the work, write an activity_log row, shape the response.",
           blurb:
-            "Business logic and every authorization decision. Each function takes (db, ctx, …), checks visibility, does the work, writes an activity_log entry on mutations, and shapes the response. Adding real auth changed only authContext — services were untouched.",
+            "todos, events, references, projects, workspaces, incoming, tags, notifications, home, collaborators, activity, auth, cleanup. Adding real auth changed only authContext — services were untouched.",
           paths: ["apps/api/src/services/"],
         },
         {
-          id: "access", kind: "internal", layer: 3, lane: 2.15, name: "access.ts",
-          stereo: "the visibility model",
-          blurb:
-            "ADR-0003 in code. accessibleProjectIds() = owns OR project_member OR workspace_member. projectAccess() = stronger of workspace role and project role. assertWorkspaceMember() guards writes. Called by every list / read / mutate.",
+          id: "access", kind: "component", layer: 4, lane: 2.2, name: "access.ts", type: "Component: the visibility model",
+          desc: "ADR-0003 in code. accessibleProjectIds() = owns OR project_member OR workspace_member. projectAccess() = stronger of the two roles.",
+          blurb: "assertWorkspaceMember() guards writes. Called by every list / read / mutate.",
           paths: ["apps/api/src/services/access.ts"],
         },
         {
-          id: "data", kind: "internal", layer: 4, lane: 1, name: "Data access",
-          stereo: "db/client.ts · schema.ts · migrate.ts",
-          blurb:
-            "db/client.ts is the Drizzle + libSQL singleton. schema.ts is the source of truth for all 20 tables (text uuid PKs, epoch-ms timestamps, booleans as 0/1). migrate.ts runs the committed drizzle/ SQL on boot. seed.ts loads demo data + the pamcalmer dev account.",
+          id: "data", kind: "component", layer: 4, lane: 1, name: "Data access", type: "Component: db/*",
+          desc: "db/client.ts is the Drizzle + libSQL singleton. schema.ts is the source of truth for all 20 tables. migrate.ts runs committed SQL on boot.",
+          blurb: "seed.ts loads demo data plus the pamcalmer dev account (skipped when NODE_ENV=production).",
           paths: ["apps/api/src/db/"],
         },
         {
-          id: "lib", kind: "internal", layer: 4, lane: 0, name: "lib/*",
-          stereo: "cross-cutting helpers",
-          blurb:
-            "sitemap (static public + authed per-user), logger (pino + credential redaction + OTel mixin), cookies, errors (AppError → HTTP), ids (uuid), clock (freezable time), day.",
+          id: "lib", kind: "component", layer: 4, lane: 0, name: "lib/*", type: "Component: cross-cutting helpers",
+          desc: "sitemap (public static + authed per-user), logger (pino + redaction + OTel mixin), cookies, errors, ids, clock.",
+          blurb: "Small, dependency-free helpers used across the route and service layers.",
           paths: ["apps/api/src/lib/"],
         },
         {
-          id: "db", kind: "store", layer: 5, lane: 1, name: "Database",
-          stereo: "libSQL / SQLite",
-          blurb: "The store from the Container level.",
+          id: "db", kind: "store", layer: 5, lane: 1, name: "Database", type: "Container: libSQL / SQLite",
+          desc: "The store from the Container level.",
+          blurb: "20 tables.",
         },
       ],
       edges: [
-        { from: "instr", to: "bootstrap", label: "loaded first", state: "optional" },
-        { from: "bootstrap", to: "plugins", label: "registers in order" },
-        { from: "bootstrap", to: "authctx", label: "" },
-        { from: "authctx", to: "routes-index", label: "onRequest: ctx / 401" },
-        { from: "authctx", to: "routes-auth", label: "" },
-        { from: "plugins", to: "routes-auth", label: "" },
-        { from: "routes-auth", to: "services", label: "" },
-        { from: "routes-index", to: "services", label: "validate → call(db, ctx, …)" },
-        { from: "services", to: "access", label: "checks visibility" },
-        { from: "services", to: "data", label: "queries" },
-        { from: "routes-index", to: "lib", label: "sitemap", state: "optional" },
-        { from: "data", to: "db", label: "SQL" },
+        { from: "instr", to: "bootstrap", label: "Loaded first by", tech: "", state: "optional" },
+        { from: "bootstrap", to: "plugins", label: "Registers", tech: "" },
+        { from: "bootstrap", to: "authctx", label: "", tech: "" },
+        { from: "authctx", to: "routes-index", label: "Sets request.ctx / 401s", tech: "onRequest" },
+        { from: "authctx", to: "routes-auth", label: "", tech: "" },
+        { from: "plugins", to: "routes-auth", label: "", tech: "" },
+        { from: "routes-auth", to: "services", label: "", tech: "" },
+        { from: "routes-index", to: "services", label: "Validates, then calls", tech: "(db, ctx, …)" },
+        { from: "services", to: "access", label: "Checks visibility with", tech: "" },
+        { from: "services", to: "data", label: "Queries via", tech: "Drizzle" },
+        { from: "routes-index", to: "lib", label: "Builds sitemap with", tech: "", state: "optional" },
+        { from: "data", to: "db", label: "Reads / writes", tech: "SQL" },
       ],
     },
 
@@ -992,118 +979,107 @@
       crumb: "Web SPA",
       ladder: { lv: "Level 3", nm: "Components · Web SPA", depth: 2 },
       parent: "spa",
-      title: "Components — the Web SPA",
-      lead: "Providers at the root, an auth gate that decides whether to show the app or the login screen, one shell around every page, and a thin data layer: TanStack Query hooks over a tiny fetch wrapper that always sends the session cookie.",
-      box: [202, 58],
-      layerGap: 106,
-      laneGap: 226,
+      title: "Level 3 — Components of the Web SPA",
+      lead: "Zooms into the SPA. Providers at the root, an auth gate that shows either the app or the login screen, one shell around every page, and a thin data layer of query hooks over a fetch wrapper that always sends the session cookie.",
+      box: 212,
+      layerGap: 166,
+      laneGap: 236,
+      descMax: 2,
+      boundary: {
+        label: "Web SPA — Container",
+        ids: ["main", "app", "contexts", "shell", "pages", "forms", "queries", "apiclient"],
+      },
       nodes: [
         {
-          id: "main", kind: "internal", layer: 0, lane: 1, name: "main.tsx",
-          stereo: "provider tree",
-          blurb:
-            "Mounts QueryClientProvider (with a QueryCache that bounces any 401 to the auth check), BrowserRouter, AuthProvider, WorkspaceProvider, then <App/>.",
+          id: "main", kind: "component", layer: 0, lane: 1, name: "main.tsx", type: "Component: provider tree",
+          desc: "Mounts QueryClientProvider (with a 401 → auth-check cache handler), BrowserRouter, AuthProvider, WorkspaceProvider, then App.",
+          blurb: "The composition root.",
           paths: ["apps/web/src/main.tsx"],
         },
         {
-          id: "app", kind: "internal", layer: 1, lane: 1, name: "App.tsx",
-          stereo: "route table + auth gate",
-          blurb:
-            "If auth is loading → spinner. If no user → only /login and /signup render. Otherwise the full route table renders inside <AppShell>.",
+          id: "app", kind: "component", layer: 1, lane: 1, name: "App.tsx", type: "Component: route table + auth gate",
+          desc: "Auth loading → spinner. No user → only /login and /signup render. Otherwise the full route table renders inside AppShell.",
+          blurb: "The single decision point for authed vs. unauthed UI.",
           paths: ["apps/web/src/App.tsx"],
         },
         {
-          id: "shell", kind: "internal", layer: 2, lane: 0.4, name: "AppShell",
-          stereo: "components/AppShell.tsx",
-          sub: ["banner + nav", "HotSidebar", "WorkspaceSwitcher", "NotificationsBell · UserMenu"],
-          blurb:
-            "The frame every authed page sits in: title banner, section nav, the “hot & relevant” sidebar, the active-workspace switcher, the notifications bell, and the user menu (avatar + sign out).",
-          paths: ["apps/web/src/components/AppShell.tsx"],
-        },
-        {
-          id: "pages", kind: "internal", layer: 2, lane: 1.9, name: "Route pages",
-          stereo: "routes/*",
-          sub: [
-            "Home · Todos · TodoDetail",
-            "Calendar · EventDetail · Incoming",
-            "Learn · ReferenceDetail · Projects",
-            "ProjectDetail · Workspaces · SharedWithMe",
-            "TagPage · Login",
-          ],
-          blurb:
-            "One component per screen. Pages read data through query hooks and compose the forms & editors below; they hold no fetch logic of their own.",
-          paths: ["apps/web/src/routes/"],
-        },
-        {
-          id: "forms", kind: "internal", layer: 3, lane: 1.6, name: "Forms & editors",
-          stereo: "components/*",
-          sub: ["TodoForm · EventForm · ReferenceForm", "ShareEditor · AssigneePicker", "TagEditor · ActivityPanel"],
-          blurb:
-            "React Hook Form + the same Zod schemas the API validates against (@stomp/shared). Submit → a mutation hook → the fetch wrapper.",
-          paths: ["apps/web/src/components/"],
-        },
-        {
-          id: "contexts", kind: "internal", layer: 1, lane: 2.15, name: "Context hooks",
-          stereo: "lib/auth · workspace · theme",
-          blurb:
-            "auth.tsx (useAuth: the /auth/me query + login/signup/logout), workspace.tsx (active workspace + ?workspaceId= scoping), theme.ts (light/dark/system).",
+          id: "contexts", kind: "component", layer: 0, lane: 2.1, name: "Context hooks", type: "Component: lib/auth · workspace · theme",
+          desc: "useAuth (the /auth/me query + login/signup/logout), active-workspace scoping (?workspaceId=), light/dark/system theme.",
+          blurb: "Mounted in main.tsx; consumed by App.tsx's auth gate and throughout the shell and pages.",
           paths: ["apps/web/src/lib/auth.tsx", "apps/web/src/lib/workspace.tsx"],
         },
         {
-          id: "queries", kind: "internal", layer: 4, lane: 1, name: "Query hooks",
-          stereo: "lib/queries.ts",
-          blurb:
-            "Every server-state read and mutation as a TanStack Query hook — useTodos(), useCreateTodo(), useHotList() … with cache-key invalidation on writes.",
+          id: "shell", kind: "component", layer: 2, lane: 0.4, name: "AppShell", type: "Component: components/AppShell.tsx",
+          desc: "The frame every authed page sits in: title banner, section nav, the hot sidebar, workspace switcher, notifications bell, user menu.",
+          blurb: "Renders once; pages render into its content slot.",
+          paths: ["apps/web/src/components/AppShell.tsx"],
+        },
+        {
+          id: "pages", kind: "component", layer: 2, lane: 1.9, name: "Route pages", type: "Component: routes/*",
+          desc: "One component per screen — Home, Todos/TodoDetail, Calendar/EventDetail, Incoming, Learn/ReferenceDetail, Projects/ProjectDetail, Workspaces, SharedWithMe, TagPage, Login.",
+          blurb: "Pages read data through query hooks and compose the forms & editors; they hold no fetch logic.",
+          paths: ["apps/web/src/routes/"],
+        },
+        {
+          id: "forms", kind: "component", layer: 2, lane: 3.15, name: "Forms & editors", type: "Component: components/*",
+          desc: "TodoForm, EventForm, ReferenceForm, ShareEditor, AssigneePicker, TagEditor, ActivityPanel.",
+          blurb: "React Hook Form + the same Zod schemas the API validates against. Submit → a mutation hook.",
+          paths: ["apps/web/src/components/"],
+        },
+        {
+          id: "queries", kind: "component", layer: 3, lane: 1, name: "Query hooks", type: "Component: lib/queries.ts",
+          desc: "Every server-state read and mutation as a TanStack Query hook — useTodos(), useCreateTodo(), useHotList() … with cache-key invalidation on writes.",
+          blurb: "The one place the component tree talks to server state.",
           paths: ["apps/web/src/lib/queries.ts"],
         },
         {
-          id: "apiclient", kind: "internal", layer: 5, lane: 1, name: "api.ts",
-          stereo: "fetch wrapper",
-          blurb:
-            "get / post / patch / del against VITE_API_BASE_URL (/api). Always credentials: “include” so the stomp_session cookie rides along; non-2xx → throws ApiError(status, body).",
+          id: "apiclient", kind: "component", layer: 4, lane: 1, name: "api.ts", type: "Component: fetch wrapper",
+          desc: "get / post / patch / del against /api. Always credentials: “include” so the session cookie rides along; non-2xx → throws ApiError.",
+          blurb: "~30 lines. The only fetch call site.",
           paths: ["apps/web/src/lib/api.ts"],
         },
         {
-          id: "api", kind: "external", layer: 6, lane: 1, name: "API", stereo: "container",
-          blurb: "The Fastify API container. Drill into it from the Containers level.",
+          id: "api", kind: "external", layer: 5, lane: 1, name: "API", type: "Container",
+          desc: "The Fastify API container. Drill into it from the Containers level.",
+          blurb: "See the API components level.",
         },
       ],
       edges: [
-        { from: "main", to: "app", label: "renders" },
-        { from: "app", to: "shell", label: "authed →" },
-        { from: "app", to: "pages", label: "route table" },
-        { from: "shell", to: "pages", label: "wraps" },
-        { from: "pages", to: "forms", label: "compose" },
-        { from: "app", to: "contexts", label: "auth gate", state: "optional" },
-        { from: "pages", to: "queries", label: "useTodos() …" },
-        { from: "forms", to: "queries", label: "mutations" },
-        { from: "queries", to: "apiclient", label: "api.get / post / patch" },
-        { from: "apiclient", to: "api", label: "HTTP /api/* + cookie" },
+        { from: "main", to: "app", label: "Renders", tech: "" },
+        { from: "main", to: "contexts", label: "Mounts", tech: "", state: "optional" },
+        { from: "app", to: "shell", label: "When authed, renders", tech: "" },
+        { from: "app", to: "pages", label: "Route table", tech: "" },
+        { from: "shell", to: "pages", label: "Wraps", tech: "" },
+        { from: "pages", to: "forms", label: "Composes", tech: "" },
+        { from: "pages", to: "queries", label: "Reads data via", tech: "useTodos() …" },
+        { from: "forms", to: "queries", label: "Submits via", tech: "mutations" },
+        { from: "queries", to: "apiclient", label: "Calls", tech: "api.get / post / patch" },
+        { from: "apiclient", to: "api", label: "Makes requests to", tech: "HTTP /api/* + cookie" },
       ],
     },
 
     flow: {
       crumb: "Request flow",
       ladder: { lv: "Level 4", nm: "Code · Request flow", depth: 2 },
-      parent: "services",
-      title: "Code — one request end to end",
-      lead: "PATCH /api/todos/:id — editing a todo. The illustrative “code” level: the actual hooks and functions a single request runs through, with the authentication gate (amber) and the authorization gate (emerald) marked.",
+      parent: "api",
+      title: "Level 4 — Code: one request end to end",
+      lead: "The optional code level, as a runtime sequence rather than a class diagram. PATCH /api/todos/:id — editing a todo — through the actual hooks and functions, with the authentication gate (amber) and the authorization gate (green) called out.",
       sequence: {
         actors: [
           { id: "browser", name: "Browser" },
           { id: "nginx", name: "nginx" },
-          { id: "authctx", name: "authContext\n(onRequest)" },
-          { id: "route", name: "routes/\nindex.ts" },
-          { id: "svc", name: "services/\ntodos.ts" },
-          { id: "access", name: "services/\naccess.ts" },
-          { id: "db", name: "Drizzle /\nSQLite" },
+          { id: "authctx", name: "authContext" },
+          { id: "route", name: "routes/index.ts" },
+          { id: "svc", name: "services/todos.ts" },
+          { id: "access", name: "services/access.ts" },
+          { id: "db", name: "Drizzle / SQLite" },
         ],
         messages: [
           { from: "browser", to: "nginx", label: "PATCH /api/todos/:id  ·  Cookie: stomp_session" },
           { from: "nginx", to: "authctx", label: "proxy_pass → :3000" },
           { from: "authctx", to: "db", label: "resolveSession(token)", gate: "auth" },
           { from: "db", to: "authctx", label: "session + user  (else → 401)", gate: "auth", dashed: true },
-          { from: "authctx", to: "route", label: "request.ctx = { userId }", note: "public allow-list skips this" },
+          { from: "authctx", to: "route", label: "request.ctx = { userId }", note: "public routes skip this" },
           { from: "route", to: "route", label: "Zod-validate params + body", self: true },
           { from: "route", to: "svc", label: "updateTodo(db, ctx, id, input)" },
           { from: "svc", to: "access", label: "projectAccess(userId, projectId)", gate: "authz" },
@@ -1118,10 +1094,8 @@
   };
 
   const ORDER = ["context", "containers", "api", "web", "flow"];
-
   const PARENTS = { context: null, containers: "context", api: "containers", web: "containers", flow: "api" };
 
-  /* ───────────────────────── state ───────────────────────── */
   let current = "context";
   let selected = null;
 
@@ -1129,24 +1103,42 @@
   const $ = (s, r = document) => r.querySelector(s);
   const esc = (s) =>
     String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const cssEsc = (s) => String(s).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
   const mdInline = (s) =>
     esc(s).replace(/`([^`]+)`/g, '<code style="font-family:var(--font-mono);font-size:0.92em">$1</code>');
 
-  const MARGIN = 56;
+  const M = 58; // canvas margin
 
-  function nodeById(level, id) {
-    return level.nodes.find((n) => n.id === id);
+  function wrap(text, maxChars) {
+    const words = String(text).split(/\s+/);
+    const lines = [];
+    let cur = "";
+    for (const w of words) {
+      if (cur && (cur + " " + w).length > maxChars) {
+        lines.push(cur);
+        cur = w;
+      } else {
+        cur = cur ? cur + " " + w : w;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines;
   }
 
-  /** Geometry of one node: fixed width, height grows only with name lines. */
+  /** Full geometry + wrapped text for one C4 node. */
   function geom(level, n) {
-    const w = level.box[0];
-    const nameLines = n.name.split("\n").length;
-    const h = level.box[1] + (nameLines - 1) * 15;
-    const cx = MARGIN + n.lane * level.laneGap + w / 2;
-    const bandTop = MARGIN + n.layer * level.layerGap;
-    return { x: cx - w / 2, y: bandTop, w, h, cx, top: bandTop, bottom: bandTop + h, midY: bandTop + h / 2 };
+    const w = level.box;
+    const nameLines = wrap(n.name, Math.floor((w - 24) / 7.4));
+    const descLines = wrap(n.desc || "", Math.floor((w - 22) / 5.4)).slice(0, level.descMax || 3);
+    const head = n.kind === "person" ? 20 : 0;
+    const bodyH =
+      14 + nameLines.length * 17 + 5 + (n.type ? 13 : 0) + (descLines.length ? 8 + descLines.length * 13 : 0) + 14;
+    const cx = M + n.lane * level.laneGap + w / 2;
+    const top = M + n.layer * level.layerGap + head;
+    return {
+      x: cx - w / 2, y: top, w, h: bodyH, cx,
+      top, bottom: top + bodyH, headCy: top - 1, headR: 11,
+      nameLines, descLines,
+    };
   }
 
   function canvasSize(level) {
@@ -1157,78 +1149,119 @@
       W = Math.max(W, g.x + g.w);
       H = Math.max(H, g.bottom);
     }
-    return [W + MARGIN, H + MARGIN];
+    if (level.boundary) {
+      H += 18;
+      W += 14;
+    }
+    return [W + M, H + M];
   }
 
-  /* ───────────────────────── render: box diagram ─────────── */
-  function renderBoxDiagram(level) {
+  function nodeById(level, id) {
+    return level.nodes.find((n) => n.id === id);
+  }
+
+  /* ───────────────────────── render: C4 diagram ──────────── */
+  function renderC4(level) {
     const [W, H] = canvasSize(level);
+    const geoms = new Map(level.nodes.map((n) => [n.id, geom(level, n)]));
     const parts = [
-      `<svg class="diagram" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMin meet" role="img" aria-label="${esc(level.title)} diagram">`,
-      `<defs>
-        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0 0 L10 5 L0 10 z" class="arrow"/></marker>
-        <marker id="ar-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0 0 L10 5 L0 10 z" class="arrow a-planned"/></marker>
-      </defs>`,
+      `<svg class="diagram" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMin meet" role="img" aria-label="${esc(
+        level.title,
+      )}">`,
+      `<defs><marker id="c4arw" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+         <path d="M0 0 L10 5 L0 10 z" class="arrow"/></marker></defs>`,
     ];
 
-    // edges under nodes. Stagger the jog height of edges that fan out of the
-    // same node so their horizontal segments (and labels) don't stack up.
-    const fanIdx = {};
+    // boundary box
+    if (level.boundary) {
+      const gs = level.boundary.ids.map((id) => geoms.get(id)).filter(Boolean);
+      const bx0 = Math.min(...gs.map((g) => g.x)) - 22;
+      const by0 = Math.min(...gs.map((g) => g.top - (g.headCy ? 21 : 0))) - 30;
+      const bx1 = Math.max(...gs.map((g) => g.x + g.w)) + 22;
+      const by1 = Math.max(...gs.map((g) => g.bottom)) + 20;
+      parts.push(`<rect class="boundary" x="${bx0}" y="${by0}" width="${bx1 - bx0}" height="${by1 - by0}" rx="12"/>`);
+      parts.push(`<text class="boundary-label" x="${bx0 + 14}" y="${by0 + 18}">${esc(level.boundary.label)}</text>`);
+    }
+
+    // edges — pre-count fan-out so parallel jogs get staggered
+    const fanTotal = {};
+    for (const e of level.edges) {
+      const a = nodeById(level, e.from);
+      const b = nodeById(level, e.to);
+      if (!a || !b || a.layer === b.layer) continue;
+      if (Math.abs(geoms.get(a.id).cx - geoms.get(b.id).cx) < 2) continue;
+      const k = e.from + (b.layer > a.layer ? "d" : "u");
+      fanTotal[k] = (fanTotal[k] || 0) + 1;
+    }
+
+    const fan = {};
     for (const e of level.edges) {
       const a = nodeById(level, e.from);
       const b = nodeById(level, e.to);
       if (!a || !b) continue;
-      const ga = geom(level, a);
-      const gb = geom(level, b);
-      const cls =
-        e.state === "planned" ? "edge e-planned" : e.state === "optional" ? "edge e-optional" : "edge";
-      const marker = e.state === "planned" ? "url(#ar-p)" : "url(#ar)";
+      const ga = geoms.get(a.id);
+      const gb = geoms.get(b.id);
+      const cls = e.state ? "edge e-" + e.state : "edge";
 
-      // ly = first-line baseline; labels always render downward from there.
-      let d, lx, ly, anchor;
+      let x1, y1, x2, y2, lx, ly, anchor;
       if (a.layer === b.layer) {
-        const leftFirst = ga.cx <= gb.cx;
-        const x1 = leftFirst ? ga.x + ga.w : ga.x;
-        const x2 = leftFirst ? gb.x : gb.x + gb.w;
-        const y = (ga.midY + gb.midY) / 2;
-        d = `M ${x1} ${y} L ${x2} ${y}`;
+        const lf = ga.cx <= gb.cx;
+        x1 = lf ? ga.x + ga.w : ga.x;
+        x2 = lf ? gb.x : gb.x + gb.w;
+        y1 = y2 = (ga.top + ga.bottom + gb.top + gb.bottom) / 4;
         lx = (x1 + x2) / 2;
-        ly = Math.max(ga.bottom, gb.bottom) + 22;
+        ly = Math.max(ga.bottom, gb.bottom) + 20;
         anchor = "middle";
+        parts.push(`<path class="${cls}" d="M ${x1} ${y1} L ${x2} ${y2}" marker-end="url(#c4arw)"/>`);
       } else {
         const down = b.layer > a.layer;
-        const x1 = ga.cx;
-        const x2 = gb.cx;
-        const y1 = down ? ga.bottom : ga.top;
-        const y2 = down ? gb.top : gb.bottom;
+        x1 = ga.cx;
+        x2 = gb.cx;
+        y1 = down ? ga.bottom : ga.top;
+        y2 = down ? gb.top - (gb.headCy ? 21 : 0) : gb.bottom;
         const straight = Math.abs(x1 - x2) < 2;
         const key = e.from + (down ? "d" : "u");
-        const i = straight ? 0 : (fanIdx[key] = (fanIdx[key] || 0) + 1) - 1;
-        // keep the jog inside the gap immediately past the source box
-        const immGap = level.layerGap - level.box[1] - 8;
-        const off = Math.max(14, Math.min(18 + i * 13, immGap, Math.abs(y2 - y1) - 14));
+        const total = fanTotal[key] || 1;
+        const i = straight ? 0 : (fan[key] = (fan[key] || 0) + 1) - 1;
+        const gap = level.layerGap - ga.h - (a.kind === "person" ? 20 : 0);
+        const step = total > 1 ? Math.max(20, (gap - 40) / (total - 1)) : 0;
+        const off = Math.max(14, Math.min(18 + i * step, gap - 12, Math.abs(y2 - y1) - 10));
         const jy = down ? y1 + off : y1 - off;
-        d = straight
+        const d = straight
           ? `M ${x1} ${y1} L ${x2} ${y2}`
           : `M ${x1} ${y1} L ${x1} ${jy} L ${x2} ${jy} L ${x2} ${y2}`;
-        const lines = (e.label || "").split("\n").length;
-        lx = straight ? x1 + 8 : (x1 + x2) / 2;
-        ly = down ? jy + 4 : jy - 6 - (lines - 1) * 12;
-        anchor = straight ? "start" : "middle";
+        parts.push(`<path class="${cls}" d="${d}" marker-end="url(#c4arw)"/>`);
+        // label: on the jog for lone edges; near the target's vertical drop
+        // for fan-outs, so parallel labels separate horizontally
+        const rowCount = (e.label ? wrap(e.label, 26).length : 0) + (e.tech ? 1 : 0);
+        if (straight) {
+          lx = x1 + 8;
+          ly = down ? jy + 4 : jy - 16;
+          anchor = "start";
+        } else if (total > 1) {
+          // sits just above the target box, on its own vertical drop
+          lx = x2;
+          ly = (down ? y2 : y2 + rowCount * 12 + 14) - 12 - rowCount * 12;
+          anchor = "middle";
+        } else {
+          lx = (x1 + x2) / 2;
+          ly = down ? jy + 4 : jy - 16;
+          anchor = "middle";
+        }
       }
 
-      parts.push(`<path class="${cls}" d="${d}" marker-end="${marker}"/>`);
-      if (e.label) {
-        const lines = e.label.split("\n");
-        const wdt = Math.max(...lines.map((l) => l.length)) * 5.7 + 10;
+      if (e.label || e.tech) {
+        const L1 = e.label ? wrap(e.label, 26) : [];
+        const rows = [...L1.map((t) => ({ t, cls: "elabel" }))];
+        if (e.tech) rows.push({ t: "[" + e.tech + "]", cls: "elabel-tech" });
+        const wdt = Math.max(...rows.map((r) => r.t.length)) * 5.6 + 10;
+        const bx = anchor === "start" ? lx - 5 : lx - wdt / 2;
         parts.push(
-          `<rect class="elabel-bg" x="${lx - (anchor === "start" ? 5 : wdt / 2)}" y="${ly - 10}" width="${wdt}" height="${lines.length * 12 + 4}" rx="3"/>`,
+          `<rect class="elabel-bg" x="${bx}" y="${ly - 10}" width="${wdt}" height="${rows.length * 12 + 4}" rx="3"/>`,
         );
-        lines.forEach((ln, i) =>
+        rows.forEach((r, i) =>
           parts.push(
-            `<text class="elabel" x="${lx}" y="${ly + i * 12}" text-anchor="${anchor}">${esc(ln)}</text>`,
+            `<text class="${r.cls}" x="${lx}" y="${ly + i * 12}" text-anchor="${anchor}">${esc(r.t)}</text>`,
           ),
         );
       }
@@ -1236,40 +1269,49 @@
 
     // nodes
     for (const n of level.nodes) {
-      const g = geom(level, n);
-      const nameLines = n.name.split("\n");
+      const g = geoms.get(n.id);
       const cls = ["node", "n-" + n.kind, n.state ? "s-" + n.state : "", n.id === selected ? "is-selected" : ""]
         .filter(Boolean)
         .join(" ");
-      const drill = n.drill ? '<tspan class="drill" dx="4">↳</tspan>' : "";
-      const nParts = n.sub && n.sub.length ? n.sub.reduce((s, l) => s + l.split(" · ").length, 0) : 0;
-
       parts.push(
         `<g class="${cls}" data-node="${n.id}" tabindex="0" role="button" aria-label="${esc(
-          n.name.replace(/\n/g, " "),
-        )}, ${esc(n.stereo)}${nParts ? `, ${nParts} parts` : ""}${n.drill ? ", opens the next level" : ""}">`,
+          n.name,
+        )}, ${esc(n.type || "")}${n.drill ? ", opens the next level" : ""}">`,
       );
-      parts.push(`<rect class="box" x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" rx="9"/>`);
-      if (n.kind === "internal" || n.kind === "store") {
-        parts.push(`<rect class="accent-bar" x="${g.x}" y="${g.y}" width="4" height="${g.h}" rx="2"/>`);
+
+      if (n.kind === "person") {
+        parts.push(`<circle class="shape" cx="${g.cx}" cy="${g.headCy}" r="${g.headR}"/>`);
       }
-      if (nParts) {
+      if (n.kind === "store") {
+        // cylinder
+        const rx = g.w / 2;
+        const ry = 9;
         parts.push(
-          `<text class="sub" x="${g.x + g.w - 9}" y="${g.y + 14}" text-anchor="end" style="opacity:.75">${nParts} ▾</text>`,
+          `<path class="shape" d="M ${g.x} ${g.y + ry} a ${rx} ${ry} 0 0 1 ${g.w} 0 v ${g.h - 2 * ry} a ${rx} ${ry} 0 0 1 ${-g.w} 0 z"/>`,
+          `<path class="shape" style="fill:rgba(255,255,255,0.12)" d="M ${g.x} ${g.y + ry} a ${rx} ${ry} 0 0 0 ${g.w} 0"/>`,
         );
+      } else {
+        parts.push(`<rect class="shape" x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" rx="4"/>`);
       }
 
-      // vertical layout inside the box: name lines, then stereotype
-      const blockH = nameLines.length * 15 + 13;
-      let ty = g.y + (g.h - blockH) / 2 + 11;
-      nameLines.forEach((ln, i) => {
-        const tail = i === nameLines.length - 1 ? drill : "";
+      let ty = g.y + 20 + (n.kind === "store" ? 4 : 0);
+      g.nameLines.forEach((ln, i) => {
+        const tail = n.drill && i === g.nameLines.length - 1 ? ' <tspan class="t-drill">↳ open</tspan>' : "";
         parts.push(
-          `<text class="nm" x="${g.cx}" y="${ty + i * 15}" text-anchor="middle">${esc(ln)}${tail}</text>`,
+          `<text class="t-name" x="${g.cx}" y="${ty + i * 17}" text-anchor="middle">${esc(ln)}${tail}</text>`,
         );
       });
-      ty += nameLines.length * 15 + 1;
-      parts.push(`<text class="st" x="${g.cx}" y="${ty}" text-anchor="middle">«${esc(n.stereo)}»</text>`);
+      ty += g.nameLines.length * 17 + 1;
+      if (n.type) {
+        parts.push(`<text class="t-type" x="${g.cx}" y="${ty}" text-anchor="middle">[${esc(n.type)}]</text>`);
+        ty += 8;
+      }
+      g.descLines.forEach((ln, i) =>
+        parts.push(
+          `<text class="t-desc" x="${g.cx}" y="${ty + 13 + i * 13}" text-anchor="middle">${esc(ln)}</text>`,
+        ),
+      );
+
       parts.push(`</g>`);
     }
 
@@ -1280,74 +1322,77 @@
   /* ───────────────────────── render: sequence ────────────── */
   function renderSequence(level) {
     const seq = level.sequence;
-    const colGap = 236;
-    const left = 96;
-    const top = 84;
+    const colGap = 238;
+    const left = 100;
+    const top = 86;
     const rowGap = 46;
     const W = left + (seq.actors.length - 1) * colGap + left;
-    const H = top + 24 + seq.messages.length * rowGap + 40;
+    const H = top + 26 + seq.messages.length * rowGap + 40;
 
     const parts = [
       `<svg class="diagram" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMin meet" role="img" aria-label="${esc(
         level.title,
-      )} sequence diagram">`,
+      )}">`,
       `<defs>
-        <marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-          <path d="M0 0 L10 5 L0 10 z" class="msg-arrow"/></marker>
-        <marker id="m-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-          <path d="M0 0 L10 5 L0 10 z" class="msg-arrow gate-auth"/></marker>
-        <marker id="m-z" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-          <path d="M0 0 L10 5 L0 10 z" class="msg-arrow gate-authz"/></marker>
+        <marker id="sq" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="msg-arrow"/></marker>
+        <marker id="sq-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="msg-arrow g-auth"/></marker>
+        <marker id="sq-z" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="msg-arrow g-authz"/></marker>
       </defs>`,
     ];
 
     const cx = {};
-    seq.actors.forEach((a, i) => {
-      const x = left + i * colGap;
-      cx[a.id] = x;
-      parts.push(`<line class="lifeline" x1="${x}" y1="${top + 4}" x2="${x}" y2="${H - 26}"/>`);
-      const lines = a.name.split("\n");
+    seq.actors.forEach((a, i) => (cx[a.id] = left + i * colGap));
+
+    // gate bands
+    const rowY = (i) => top + 30 + i * rowGap;
+    const authRows = seq.messages.map((m, i) => (m.gate === "auth" ? i : -1)).filter((i) => i >= 0);
+    const authzRows = seq.messages.map((m, i) => (m.gate === "authz" ? i : -1)).filter((i) => i >= 0);
+    const band = (rows, klass, tag) => {
+      if (!rows.length) return;
+      const y0 = rowY(rows[0]) - 20;
+      const y1 = rowY(rows[rows.length - 1]) + 12;
+      parts.push(`<rect class="gate-band ${klass}" x="${left - 40}" y="${y0}" width="${W - left - 20}" height="${y1 - y0}" rx="6"/>`);
+      parts.push(`<text class="gate-tag" x="${left - 34}" y="${y0 + 13}">${tag}</text>`);
+    };
+    band(authRows, "", "authentication");
+    band(authzRows, "authz", "authorization");
+
+    // lifelines + actor boxes
+    seq.actors.forEach((a) => {
+      const x = cx[a.id];
+      parts.push(`<line class="lifeline" x1="${x}" y1="${top + 2}" x2="${x}" y2="${H - 26}"/>`);
       parts.push(
-        `<g class="node n-internal" data-node="seq:${a.id}" tabindex="0" role="button" aria-label="${esc(
-          a.name.replace(/\n/g, " "),
-        )}">`,
+        `<g class="node n-component" data-node="seq:${a.id}" tabindex="0" role="button" aria-label="${esc(a.name)}">`,
       );
+      parts.push(`<rect class="shape" x="${x - 74}" y="26" width="148" height="34" rx="4"/>`);
       parts.push(
-        `<rect class="box" x="${x - 70}" y="24" width="140" height="${16 + lines.length * 13}" rx="8"/>`,
-      );
-      lines.forEach((ln, li) =>
-        parts.push(
-          `<text class="nm" x="${x}" y="${41 + li * 13}" text-anchor="middle" style="font-size:11px">${esc(ln)}</text>`,
-        ),
+        `<text class="t-name" x="${x}" y="47" text-anchor="middle" style="font-size:11px">${esc(a.name)}</text>`,
       );
       parts.push(`</g>`);
     });
 
+    // messages
     seq.messages.forEach((m, i) => {
-      const y = top + 34 + i * rowGap;
+      const y = rowY(i);
       const x1 = cx[m.from];
       const x2 = cx[m.to];
-      const gate = m.gate === "auth" ? " gate-auth" : m.gate === "authz" ? " gate-authz" : "";
-      const marker = m.gate === "auth" ? "url(#m-a)" : m.gate === "authz" ? "url(#m-z)" : "url(#m)";
+      const g = m.gate === "auth" ? " g-auth" : m.gate === "authz" ? " g-authz" : "";
+      const mk = m.gate === "auth" ? "url(#sq-a)" : m.gate === "authz" ? "url(#sq-z)" : "url(#sq)";
       const dash = m.dashed ? ' stroke-dasharray="4 3"' : "";
       if (m.self) {
-        parts.push(
-          `<path class="msg${gate}" d="M ${x1} ${y} h 30 v 15 h -30" marker-end="${marker}"${dash}/>`,
-        );
+        parts.push(`<path class="msg${g}" d="M ${x1} ${y} h 30 v 15 h -30" marker-end="${mk}"${dash}/>`);
         parts.push(`<text class="mlabel" x="${x1 + 40}" y="${y + 12}">${esc(m.label)}</text>`);
       } else {
         const dir = x2 > x1 ? 1 : -1;
         parts.push(
-          `<line class="msg${gate}" x1="${x1 + dir * 5}" y1="${y}" x2="${x2 - dir * 6}" y2="${y}" marker-end="${marker}"${dash}/>`,
+          `<line class="msg${g}" x1="${x1 + dir * 5}" y1="${y}" x2="${x2 - dir * 6}" y2="${y}" marker-end="${mk}"${dash}/>`,
         );
         parts.push(
-          `<text class="mlabel" x="${Math.min(x1, x2) + 6}" y="${y - 6}" text-anchor="start">${esc(m.label)}</text>`,
+          `<text class="mlabel" x="${Math.min(x1, x2) + 6}" y="${y - 6}">${esc(m.label)}</text>`,
         );
       }
       if (m.note)
-        parts.push(
-          `<text class="mnote" x="${Math.min(x1, x2) + 6}" y="${y + 13}" text-anchor="start">${esc(m.note)}</text>`,
-        );
+        parts.push(`<text class="mnote" x="${Math.min(x1, x2) + 6}" y="${y + 13}">${esc(m.note)}</text>`);
     });
 
     parts.push(`</svg>`);
@@ -1364,16 +1409,14 @@
           <h2>${esc(level.title)}</h2>
           <p>${mdInline(level.lead)}</p>
         </div>
-        <div class="diagram-wrap">${
-          level.sequence ? renderSequence(level) : renderBoxDiagram(level)
-        }</div>
+        <div class="diagram-wrap">${level.sequence ? renderSequence(level) : renderC4(level)}</div>
       </div>`;
 
-    canvas.querySelectorAll("[data-node]").forEach((g) => {
-      const raw = g.getAttribute("data-node");
+    canvas.querySelectorAll("[data-node]").forEach((gEl) => {
+      const raw = gEl.getAttribute("data-node");
       const id = raw.startsWith("seq:") ? raw.slice(4) : raw;
-      g.addEventListener("click", () => selectNode(id));
-      g.addEventListener("keydown", (ev) => {
+      gEl.addEventListener("click", () => selectNode(id));
+      gEl.addEventListener("keydown", (ev) => {
         if (ev.key === "Enter" || ev.key === " ") {
           ev.preventDefault();
           selectNode(id);
@@ -1391,13 +1434,10 @@
     box.innerHTML = ORDER.map((key) => {
       const L = LEVELS[key];
       return `<button data-key="${key}" data-depth="${L.ladder.depth}" aria-current="${key === current}">
-        <span class="lv">${esc(L.ladder.lv)}</span>
-        <span class="nm">${esc(L.ladder.nm)}</span>
+        <span class="lv">${esc(L.ladder.lv)}</span><span class="nm">${esc(L.ladder.nm)}</span>
       </button>`;
     }).join("");
-    box.querySelectorAll("button").forEach((b) => {
-      b.addEventListener("click", () => go(b.dataset.key, null));
-    });
+    box.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => go(b.dataset.key, null)));
   }
 
   function paintCrumbs() {
@@ -1407,20 +1447,16 @@
       walk = PARENTS[walk];
       chain.unshift(walk);
     }
-    const html = chain
+    const el = $("#crumbs");
+    el.innerHTML = chain
       .map((key, i) => {
-        const L = LEVELS[key];
         const last = i === chain.length - 1;
-        return `<button data-key="${key}" ${last ? 'aria-current="page"' : ""}>${esc(L.crumb)}</button>${
+        return `<button data-key="${key}" ${last ? 'aria-current="page"' : ""}>${esc(LEVELS[key].crumb)}</button>${
           last ? "" : '<span class="sep">›</span>'
         }`;
       })
       .join("");
-    const el = $("#crumbs");
-    el.innerHTML = html;
-    el.querySelectorAll("button").forEach((b) =>
-      b.addEventListener("click", () => go(b.dataset.key, null)),
-    );
+    el.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => go(b.dataset.key, null)));
   }
 
   function paintDetail() {
@@ -1429,55 +1465,58 @@
     let node = null;
     if (selected) {
       node = (level.nodes || []).find((n) => n.id === selected);
-      if (!node && level.sequence)
-        node = level.sequence.actors.find((a) => a.id === selected)
-          ? seqActorDetail(level.sequence.actors.find((a) => a.id === selected))
-          : null;
+      if (!node && level.sequence) {
+        const a = level.sequence.actors.find((x) => x.id === selected);
+        if (a) node = seqActorDetail(a);
+      }
     }
     if (!node) {
       el.innerHTML = `<p class="empty">Select any box to see what it is, what it does, and where it lives in the repo.</p>`;
       return;
     }
 
-    const tagClass =
-      node.kind === "external" ? "external" : node.state === "planned" ? "planned" : "";
-    const tagText =
+    const kc =
+      node.kind === "person"
+        ? "person"
+        : node.kind === "system"
+          ? "system"
+          : node.kind === "external"
+            ? "external"
+            : node.kind === "component"
+              ? "component"
+              : "";
+    const kt =
       node.state === "planned"
         ? "planned"
         : node.kind === "person"
           ? "person"
           : node.kind === "external"
-            ? "external"
-            : node.kind === "store"
-              ? "data store"
-              : node.kind === "focus"
-                ? "system"
-                : "component";
+            ? "external system"
+            : node.kind === "system"
+              ? "software system"
+              : node.kind === "store"
+                ? "data store"
+                : node.kind === "component"
+                  ? "component"
+                  : "container";
 
-    let html = `<span class="kind-tag ${tagClass}">${esc(tagText)}</span>
-      <h3>${esc((node.name || "").replace(/\n/g, " "))}</h3>
-      <p class="stereo">«${esc(node.stereo || "")}»</p>
-      <p class="blurb">${mdInline(node.blurb || "")}</p>`;
+    let html = `<span class="kind-tag ${kc}">${esc(kt)}</span>
+      <h3>${esc(node.name)}</h3>
+      <p class="stereo">[${esc(node.type || "")}]</p>
+      <p class="blurb">${mdInline([node.desc, node.blurb].filter(Boolean).join(" "))}</p>`;
 
     if (node.tech && node.tech.length) {
-      html += `<div class="meta"><h4>Tech</h4><ul>${node.tech
-        .map((t) => `<li class="chip">${esc(t)}</li>`)
-        .join("")}</ul></div>`;
-    }
-    if (node.sub && node.sub.length) {
-      html += `<div class="meta"><h4>Contains</h4><ul class="paths">${node.sub
+      html += `<div class="meta"><h4>Technology</h4><ul>${node.tech
         .map((t) => `<li class="chip">${esc(t)}</li>`)
         .join("")}</ul></div>`;
     }
     if (node.paths && node.paths.length) {
-      html += `<div class="meta"><h4>In the repo</h4><ul class="paths">${node.paths
+      html += `<div class="meta"><h4>In the repo</h4><ul class="stack">${node.paths
         .map((p) => `<li class="chip">${esc(p)}</li>`)
         .join("")}</ul></div>`;
     }
     if (node.drill) {
-      html += `<button class="drill-btn" data-drill="${node.drill}">Open ${esc(
-        LEVELS[node.drill].crumb,
-      )} →</button>`;
+      html += `<button class="drill-btn" data-drill="${node.drill}">Zoom into ${esc(LEVELS[node.drill].crumb)} →</button>`;
     }
     if (PARENTS[current]) {
       html += `<button class="up-btn" data-up="1">↑ Back to ${esc(LEVELS[PARENTS[current]].crumb)}</button>`;
@@ -1493,47 +1532,46 @@
   function seqActorDetail(a) {
     const map = {
       browser: {
-        name: "Browser", stereo: "the SPA, running client-side",
-        blurb: "Sends the PATCH with the httpOnly `stomp_session` cookie attached automatically (fetch uses credentials: “include”).",
+        name: "Browser", kind: "container", type: "the SPA, client-side",
+        desc: "Sends the PATCH with the httpOnly stomp_session cookie attached automatically (fetch uses credentials: “include”).",
       },
-      nginx: { name: "nginx", stereo: "web container", blurb: "Reverse-proxies /api to the api container on :3000." },
+      nginx: { name: "nginx", kind: "container", type: "web container", desc: "Reverse-proxies /api to the api container on :3000." },
       authctx: {
-        name: "authContext", stereo: "Fastify onRequest hook",
-        blurb: "Unsigns the cookie, resolves the session, sets `request.ctx`. 401s if there is no valid session and the route is not public.",
+        name: "authContext", kind: "component", type: "Fastify onRequest hook",
+        desc: "Unsigns the cookie, resolves the session, sets request.ctx. 401s if there is no valid session and the route is not public.",
         paths: ["apps/api/src/plugins/authContext.ts"],
       },
       route: {
-        name: "routes/index.ts", stereo: "HTTP layer",
-        blurb: "Zod-validates the :id param and the JSON body, then calls the service. Serializes the response against the response schema.",
+        name: "routes/index.ts", kind: "component", type: "HTTP layer",
+        desc: "Zod-validates the :id param and the JSON body, calls the service, serializes the response against the response schema.",
         paths: ["apps/api/src/routes/index.ts"],
       },
       svc: {
-        name: "services/todos.ts", stereo: "logic + authz",
-        blurb: "updateTodo(db, ctx, id, input): loads the todo, checks edit access, applies the patch, writes an activity_log row, returns the updated todo.",
+        name: "services/todos.ts", kind: "component", type: "logic + authorization",
+        desc: "updateTodo(db, ctx, id, input): loads the todo, checks edit access, applies the patch, writes an activity_log row, returns the updated todo.",
         paths: ["apps/api/src/services/todos.ts"],
       },
       access: {
-        name: "services/access.ts", stereo: "the visibility model",
-        blurb: "projectAccess(userId, projectId) returns { canView, canEdit } from the stronger of the workspace role and the project role. The service throws 403 if canEdit is false.",
+        name: "services/access.ts", kind: "component", type: "the visibility model",
+        desc: "projectAccess(userId, projectId) → { canView, canEdit } from the stronger of the workspace and project role. The service throws 403 if canEdit is false.",
         paths: ["apps/api/src/services/access.ts"],
       },
       db: {
-        name: "Drizzle / SQLite", stereo: "data access",
-        blurb: "Parameterized UPDATE and INSERT via Drizzle against the libSQL/SQLite file.",
+        name: "Drizzle / SQLite", kind: "store", type: "data access",
+        desc: "Parameterized UPDATE and INSERT via Drizzle against the libSQL / SQLite file.",
       },
     };
-    return map[a.id] || { name: a.name, stereo: "", blurb: "" };
+    return map[a.id] || { name: a.name, kind: "component", type: "", desc: "" };
   }
 
   /* ───────────────────────── nav ─────────────────────────── */
   function selectNode(id) {
     selected = id;
     syncHash();
-    // re-mark selection without a full repaint flicker
-    document.querySelectorAll("#canvas .node").forEach((g) => {
-      const raw = g.getAttribute("data-node") || "";
+    document.querySelectorAll("#canvas .node").forEach((gEl) => {
+      const raw = gEl.getAttribute("data-node") || "";
       const nid = raw.startsWith("seq:") ? raw.slice(4) : raw;
-      g.classList.toggle("is-selected", nid === id);
+      gEl.classList.toggle("is-selected", nid === id);
     });
     paintDetail();
   }
@@ -1541,10 +1579,8 @@
   function go(key, fromNode) {
     if (!LEVELS[key]) return;
     current = key;
-    // keep a selection only if a node with that id exists in the new level
     const L = LEVELS[key];
-    const exists = fromNode && (L.nodes || []).some((n) => n.id === fromNode);
-    selected = exists ? fromNode : null;
+    selected = fromNode && (L.nodes || []).some((n) => n.id === fromNode) ? fromNode : null;
     syncHash();
     paint();
     $("#canvas").scrollTo({ top: 0, left: 0 });
