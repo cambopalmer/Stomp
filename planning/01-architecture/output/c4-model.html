@@ -329,12 +329,21 @@
 
   .canvas {
     grid-area: canvas;
-    overflow: auto;
     background: var(--ground);
-    padding: 26px;
+    padding: 18px 22px 22px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
   }
   .stage {
-    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  .stage-head {
+    flex: none;
   }
   .stage-head h2 {
     margin: 0;
@@ -344,28 +353,74 @@
     text-wrap: balance;
   }
   .stage-head p {
-    margin: 3px 0 16px;
+    margin: 3px 0 12px;
     font-size: 13px;
     color: var(--muted);
     max-width: 66ch;
   }
   .diagram-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
     background: var(--canvas);
     border: 1px solid var(--hair);
     border-radius: 10px;
     box-shadow: var(--shadow);
-    padding: 18px;
-    max-width: 100%;
-    overflow: auto; /* big diagrams pan inside their card */
+    overflow: hidden;
+    touch-action: none;
+    cursor: grab;
+  }
+  .diagram-wrap.grabbing {
+    cursor: grabbing;
+  }
+  .pan-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    will-change: transform;
   }
   svg.diagram {
     display: block;
-    height: auto; /* width/height attributes give it its size; scale down only on small screens */
   }
-  @media (max-width: 640px) {
-    svg.diagram {
-      max-width: 100%;
-    }
+  .zoombar {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 9px;
+    background: var(--surface);
+    border: 1px solid var(--hair-strong);
+    box-shadow: var(--shadow);
+    font-size: 12px;
+  }
+  .zoombar button {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--ink-soft);
+    font: inherit;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .zoombar button:hover {
+    background: var(--indigo-soft);
+    color: var(--ink);
+  }
+  .zoombar .pct {
+    min-width: 42px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
   }
   @media (prefers-reduced-motion: no-preference) {
     .stage {
@@ -1409,17 +1464,144 @@
     return parts.join("");
   }
 
+  /* ───────────────────────── pan & zoom ──────────────────── */
+  const view = { scale: 1, tx: 0, ty: 0, w: 0, h: 0 };
+
+  function applyView() {
+    const pl = $("#pan");
+    if (pl) pl.style.transform = `translate(${view.tx}px, ${view.ty}px) scale(${view.scale})`;
+    const pct = $("#zoompct");
+    if (pct) pct.textContent = Math.round(view.scale * 100) + "%";
+  }
+
+  function fitView() {
+    const wrap = $("#dwrap");
+    if (!wrap || !view.w) return;
+    const pad = 26;
+    const s = Math.min(
+      (wrap.clientWidth - pad * 2) / view.w,
+      (wrap.clientHeight - pad * 2) / view.h,
+      1.4,
+    );
+    view.scale = Math.max(0.15, s);
+    view.tx = (wrap.clientWidth - view.w * view.scale) / 2;
+    view.ty = Math.max(pad, (wrap.clientHeight - view.h * view.scale) / 2);
+    applyView();
+  }
+
+  function zoomAt(factor, cx, cy) {
+    const wrap = $("#dwrap");
+    const r = wrap.getBoundingClientRect();
+    const px = cx - r.left;
+    const py = cy - r.top;
+    const next = Math.max(0.15, Math.min(3, view.scale * factor));
+    const k = next / view.scale;
+    view.tx = px - (px - view.tx) * k;
+    view.ty = py - (py - view.ty) * k;
+    view.scale = next;
+    applyView();
+  }
+
+  function wirePanZoom() {
+    const wrap = $("#dwrap");
+    if (!wrap) return;
+
+    wrap.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        zoomAt(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX, e.clientY);
+      },
+      { passive: false },
+    );
+
+    let dragging = false;
+    let moved = false;
+    let sx = 0;
+    let sy = 0;
+    let downX = 0;
+    let downY = 0;
+    wrap.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      dragging = true;
+      moved = false;
+      downX = e.clientX;
+      downY = e.clientY;
+      sx = e.clientX - view.tx;
+      sy = e.clientY - view.ty;
+      wrap.setPointerCapture(e.pointerId);
+      wrap.classList.add("grabbing");
+    });
+    wrap.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      if (!moved && Math.hypot(e.clientX - downX, e.clientY - downY) > 4) moved = true;
+      if (moved) {
+        view.tx = e.clientX - sx;
+        view.ty = e.clientY - sy;
+        applyView();
+      }
+    });
+    const end = () => {
+      dragging = false;
+      wrap.classList.remove("grabbing");
+    };
+    wrap.addEventListener("pointerup", end);
+    wrap.addEventListener("pointercancel", end);
+    // swallow the click that follows a drag so it doesn't select a node
+    wrap.addEventListener(
+      "click",
+      (e) => {
+        if (moved) {
+          e.stopPropagation();
+          moved = false;
+        }
+      },
+      true,
+    );
+    wrap.addEventListener("dblclick", () => fitView());
+
+    $("#zoomin").addEventListener("click", () => {
+      const r = wrap.getBoundingClientRect();
+      zoomAt(1.25, r.left + r.width / 2, r.top + r.height / 2);
+    });
+    $("#zoomout").addEventListener("click", () => {
+      const r = wrap.getBoundingClientRect();
+      zoomAt(1 / 1.25, r.left + r.width / 2, r.top + r.height / 2);
+    });
+    $("#zoomfit").addEventListener("click", () => fitView());
+    $("#zoompct").addEventListener("click", () => fitView());
+  }
+
+  let _resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(fitView, 150);
+  });
+
   /* ───────────────────────── paint ───────────────────────── */
   function paint() {
     const level = LEVELS[current];
     const canvas = $("#canvas");
+    const svg = level.sequence ? renderSequence(level) : renderC4(level);
+    const m = svg.match(/width="([\d.]+)" height="([\d.]+)"/);
+    view.w = m ? +m[1] : 1000;
+    view.h = m ? +m[2] : 700;
+
     canvas.innerHTML = `
       <div class="stage">
         <div class="stage-head">
           <h2>${esc(level.title)}</h2>
           <p>${mdInline(level.lead)}</p>
         </div>
-        <div class="diagram-wrap">${level.sequence ? renderSequence(level) : renderC4(level)}</div>
+        <div class="diagram-wrap" id="dwrap">
+          <div class="pan-layer" id="pan">${svg}</div>
+          <div class="zoombar">
+            <button id="zoomout" aria-label="Zoom out">−</button>
+            <span class="pct" id="zoompct" title="Fit to view">100%</span>
+            <button id="zoomin" aria-label="Zoom in">+</button>
+            <button id="zoomfit" aria-label="Fit to view" title="Fit to view">⊡</button>
+          </div>
+        </div>
       </div>`;
 
     canvas.querySelectorAll("[data-node]").forEach((gEl) => {
@@ -1433,6 +1615,9 @@
         }
       });
     });
+
+    wirePanZoom();
+    requestAnimationFrame(fitView);
 
     paintLadder();
     paintCrumbs();
