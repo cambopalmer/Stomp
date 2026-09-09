@@ -127,6 +127,28 @@ export function AppShell({ children }: { children: ReactNode }) {
           <HotSidebar />
         </aside>
       </div>
+
+      <footer className="border-t border-border py-4 text-xs text-muted">
+        <a
+          href="/architecture.html"
+          target="_blank"
+          rel="noreferrer"
+          className="hover:text-text hover:underline"
+        >
+          Architecture map ↗
+        </a>
+        <span className="mx-2" aria-hidden="true">
+          ·
+        </span>
+        <a
+          href="https://github.com/cambopalmer/Stomp"
+          target="_blank"
+          rel="noreferrer"
+          className="hover:text-text hover:underline"
+        >
+          Source
+        </a>
+      </footer>
     </div>
   );
 }

@@ -2,8 +2,9 @@
 
 The architecture at four zoom levels ([C4 model](https://c4model.com/): Context → Container
 → Component → Code). This file is the tracked, diffable source; the same model is also an
-**interactive click-through page** — open [`c4-model.html`](c4-model.html) (or the published
-artifact) to drill from any box into the level below it.
+**interactive click-through page** — [`c4-model.html`](c4-model.html) — with pan/zoom and
+drill-down. The web app serves a copy at **`/architecture.html`** (generated from this file by
+`apps/web` prebuild; linked from the app footer).
 
 Current as of **v0.4.0** (Phases 0–3 on `main`). Update this file and `c4-model.html` together
 when a top-level piece is added or its responsibility changes.

@@ -21,3 +21,6 @@ __pycache__/
 *.pyc
 
 apps/web/e2e/.auth/
+
+# generated from planning/01-architecture/output/c4-model.html by apps/web prebuild
+apps/web/public/architecture.html

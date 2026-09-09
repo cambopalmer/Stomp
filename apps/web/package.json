@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "gen:arch": "node scripts/gen-architecture-page.mjs",
+    "predev": "node scripts/gen-architecture-page.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/gen-architecture-page.mjs",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
