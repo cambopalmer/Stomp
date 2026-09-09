@@ -98,6 +98,7 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 
 ## Unscheduled backlog
 
+- [ ] 🔒 **Dependency upgrade sweep** — deferred from 2026-09-09 (drizzle-orm already bumped to 0.45.2): vitest/@vitest/mocker → 3.x/4.x (dev-only, needs config check), vite/esbuild (dev-only, fix is in vite 6+ major), `@opentelemetry/*` → 0.222 (huge jump; only a Prometheus-exporter crash, OTEL_MODE=off by default). Batch as one PR.
 - [ ] Recurring todos / events (`rrule` expansion)
 - [ ] Reference: progress %, topics/groups, spaced-repetition review queue
 - [ ] Notifications / daily digest email
