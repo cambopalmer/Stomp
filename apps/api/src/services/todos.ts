@@ -217,11 +217,23 @@ export async function updateTodo(db: Db, ctx: Ctx, id: string, input: UpdateTodo
 export async function deleteTodo(db: Db, ctx: Ctx, id: string): Promise<void> {
   const current = await loadVisible(db, ctx, id);
   await assertCanEdit(db, ctx, current);
-  // clean subtasks' polymorphic refs before the FK cascade removes them
-  const children = await db.select({ id: todos.id }).from(todos).where(eq(todos.parentTodoId, id));
-  for (const c of [...children, { id }]) await purgePolymorphicRefs(db, "todo", c.id);
-  await db.delete(todos).where(eq(todos.id, id)); // subtasks cascade via FK
+  await purgeTodoTree(db, id);
   await logActivity(db, ctx.userId, "todo", id, "deleted");
+}
+
+/**
+ * Delete a todo and every descendant. `parent_todo_id` has no FK (a
+ * self-reference would need a table rebuild), so nothing cascades — this
+ * walks the tree explicitly and cleans each row's polymorphic refs.
+ */
+export async function purgeTodoTree(db: Db, rootId: string): Promise<void> {
+  const ids = [rootId];
+  for (let i = 0; i < ids.length; i++) {
+    const kids = await db.select({ id: todos.id }).from(todos).where(eq(todos.parentTodoId, ids[i]!));
+    ids.push(...kids.map((k) => k.id));
+  }
+  for (const tid of ids) await purgePolymorphicRefs(db, "todo", tid);
+  await db.delete(todos).where(inArray(todos.id, ids));
 }
 
 async function assertCanEdit(db: Db, ctx: Ctx, todo: Todo) {

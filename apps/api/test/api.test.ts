@@ -164,6 +164,16 @@ describe("todos CRUD", () => {
     expect(after.projectId).toBeNull();
   });
 
+  it("deleting a todo deletes its subtasks (no orphans left behind)", async () => {
+    const mk = async (payload: Record<string, unknown>) =>
+      (await app.inject({ method: "POST", url: "/api/todos", payload })).json();
+    const parent = await mk({ title: "orphan-parent" });
+    const child = await mk({ title: "orphan-child", parentTodoId: parent.id });
+
+    expect((await app.inject({ method: "DELETE", url: `/api/todos/${parent.id}` })).statusCode).toBe(204);
+    expect((await get(`/api/todos/${child.id}`)).statusCode).toBe(404);
+  });
+
   it("dueFrom / dueTo window the list by due date (half-open, undated excluded)", async () => {
     const base = Date.UTC(2031, 0, 10);
     const mk = async (title: string, dueAt?: number) =>
