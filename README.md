@@ -17,7 +17,7 @@ infra           Dockerfiles, compose, nginx
 
 ## Local development
 
-Prereqs: Node 20+, pnpm 9 (`npm i -g pnpm`).
+Prereqs: Node 22.12+ (24 recommended — CI & Docker use 24), pnpm 9 (`npm i -g pnpm`).
 
 ```bash
 pnpm install

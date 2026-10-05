@@ -4,7 +4,7 @@
   "private": true,
   "description": "Short Term Outside Memory Planner — personal + shared hub for calendar, todos, incoming, and a learn library",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.12"
   },
   "packageManager": "pnpm@9.15.9",
   "scripts": {

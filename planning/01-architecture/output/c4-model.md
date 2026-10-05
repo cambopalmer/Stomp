@@ -53,7 +53,7 @@ C4Container
   Container_Boundary(stomp, "STOMP") {
     Container(spa, "Web SPA", "React 18, Vite, React Router, TanStack Query", "Runs in the browser; built to static assets")
     Container(nginx, "web (nginx)", "nginx :8080", "Serves the SPA, reverse-proxies /api, /sitemap.xml, /robots.txt")
-    Container(api, "API", "Fastify 5, Drizzle ORM, Node 20, :3000", "REST/JSON over /api; runs migrations on boot")
+    Container(api, "API", "Fastify 5, Drizzle ORM, Node 24, :3000", "REST/JSON over /api; runs migrations on boot")
     ContainerDb(db, "Database", "libSQL / SQLite file", "20 tables on a named volume; Turso-swappable via DATABASE_URL")
     Container(shared, "@stomp/shared", "Zod schemas (build-time)", "One definition of every request/response contract, imported by SPA and API")
   }

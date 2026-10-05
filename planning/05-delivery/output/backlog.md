@@ -101,7 +101,9 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 
 ## Unscheduled backlog
 
-- [ ] 🔒 **Dependency upgrade sweep** — deferred from 2026-09-09 (drizzle-orm already bumped to 0.45.2): vitest/@vitest/mocker → 3.x/4.x (dev-only, needs config check), vite/esbuild (dev-only, fix is in vite 6+ major), `@opentelemetry/*` → 0.222 (huge jump; only a Prometheus-exporter crash, OTEL_MODE=off by default). Batch as one PR.
+- [x] 🔒 **Dependency upgrade sweep** (2026-10-05) — `pnpm audit` 35 → 1: in-range updates (fastify 5.12.5), vitest 4.1, vite 7, plugin-react 5, react-router 7, OpenTelemetry sdk 0.222 / auto-instr 0.80, esbuild 0.25 (+ pnpm override for drizzle-kit's `@esbuild-kit`). Node 20 (EOL) → 24 in CI + Docker; `engines` ≥22.12. Also fixed CI, which had never passed setup (duplicate pnpm version).
+- [ ] 🔒 **braces** advisory (via tailwindcss 3 → chokidar) — no patched version exists; build-time only. Cleared by the Tailwind 4 migration below.
+- [ ] **Non-security major upgrades** — deliberately left out of the sweep; each is a migration, do one at a time: Tailwind 3 → 4 (CSS-first config; clears braces), React 18 → 19 (+ `@types/react*`), zod 3 → 4 (+ `fastify-type-provider-zod` 7, `@hookform/resolvers` 5 — move together), TypeScript 5 → 7, Vite 7 → 8 (Rolldown) + plugin-react 6, pino 10, `@fastify/cors` 11, `fastify-plugin` 6, dotenv 18, `@libsql/client` 0.18. Consider Renovate/Dependabot version-update PRs so this doesn't pile up again.
 - [ ] Recurring todos / events (`rrule` expansion)
 - [ ] Reference: progress %, topics/groups, spaced-repetition review queue
 - [ ] Notifications / daily digest email
