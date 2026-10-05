@@ -4,38 +4,38 @@ This is the seed content for the **"STOMP Buildout"** project (`projects` row) a
 
 Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open question.
 
-## Phase 0 (today)
+## Phase 0 — Foundation (shipped; ticked 2026-10-05)
 
-- [ ] `[0]` Scaffold pnpm monorepo (`apps/api`, `apps/web`, `packages/shared`)
-- [ ] `[0]` Drizzle schema for all 19 tables in `schema.md` (incl. workspaces, workspace_members, collaborator tables, notifications)
-- [ ] `[0]` Generate + wire first migration; run on API boot
-- [ ] `[0]` SQLite client: WAL, `busy_timeout`, `foreign_keys=ON`
-- [ ] `[0]` Zod DTO schemas in `packages/shared` (create/update/read per entity)
-- [ ] `[0]` `authContext` plugin (seeded user; `ctx.userId` only)
-- [ ] `[0]` Visibility helper (`repositories/visibility.ts`) — `accessibleProjectIds` + per-entity rules + effective-role helper + tests
-- [ ] `[0]` Subtask service rules: inherit workspace+project, reject overrides, cascade on re-scope
-- [ ] `[0]` CRUD: todos (incl. subtasks)
-- [ ] `[0]` CRUD: projects + project_members
-- [ ] `[0]` CRUD: workspaces + workspace_members (API only; no UI)
-- [ ] `[0]` CRUD: events + attendees
-- [ ] `[0]` CRUD: references
-- [ ] `[0]` CRUD: incoming_items + `POST /:id/triage`
-- [ ] `[0]` CRUD: tags + taggings
-- [ ] `[0]` `GET /api/home/summary` + `GET /api/home/hot`
-- [ ] `[0]` `GET /api/sitemap.xml` dynamic + `robots.txt`
-- [ ] `[0]` Seed script (2 users, shared workspace + project, tags, "STOMP Buildout" project, demo items)
-- [ ] `[0]` Vite + React + Router + TanStack Query + Tailwind + shadcn/ui setup
-- [ ] `[0]` MASTER.md tokens → `index.css` (light+dark CSS vars); Plus Jakarta Sans; Tailwind/shadcn wired to tokens
-- [ ] `[0]` `AppShell`: banner (+ "Create account" stub link) + tile grid + hot sidebar
-- [ ] `[0]` Home page wired to `/api/home/*`
-- [ ] `[0]` Landing pages: /calendar, /todos, /incoming, /learn, /projects (read real data)
-- [ ] `[0]` Todo create/edit/delete form (RHF + Zod)
-- [ ] `[0]` Project create/edit form
-- [ ] `[0]` QuickAdd dialog → incoming
-- [ ] `[0]` Dockerfiles + docker-compose + nginx.conf
-- [ ] `[0]` GitHub Actions: typecheck, test, build images
-- [ ] `[0]` Root README + `.env.example`
-- [ ] `[0]` Vitest setup + smoke tests for each CRUD route
+- [x] `[0]` Scaffold pnpm monorepo (`apps/api`, `apps/web`, `packages/shared`)
+- [x] `[0]` Drizzle schema for all 19 tables in `schema.md` (incl. workspaces, workspace_members, collaborator tables, notifications)
+- [x] `[0]` Generate + wire first migration; run on API boot
+- [ ] `[0]` SQLite client: WAL, `busy_timeout`, `foreign_keys=ON` — **only `foreign_keys=ON` landed** (`apps/api/src/db/client.ts`); WAL + `busy_timeout` still to do
+- [x] `[0]` Zod DTO schemas in `packages/shared` (create/update/read per entity)
+- [x] `[0]` `authContext` plugin (seeded user; `ctx.userId` only)
+- [x] `[0]` Visibility helper (landed as `services/access.ts`) — `accessibleProjectIds` + per-entity rules + effective-role helper + tests
+- [x] `[0]` Subtask service rules: inherit workspace+project, reject overrides, cascade on re-scope
+- [x] `[0]` CRUD: todos (incl. subtasks)
+- [x] `[0]` CRUD: projects + project_members
+- [x] `[0]` CRUD: workspaces + workspace_members (API only; no UI)
+- [x] `[0]` CRUD: events + attendees
+- [x] `[0]` CRUD: references
+- [x] `[0]` CRUD: incoming_items + `POST /:id/triage`
+- [x] `[0]` CRUD: tags + taggings
+- [x] `[0]` `GET /api/home/summary` + `GET /api/home/hot`
+- [x] `[0]` `GET /api/sitemap.xml` dynamic + `robots.txt`
+- [x] `[0]` Seed script (2 users, shared workspace + project, tags, "STOMP Buildout" project, demo items)
+- [x] `[0]` Vite + React + Router + TanStack Query + Tailwind setup (no shadcn/ui — hand-rolled `components/ui.tsx`)
+- [x] `[0]` MASTER.md tokens → `index.css` (light+dark CSS vars); Plus Jakarta Sans; Tailwind/shadcn wired to tokens
+- [x] `[0]` `AppShell`: banner (+ "Create account" stub link) + tile grid + hot sidebar
+- [x] `[0]` Home page wired to `/api/home/*`
+- [x] `[0]` Landing pages: /calendar, /todos, /incoming, /learn, /projects (read real data)
+- [x] `[0]` Todo create/edit/delete form (RHF + Zod)
+- [x] `[0]` Project create/edit form
+- [x] `[0]` QuickAdd dialog → incoming
+- [x] `[0]` Dockerfiles + docker-compose + nginx.conf
+- [x] `[0]` GitHub Actions: typecheck, test, build images
+- [x] `[0]` Root README + `.env.example`
+- [x] `[0]` Vitest setup + smoke tests for each CRUD route
 
 ## Phase 1 — Fill the UI
 

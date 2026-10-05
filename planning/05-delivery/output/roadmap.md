@@ -2,7 +2,7 @@
 
 Phases are sequential but each ends at a usable state. Schema is designed complete in Phase 0 so later phases add columns/tables, never destructive migrations.
 
-## Phase 0 — Foundation (Section A resolved; ready on the owner's go)
+## Phase 0 — Foundation ✅ shipped
 
 **Goal:** `docker compose up` → a working hub with real persistence and CRUD.
 
