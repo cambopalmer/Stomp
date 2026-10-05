@@ -1,4 +1,4 @@
-import type { CalendarEvent } from "@stomp/shared";
+import type { CalendarEvent, Todo } from "@stomp/shared";
 
 export const DAY_MS = 86_400_000;
 export const WEEK_STARTS_ON = 0; // 0 = Sunday
@@ -72,23 +72,56 @@ export function eventsOnDay(events: CalendarEvent[], day: Date): CalendarEvent[]
     .sort((a, b) => a.startsAt - b.startsAt || a.endsAt - b.endsAt);
 }
 
+/* ── todo helpers ───────────────────────────────────────────── */
+
+/** What the calendar shows: events, todos, or both. `?show=` in the URL. */
+export type CalendarShow = "all" | "events" | "todos";
+
+export const parseShow = (s: string | null): CalendarShow =>
+  s === "events" || s === "todos" ? s : "all";
+
+/** A todo belongs on the calendar when it has a due date and is still open. */
+export const isCalendarTodo = (t: Todo): t is Todo & { dueAt: number } =>
+  t.dueAt != null && t.status !== "done" && t.status !== "cancelled";
+
+/** Due before today (by local day), and still open. */
+export const isOverdue = (t: Todo, now: number = Date.now()): boolean =>
+  isCalendarTodo(t) && t.dueAt < startOfDay(now).getTime();
+
+const PRIORITY_RANK: Record<Todo["priority"], number> = { urgent: 0, high: 1, medium: 2, low: 3, none: 4 };
+
+/** Open todos due on `day` (all-day items), priority-then-title sorted. */
+export function todosOnDay(todos: Todo[], day: Date): Todo[] {
+  const from = startOfDay(day).getTime();
+  const to = from + DAY_MS;
+  return todos
+    .filter((t) => isCalendarTodo(t) && t.dueAt >= from && t.dueAt < to)
+    .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.title.localeCompare(b.title));
+}
+
 export interface DayGroup {
   day: number; // start-of-day epoch ms
   events: CalendarEvent[];
+  todos: Todo[];
 }
 
-/** Group events by their start day, chronological, days-with-events only. */
-export function groupByDay(events: CalendarEvent[]): DayGroup[] {
-  const map = new Map<number, CalendarEvent[]>();
-  for (const e of [...events].sort((a, b) => a.startsAt - b.startsAt)) {
-    const key = startOfDay(e.startsAt).getTime();
-    const bucket = map.get(key);
-    if (bucket) bucket.push(e);
-    else map.set(key, [e]);
-  }
-  return [...map.entries()]
-    .sort(([a], [b]) => a - b)
-    .map(([day, dayEvents]) => ({ day, events: dayEvents }));
+/**
+ * Group events (by start day) and open todos (by due day) for the list view.
+ * Chronological, days-with-something only; within a day todos come first, like all-day items.
+ */
+export function groupByDay(events: CalendarEvent[], todos: Todo[] = []): DayGroup[] {
+  const map = new Map<number, DayGroup>();
+  const bucket = (ms: number) => {
+    const day = startOfDay(ms).getTime();
+    let g = map.get(day);
+    if (!g) map.set(day, (g = { day, events: [], todos: [] }));
+    return g;
+  };
+  for (const e of [...events].sort((a, b) => a.startsAt - b.startsAt)) bucket(e.startsAt).events.push(e);
+  for (const t of todos) if (isCalendarTodo(t)) bucket(t.dueAt).todos.push(t);
+  const groups = [...map.values()].sort((a, b) => a.day - b.day);
+  for (const g of groups) g.todos = todosOnDay(g.todos, new Date(g.day));
+  return groups;
 }
 
 /* ── week time-grid layout ──────────────────────────────────── */

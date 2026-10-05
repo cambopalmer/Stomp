@@ -41,6 +41,8 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 
 - [x] `[1]` Event detail/edit (`/calendar/:id` + `EventForm`)
 - [x] `[1]` Calendar views — month grid, week time-grid, list-by-day; `?view=` + `?date=` in the URL, prev/today/next, click-a-day to add (2026-09-09)
+- [x] `[1]` Todos on the calendar — open todos with a deadline shown as all-day items in all three views (overdue marked), **Show** filter All / Events / Todos (`?show=`); API `GET /todos?dueFrom=&dueTo=`; web unit tests (vitest) for the calendar helpers (2026-10-05)
+- [ ] `[1]` Calendar: also show todos by "Plan for" (`scheduled_for`)? — decide whether it belongs on the calendar and how it differs visually from a deadline
 - [x] `[1]` Reference detail/edit (`/learn/:id` + `ReferenceForm`)
 - [x] `[1]` Incoming full triage UI (inline → Todo / → Event forms + Dismiss)
 - [x] `[1]` Todo detail (`/todos/:id`) + subtasks UI

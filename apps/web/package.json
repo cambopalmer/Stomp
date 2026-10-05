@@ -11,7 +11,7 @@
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo \"(web unit tests: none yet)\"",
+    "test": "vitest run --dir src",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "lint": "echo \"(no lint configured)\""
@@ -36,6 +36,7 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^2.1.4"
   }
 }

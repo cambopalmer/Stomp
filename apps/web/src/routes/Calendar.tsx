@@ -6,15 +6,27 @@ import { MonthView } from "../components/calendar/MonthView.js";
 import { WeekView } from "../components/calendar/WeekView.js";
 import { EventForm } from "../components/EventForm.js";
 import { Button, Card, ErrorState, Spinner } from "../components/ui.js";
-import { addDays, addMonths, monthGridDays, weekDays } from "../lib/calendar.js";
+import {
+  addDays,
+  addMonths,
+  type CalendarShow,
+  monthGridDays,
+  parseShow,
+  weekDays,
+} from "../lib/calendar.js";
 import { fmtMonthYear, fmtWeekRange } from "../lib/format.js";
-import { useEvents } from "../lib/queries.js";
+import { useDueTodos, useEvents } from "../lib/queries.js";
 
 type View = "month" | "week" | "list";
 const VIEWS: { id: View; label: string }[] = [
   { id: "month", label: "Month" },
   { id: "week", label: "Week" },
   { id: "list", label: "List" },
+];
+const SHOWS: { id: CalendarShow; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "events", label: "Events" },
+  { id: "todos", label: "Todos" },
 ];
 
 const toIso = (d: Date) =>
@@ -28,11 +40,14 @@ export function Calendar() {
   const [params, setParams] = useSearchParams();
   const view = (VIEWS.find((v) => v.id === params.get("view"))?.id ?? "month") as View;
   const anchor = fromIso(params.get("date"));
+  const show = parseShow(params.get("show"));
 
   const [showForm, setShowForm] = useState(false);
   const [formDate, setFormDate] = useState<string | undefined>(undefined);
 
   const setView = (v: View) => setParams((p) => (p.set("view", v), p), { replace: true });
+  const setShow = (s: CalendarShow) =>
+    setParams((p) => (s === "all" ? p.delete("show") : p.set("show", s), p), { replace: true });
   const setAnchor = (d: Date) => setParams((p) => (p.set("date", toIso(d)), p), { replace: true });
 
   const step = (dir: 1 | -1) =>
@@ -45,7 +60,11 @@ export function Calendar() {
     return { from: first.getTime(), to: addDays(last, 1).getTime() };
   }, [view, anchor]);
 
-  const events = useEvents(range);
+  const events = useEvents(range, show !== "todos");
+  const todos = useDueTodos(range, show !== "events");
+  const eventList = show === "todos" ? [] : (events.data ?? []);
+  const todoList = show === "events" ? [] : (todos.data ?? []);
+  const failed = events.isError ? events : todos.isError ? todos : null;
 
   const title = useMemo(() => {
     if (view === "week") {
@@ -93,7 +112,26 @@ export function Calendar() {
           <span className="ml-1 text-sm font-medium text-muted tabular-nums">{title}</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            role="radiogroup"
+            aria-label="Show"
+            className="flex rounded-md border border-border p-0.5 text-sm"
+          >
+            {SHOWS.map((s) => (
+              <button
+                key={s.id}
+                role="radio"
+                aria-checked={show === s.id}
+                onClick={() => setShow(s.id)}
+                className={`rounded px-2.5 py-1 font-medium ${
+                  show === s.id ? "bg-surface-2 text-text" : "text-muted hover:text-text"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
           <div
             role="tablist"
             aria-label="Calendar view"
@@ -129,21 +167,22 @@ export function Calendar() {
         </Card>
       )}
 
-      {events.isLoading ? (
+      {events.isLoading || todos.isLoading ? (
         <Spinner />
-      ) : events.isError ? (
-        <ErrorState error={events.error} retry={events.refetch} />
+      ) : failed ? (
+        <ErrorState error={failed.error} retry={failed.refetch} />
       ) : view === "month" ? (
         <MonthView
           anchor={anchor}
-          events={events.data ?? []}
+          events={eventList}
+          todos={todoList}
           onPickDate={openForm}
           onOpenDay={openDayInWeek}
         />
       ) : view === "week" ? (
-        <WeekView anchor={anchor} events={events.data ?? []} />
+        <WeekView anchor={anchor} events={eventList} todos={todoList} />
       ) : (
-        <AgendaView events={events.data ?? []} />
+        <AgendaView events={eventList} todos={todoList} />
       )}
     </div>
   );

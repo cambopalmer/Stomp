@@ -6,7 +6,7 @@
 
 ```
 /                        Home — banner, tiles, hot sidebar
-/calendar                Calendar landing — today + week, event list
+/calendar                Calendar landing — month / week / list (?view= ?date= ?show=); events + due todos
 /calendar/:eventId       Event detail / edit
 /todos                   Todos landing — lists, filters (status, priority, tag, project)
 /todos/:todoId           Todo detail / edit (subtasks inline)
@@ -39,7 +39,7 @@ Route patterns live in `apps/web/src/lib/routeManifest.ts`, which the sitemap bu
 | Screen | Purpose | Primary data |
 |---|---|---|
 | Home | "What needs me now?" + navigation | tile counts per section, hot sidebar payload |
-| Calendar landing | today's schedule + week view + upcoming | `events` in range, visible to user |
+| Calendar landing | month grid / week time-grid / list-by-day, events and todo deadlines together | `events` in range + open `todos` with `due_at` in range, visible to user |
 | Event detail | view/edit one event, attendees | one `event` + `event_attendees` |
 | Todos landing | work the list | `todos` (visible), grouped by Today / Overdue / Upcoming / No date; filters |
 | Todo detail | edit, subtasks, assignment, project | one `todo` + children + `activity_log` |
@@ -84,7 +84,12 @@ Route patterns live in `apps/web/src/lib/routeManifest.ts`, which the sitemap bu
 
 ## 4. Per-section landing pages
 
-**Calendar** — date-strip header (prev/today/next), Today column (hour grid), "Later this week" list, "+ event". Read-only external events (later) visually marked.
+**Calendar** — header: prev / Today / next + period title; **Show** filter (All · Events · Todos); view switch (Month · Week · List); "+ New event". All three in the URL (`?view=month|week|list`, `?date=YYYY-MM-DD`, `?show=events|todos`; `all` is the default and omitted) so a period is linkable.
+- **Month** — 6-week grid, chips per day (events first, then todos), "+N more" → that week; click a day number to add an event.
+- **Week** — hour time-grid with overlap columns and a "now" line; due todos and all-day events sit in the all-day strip above the grid.
+- **List** — chronological, grouped by day; within a day, todos ("Due" / "Overdue") then events.
+- **Todos on the calendar** — an open todo (not done / cancelled) with a **Deadline** (`due_at`) appears as an all-day item on that day and links to `/todos/:id`. Outlined chip with a checkbox glyph so it reads as a todo by shape, not colour; overdue turns danger. "Plan for" (`scheduled_for`) is not shown on the calendar yet. Fetched via `GET /todos?dueFrom=&dueTo=` (half-open window, epoch ms).
+- Read-only external events (later) visually marked.
 
 **Todos** — segmented groups: `Overdue`, `Today` (`scheduled_for` or `due_at` today), `Upcoming`, `Someday` (no date), `Done` (collapsed). Filter bar: status, priority, project, tag, assignee. Inline complete checkbox, inline quick-add per group.
 

@@ -45,6 +45,8 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
           projectId: z.string().uuid().optional(),
           topLevel: z.coerce.boolean().optional(),
           workspaceId: z.string().optional(),
+          dueFrom: z.coerce.number().int().optional(),
+          dueTo: z.coerce.number().int().optional(),
         }),
       },
     },
@@ -54,6 +56,8 @@ export const routes: FastifyPluginAsyncZod = async (app) => {
         projectId: req.query.projectId,
         parentTodoId: req.query.topLevel ? null : undefined,
         workspaceId: parseWs(req.query.workspaceId),
+        dueFrom: req.query.dueFrom,
+        dueTo: req.query.dueTo,
       }),
   );
   app.post("/todos", { schema: { body: S.createTodo } }, async (req, reply) => {

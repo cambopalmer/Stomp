@@ -69,6 +69,16 @@ export const useTodos = (query = "?topLevel=true") => {
   return useQuery({ queryKey: ["todos", "list", path], queryFn: () => api.get<Todo[]>(path) });
 };
 
+/** Todos due inside [from, to) — the calendar's todo layer. Shares the "todos" key so edits refresh it. */
+export const useDueTodos = (range: { from: number; to: number }, enabled = true) => {
+  const path = useWsPath(`/todos?dueFrom=${range.from}&dueTo=${range.to}`);
+  return useQuery({
+    queryKey: ["todos", "list", path],
+    queryFn: () => api.get<Todo[]>(path),
+    enabled,
+  });
+};
+
 export const useTodo = (id: string | undefined) =>
   useQuery({
     queryKey: ["todos", "one", id],
@@ -88,10 +98,14 @@ export const useProject = (id: string | undefined) =>
     enabled: !!id,
   });
 
-export const useEvents = (range?: { from: number; to: number }) => {
+export const useEvents = (range?: { from: number; to: number }, enabled = true) => {
   const base = range ? `/events?from=${range.from}&to=${range.to}` : "/events";
   const path = useWsPath(base);
-  return useQuery({ queryKey: ["events", "list", path], queryFn: () => api.get<CalendarEvent[]>(path) });
+  return useQuery({
+    queryKey: ["events", "list", path],
+    queryFn: () => api.get<CalendarEvent[]>(path),
+    enabled,
+  });
 };
 
 export const useEvent = (id: string | undefined) =>

@@ -153,6 +153,28 @@ describe("todos CRUD", () => {
     const after = (await get(`/api/todos/${child.id}`)).json();
     expect(after.projectId).toBeNull();
   });
+
+  it("dueFrom / dueTo window the list by due date (half-open, undated excluded)", async () => {
+    const base = Date.UTC(2031, 0, 10);
+    const mk = async (title: string, dueAt?: number) =>
+      (await app.inject({ method: "POST", url: "/api/todos", payload: { title, dueAt } })).json();
+    const before = await mk("due-before", base - 1);
+    const atStart = await mk("due-at-start", base);
+    const inside = await mk("due-inside", base + 3 * 86_400_000);
+    const atEnd = await mk("due-at-end", base + 7 * 86_400_000);
+    const undated = await mk("no-due");
+
+    const r = await get(`/api/todos?dueFrom=${base}&dueTo=${base + 7 * 86_400_000}`);
+    expect(r.statusCode).toBe(200);
+    const ids = r.json().map((t: { id: string }) => t.id);
+    expect(ids).toContain(atStart.id);
+    expect(ids).toContain(inside.id);
+    expect(ids).not.toContain(before.id);
+    expect(ids).not.toContain(atEnd.id);
+    expect(ids).not.toContain(undated.id);
+
+    expect((await get("/api/todos?dueFrom=nope")).statusCode).toBe(400);
+  });
 });
 
 describe("assignment edge cases", () => {

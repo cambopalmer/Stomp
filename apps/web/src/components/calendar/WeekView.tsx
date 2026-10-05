@@ -1,4 +1,4 @@
-import type { CalendarEvent } from "@stomp/shared";
+import type { CalendarEvent, Todo } from "@stomp/shared";
 import { useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -8,20 +8,32 @@ import {
   layoutDay,
   sameDay,
   startOfDay,
+  todosOnDay,
   weekDays,
 } from "../../lib/calendar.js";
 import { fmtHour, fmtTimeRange, fmtWeekdayShort } from "../../lib/format.js";
+import { TodoChip } from "./TodoChip.js";
 
 const HOUR_PX = 44;
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const GRID_H = HOUR_PX * 24;
 
-export function WeekView({ anchor, events }: { anchor: Date; events: CalendarEvent[] }) {
+export function WeekView({
+  anchor,
+  events,
+  todos,
+}: {
+  anchor: Date;
+  events: CalendarEvent[];
+  todos: Todo[];
+}) {
   const days = useMemo(() => weekDays(anchor), [anchor]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const dayEvents = days.map((d) => eventsOnDay(events, d));
-  const hasAllDay = dayEvents.some((list) => list.some((e) => e.allDay));
+  const dayTodos = days.map((d) => todosOnDay(todos, d));
+  const hasAllDay =
+    dayTodos.some((list) => list.length > 0) || dayEvents.some((list) => list.some((e) => e.allDay));
 
   useEffect(() => {
     // open near the working day
@@ -51,7 +63,7 @@ export function WeekView({ anchor, events }: { anchor: Date; events: CalendarEve
         ))}
       </div>
 
-      {/* all-day strip (defensive: EventForm doesn't create these yet) */}
+      {/* all-day strip: due todos + all-day events (EventForm doesn't create the latter yet) */}
       {hasAllDay && (
         <div
           className="grid border-b border-border bg-surface-2/40"
@@ -60,6 +72,9 @@ export function WeekView({ anchor, events }: { anchor: Date; events: CalendarEve
           <div className="px-1 py-1 text-right text-[10px] uppercase text-muted">all day</div>
           {days.map((d, i) => (
             <div key={d.getTime()} className="flex flex-col gap-0.5 border-l border-border p-1">
+              {(dayTodos[i] ?? []).map((t) => (
+                <TodoChip key={t.id} todo={t} />
+              ))}
               {(dayEvents[i] ?? [])
                 .filter((e) => e.allDay)
                 .map((e) => (

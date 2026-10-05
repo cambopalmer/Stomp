@@ -46,6 +46,8 @@ Personal organization is smeared across a calendar app, a to-do app, an email in
 ### Calendar
 - As a user, I can add / edit / delete an event and it persists.
 - As a user, I can see today's schedule and the rest of the week at a glance.
+- As a user, I can switch the calendar between a month grid, a week time-grid, and a day-by-day list, and link to any period.
+- As a user, I can see my open todos on the calendar on their deadline day, and filter the calendar to just events or just todos.
 - *(Later)* As a user, I can see events pulled from Google Calendar, marked read-only.
 
 ### Todos
@@ -96,6 +98,7 @@ Personal organization is smeared across a calendar app, a to-do app, an email in
 | FR-12 | Real authentication (Google OAuth and/or email+password) + signup/onboarding | 3 |
 | FR-13 | Connect Google account; Gmail read-only pull → incoming; Calendar one-way import | 4 |
 | FR-14 | Two-way calendar sync; send email; send calendar invites | 5 |
+| FR-15 | Calendar month / week / list views (`?view=`, `?date=`); open todos with a deadline (`due_at`) shown as all-day items on that day; Show filter all / events / todos (`?show=`) | 1 |
 
 ## 8. Non-functional requirements
 

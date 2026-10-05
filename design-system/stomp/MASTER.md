@@ -313,7 +313,7 @@ The generated GSAP Scroll-Reveal snippet is for **marketing/onboarding pages onl
 | Hot rail | Buckets = icon + text label + color. Sticky; must not cover focused content. Announce count changes politely without moving focus. Order: Overdue → Urgent → Due today → High → Incoming(unread) → Today's events. Empty buckets hidden; "All clear" state. |
 | Todos list | Rows ≥44px; checkbox a real target with ≥8px spacing; group headers `h2`; inline quick-add validates on blur. Priority + status shown with icon+label. |
 | Forms (todo/project/event/reference) | Full O6 form rules. Delete separated + Undo toast. |
-| Calendar | Tabular time labels; today's column marked by more than color; grid scrolls inside its own `overflow-x:auto` container on mobile. |
+| Calendar | Tabular time labels; today's column marked by more than color; grid scrolls inside its own `overflow-x:auto` container on mobile. Events = filled primary chip; todos = outlined chip + checkbox glyph + sr-only "Todo:" prefix (kind distinguishable without color); overdue todo = danger text/border. |
 | Navigation | Persistent left sidebar (desktop) / bottom nav ≤5 (mobile). Active item = color + weight + left indicator. Breadcrumbs for project → item depth. |
 | Project progress (Phase 1) | Bar/progress only; visible legend + screen-reader text summary; not color-alone. |
 

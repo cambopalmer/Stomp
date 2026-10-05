@@ -1,5 +1,5 @@
 import type { CreateTodo, Todo, UpdateTodo } from "@stomp/shared";
-import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { todoCollaborators, todos, workspaceMembers } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
@@ -56,6 +56,9 @@ export interface ListTodoFilter {
   parentTodoId?: string | null;
   /** undefined = any workspace; null = personal only; string = that workspace. */
   workspaceId?: string | null;
+  /** due-date window, epoch ms: dueAt >= dueFrom and dueAt < dueTo. Either bound implies dueAt is set. */
+  dueFrom?: number;
+  dueTo?: number;
 }
 
 export async function listTodos(db: Db, ctx: Ctx, filter: ListTodoFilter = {}): Promise<Todo[]> {
@@ -70,6 +73,8 @@ export async function listTodos(db: Db, ctx: Ctx, filter: ListTodoFilter = {}): 
   else if (filter.parentTodoId) conds.push(eq(todos.parentTodoId, filter.parentTodoId));
   if (filter.workspaceId === null) conds.push(isNull(todos.workspaceId));
   else if (filter.workspaceId) conds.push(eq(todos.workspaceId, filter.workspaceId));
+  if (filter.dueFrom != null) conds.push(gte(todos.dueAt, filter.dueFrom));
+  if (filter.dueTo != null) conds.push(lt(todos.dueAt, filter.dueTo));
 
   return db
     .select()

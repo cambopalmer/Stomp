@@ -1,7 +1,8 @@
-import type { CalendarEvent } from "@stomp/shared";
-import { eventsOnDay, isToday, monthGridDays } from "../../lib/calendar.js";
+import type { CalendarEvent, Todo } from "@stomp/shared";
+import { eventsOnDay, isToday, monthGridDays, todosOnDay } from "../../lib/calendar.js";
 import { fmtWeekdayShort } from "../../lib/format.js";
 import { EventChip } from "./EventChip.js";
+import { TodoChip } from "./TodoChip.js";
 
 const WEEKDAY_LABELS = Array.from({ length: 7 }, (_, i) =>
   fmtWeekdayShort(new Date(2024, 0, 7 + i)), // 2024-01-07 is a Sunday
@@ -11,11 +12,13 @@ const MAX_CHIPS = 3;
 export function MonthView({
   anchor,
   events,
+  todos,
   onPickDate,
   onOpenDay,
 }: {
   anchor: Date;
   events: CalendarEvent[];
+  todos: Todo[];
   onPickDate: (isoDate: string) => void;
   onOpenDay: (day: Date) => void;
 }) {
@@ -35,7 +38,11 @@ export function MonthView({
       <div className="grid grid-cols-7">
         {days.map((day) => {
           const inMonth = day.getMonth() === month;
-          const dayEvents = eventsOnDay(events, day);
+          // events lead: a fixed commitment shouldn't be pushed under "+N more" by deadlines
+          const items = [
+            ...eventsOnDay(events, day).map((e) => <EventChip key={e.id} event={e} />),
+            ...todosOnDay(todos, day).map((t) => <TodoChip key={t.id} todo={t} />),
+          ];
           const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
 
           return (
@@ -61,16 +68,14 @@ export function MonthView({
               </button>
 
               <div className="flex flex-col gap-0.5">
-                {dayEvents.slice(0, MAX_CHIPS).map((e) => (
-                  <EventChip key={e.id} event={e} />
-                ))}
-                {dayEvents.length > MAX_CHIPS && (
+                {items.slice(0, MAX_CHIPS)}
+                {items.length > MAX_CHIPS && (
                   <button
                     type="button"
                     onClick={() => onOpenDay(day)}
                     className="px-1 text-left text-xs text-muted hover:text-text"
                   >
-                    +{dayEvents.length - MAX_CHIPS} more
+                    +{items.length - MAX_CHIPS} more
                   </button>
                 )}
               </div>
