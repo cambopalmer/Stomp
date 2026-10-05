@@ -1,6 +1,6 @@
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useWorkspaces } from "../lib/queries.js";
 import { useWorkspace } from "../lib/workspace.js";
 

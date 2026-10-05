@@ -1,6 +1,6 @@
 import type { CalendarEvent, Todo } from "@stomp/shared";
 import { Square } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { groupByDay, isOverdue, isToday } from "../../lib/calendar.js";
 import { fmtAgendaDay, fmtTimeRange } from "../../lib/format.js";
 import { EmptyState } from "../ui.js";

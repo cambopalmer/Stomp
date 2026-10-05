@@ -1,7 +1,7 @@
 import { referenceStatus } from "@stomp/shared";
 import { Star } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { ReferenceForm } from "../components/ReferenceForm.js";
 import { Button, Card, EmptyState, ErrorState, Select, Spinner } from "../components/ui.js";
 import { useReferences } from "../lib/queries.js";

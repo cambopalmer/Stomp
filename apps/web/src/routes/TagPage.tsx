@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router";
 import { EmptyState, ErrorState, Spinner } from "../components/ui.js";
 import { fmtDateTime } from "../lib/format.js";
 import { useTagItems, useTags } from "../lib/queries.js";

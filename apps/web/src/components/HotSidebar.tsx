@@ -1,5 +1,5 @@
 import { AlertTriangle, CalendarClock, Flame, Inbox } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { fmtTime, relativeDay } from "../lib/format.js";
 import { useHotList } from "../lib/queries.js";
 

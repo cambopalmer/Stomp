@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { credentials, signupInput } from "@stomp/shared";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router";
 import type { z } from "zod";
 import { Button, Card, Field, Input } from "../components/ui.js";
 import { useAuth } from "../lib/auth.js";

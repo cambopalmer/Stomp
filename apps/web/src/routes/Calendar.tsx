@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { AgendaView } from "../components/calendar/AgendaView.js";
 import { MonthView } from "../components/calendar/MonthView.js";
 import { WeekView } from "../components/calendar/WeekView.js";

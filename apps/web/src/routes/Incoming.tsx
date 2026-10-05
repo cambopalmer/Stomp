@@ -1,6 +1,6 @@
 import type { IncomingItem } from "@stomp/shared";
 import { CalendarPlus, Check, ListPlus, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { type FormEvent, useState } from "react";
 import { Button, Card, EmptyState, ErrorState, Field, Input, Spinner, Textarea } from "../components/ui.js";
 import { dateInputToMs } from "../lib/format.js";

@@ -1,6 +1,6 @@
 import { ArrowLeft, ExternalLink, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router";
 import { ReferenceForm } from "../components/ReferenceForm.js";
 import { ShareEditor } from "../components/ShareEditor.js";
 import { Button, Card, ErrorState, Spinner } from "../components/ui.js";

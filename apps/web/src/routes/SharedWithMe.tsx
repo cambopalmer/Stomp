@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { EmptyState, ErrorState, Spinner } from "../components/ui.js";
 import { fmtDateTime } from "../lib/format.js";
 import { useSharedWithMe } from "../lib/queries.js";

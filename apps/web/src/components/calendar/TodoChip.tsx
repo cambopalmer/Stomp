@@ -1,6 +1,6 @@
 import type { Todo } from "@stomp/shared";
 import { Square } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { isOverdue } from "../../lib/calendar.js";
 
 /**

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router";
 import { AppShell } from "./components/AppShell.js";
 import { Spinner } from "./components/ui.js";
 import { useAuth } from "./lib/auth.js";

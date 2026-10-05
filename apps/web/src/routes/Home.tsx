@@ -1,5 +1,5 @@
 import { CalendarDays, GraduationCap, Inbox, ListTodo, FolderKanban } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Card, ErrorState, Spinner } from "../components/ui.js";
 import { useHomeSummary, useProjects } from "../lib/queries.js";
 

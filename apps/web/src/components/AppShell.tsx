@@ -11,7 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import { useQuickCapture } from "../lib/queries.js";
 import { useTheme } from "../lib/theme.js";
 import { Button, Input } from "./ui.js";

@@ -1,6 +1,6 @@
 import type { CalendarEvent, Todo } from "@stomp/shared";
 import { useEffect, useMemo, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import {
   DAY_MS,
   eventsOnDay,

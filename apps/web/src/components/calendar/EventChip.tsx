@@ -1,5 +1,5 @@
 import type { CalendarEvent } from "@stomp/shared";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { fmtTime } from "../../lib/format.js";
 
 /** Compact event pill used in the month grid. */

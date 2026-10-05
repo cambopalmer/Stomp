@@ -20,7 +20,7 @@ if (config.OTEL_MODE !== "off" && !config.isTest) {
       : new OTLPTraceExporter({ url: `${config.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces` });
 
   const sdk = new NodeSDK({
-    resource: new resources.Resource({
+    resource: resources.resourceFromAttributes({
       [ATTR_SERVICE_NAME]: config.SERVICE_NAME,
       [ATTR_SERVICE_VERSION]: config.version,
     }),

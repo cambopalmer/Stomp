@@ -1,6 +1,6 @@
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router";
 import { ActivityPanel } from "../components/ActivityPanel.js";
 import { AssigneePicker } from "../components/AssigneePicker.js";
 import { ShareEditor } from "../components/ShareEditor.js";
