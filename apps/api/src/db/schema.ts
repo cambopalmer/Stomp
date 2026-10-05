@@ -56,8 +56,6 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash"),
   googleId: text("google_id").unique(),
   lastLoginAt: ts("last_login_at"),
-  authProvider: text("auth_provider"), // legacy, unused — kept to avoid a rename migration
-  authProviderId: text("auth_provider_id"),
 });
 
 export const sessions = sqliteTable(

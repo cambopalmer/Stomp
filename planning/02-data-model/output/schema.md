@@ -76,7 +76,20 @@ users ──< notifications                                         [reserved �
 | avatar_url | text | null |
 | timezone | text | NOT NULL, default `'UTC'` (IANA name) |
 | created_at / updated_at | integer | |
-| **reserved for auth (Phase 3, nullable now):** password_hash, auth_provider, auth_provider_id, last_login_at | | |
+| password_hash | text | null — argon2id; null for Google-only accounts (Phase 3) |
+| google_id | text | UNIQUE, null — Google `sub` (Phase 3) |
+| last_login_at | integer | null (Phase 3) |
+
+> `auth_provider` / `auth_provider_id` were reserved in Phase 0, never used, and dropped in migration `0003` (2026-10-05). Login state lives in the `sessions` table.
+
+### sessions  *(Phase 3)*
+| column | type | notes |
+|---|---|---|
+| id | text PK | random token; also the signed httpOnly cookie value |
+| user_id | text FK → users | NOT NULL, `ON DELETE CASCADE`; index `idx_sessions_user` |
+| expires_at | integer | NOT NULL |
+| created_at / last_seen_at | integer | NOT NULL |
+| user_agent / ip | text | null — shown in a future "your sessions" list |
 
 ### projects
 | column | type | notes |
@@ -414,7 +427,7 @@ export const todos = sqliteTable('todos', {
 
 | Item | Trigger to build |
 |---|---|
-| `users.password_hash` / `auth_provider*` | Phase 3 (auth) |
+| ~~`users.password_hash` / `auth_provider*`~~ | Built in Phase 3 (`password_hash`, `google_id`, `sessions`); `auth_provider*` dropped |
 | `workspaces` / `workspace_members` UI + active-workspace switcher | Phase 2 (sharing). Tables + `workspace_id` columns exist from Phase 0; values are `NULL` until then. |
 | `notifications` producers/UI | Phase 2+ |
 | `events.rrule` expansion | Recurring-events backlog. **Not painted into a corner:** if a full recurrence model is needed, add `recurrence_rules` (rule + exceptions/overrides) and `event_instances`; `events.rrule` stays as the simple case. Decision deferred, migration is additive. |
