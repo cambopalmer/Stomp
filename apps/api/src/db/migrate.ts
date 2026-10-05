@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import { config } from "../config.js";
-import { createDb, createLibsql, enableForeignKeys } from "./client.js";
+import { applyPragmas, createDb, createLibsql } from "./client.js";
 
 /** Works from source (tsx, cwd=apps/api) and from the bundled container (cwd=/app). */
 function resolveMigrations(): string {
@@ -21,7 +21,7 @@ const migrationsFolder = resolveMigrations();
 /** Run all pending migrations. Called on server boot and by `pnpm db:migrate`. */
 export async function runMigrations(url = config.DATABASE_URL): Promise<void> {
   const client = createLibsql(url);
-  await enableForeignKeys(client);
+  await applyPragmas(client);
   const db = createDb(client);
   await migrate(db, { migrationsFolder });
   client.close();

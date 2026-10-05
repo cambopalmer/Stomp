@@ -1,13 +1,11 @@
 import "./instrumentation.js"; // must be first — patches http/fastify for tracing
 import { buildApp } from "./app.js";
 import { config } from "./config.js";
-import { client, enableForeignKeys } from "./db/client.js";
 import { runMigrations } from "./db/migrate.js";
 import { logger } from "./lib/logger.js";
 
 async function main() {
   await runMigrations();
-  await enableForeignKeys(client);
 
   const app = await buildApp();
   await app.listen({ port: config.API_PORT, host: "0.0.0.0" });

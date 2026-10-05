@@ -7,6 +7,7 @@ import {
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import { config } from "./config.js";
+import { applyPragmas, client } from "./db/client.js";
 import { logger } from "./lib/logger.js";
 import { authContext } from "./plugins/authContext.js";
 import { errorHandler } from "./plugins/errorHandler.js";
@@ -15,6 +16,9 @@ import { authRoutes } from "./routes/auth.js";
 import { routes } from "./routes/index.js";
 
 export async function buildApp(opts: { authBypass?: boolean } = {}): Promise<FastifyInstance> {
+  // here, not in server.ts, so tests run the same SQLite rules (FKs on) as prod
+  await applyPragmas(client);
+
   const app = Fastify({
     loggerInstance: config.isTest ? undefined : (logger as unknown as FastifyBaseLogger),
     trustProxy: true,

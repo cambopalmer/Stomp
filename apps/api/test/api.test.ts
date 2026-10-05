@@ -87,6 +87,16 @@ describe("health + read endpoints", () => {
   });
 });
 
+describe("sqlite pragmas", () => {
+  it("buildApp turns on FK enforcement, WAL and a busy timeout", async () => {
+    const { client } = await import("../src/db/client.js");
+    const one = async (sql: string) => Object.values((await client.execute(sql)).rows[0]!)[0];
+    expect(Number(await one("PRAGMA foreign_keys"))).toBe(1);
+    expect(String(await one("PRAGMA journal_mode")).toLowerCase()).toBe("wal");
+    expect(Number(await one("PRAGMA busy_timeout"))).toBe(5000);
+  });
+});
+
 describe("todos CRUD", () => {
   it("creates, trims title, reads back, updates, completes, deletes", async () => {
     const created = await app.inject({
