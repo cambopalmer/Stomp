@@ -52,7 +52,7 @@ users ──< notifications                                         [reserved �
 | slug | text | UNIQUE, NOT NULL (URL) |
 | description | text | null |
 | color | text | null |
-| created_by | text | FK users, ON DELETE RESTRICT |
+| created_by | text | FK users, no ON DELETE action (blocks a hard delete — users are anonymized, never hard-deleted; see §3a) |
 | status | text | `'active' \| 'archived'`, default `'active'` |
 | created_at / updated_at | integer | |
 
@@ -79,6 +79,9 @@ users ──< notifications                                         [reserved �
 | password_hash | text | null — argon2id; null for Google-only accounts (Phase 3) |
 | google_id | text | UNIQUE, null — Google `sub` (Phase 3) |
 | last_login_at | integer | null (Phase 3) |
+| role | text | `member` | `admin`, NOT NULL, default `member`. **Hub admin** = user management only (see §3a); unrelated to workspace roles. The first account on an install becomes admin (migration `0004` promotes the earliest existing account). |
+| disabled_at | integer | null; set → can't sign in, sessions dropped |
+| deleted_at | integer | null; set → anonymized tombstone (§3a) |
 
 > `auth_provider` / `auth_provider_id` were reserved in Phase 0, never used, and dropped in migration `0003` (2026-10-05). Login state lives in the `sessions` table.
 
@@ -96,7 +99,7 @@ users ──< notifications                                         [reserved �
 |---|---|---|
 | id | text PK | |
 | workspace_id | text | **null** = personal project; FK workspaces, ON DELETE SET NULL |
-| owner_id | text | FK users, ON DELETE RESTRICT |
+| owner_id | text | FK users, no ON DELETE action (blocks a hard delete — users are anonymized, never hard-deleted; see §3a) |
 | name | text | NOT NULL |
 | description | text | null |
 | color | text | null |
@@ -129,7 +132,7 @@ Grants access to a **personal** project, or gives a **cross-workspace guest** ac
 | completed_at | integer | null |
 | project_id | text | null, FK projects, ON DELETE SET NULL. Subtasks inherit parent's value. |
 | parent_todo_id | text | null, FK todos, ON DELETE CASCADE (subtasks) |
-| created_by | text | FK users, ON DELETE RESTRICT |
+| created_by | text | FK users, no ON DELETE action (blocks a hard delete — users are anonymized, never hard-deleted; see §3a) |
 | assignee_id | text | null, FK users, ON DELETE SET NULL |
 | source | text | `'manual' \| 'inbox' \| 'email' \| 'import'`, default `'manual'` |
 | sort_order | integer | NOT NULL, default 0 |
@@ -147,7 +150,7 @@ Grants access to a **personal** project, or gives a **cross-workspace guest** ac
 | timezone | text | NOT NULL — IANA name |
 | rrule | text | null — RFC 5545 recurrence (reserved; not expanded in v1 — see §7) |
 | project_id | text | null, FK projects, ON DELETE SET NULL |
-| created_by | text | FK users, ON DELETE RESTRICT |
+| created_by | text | FK users, no ON DELETE action (blocks a hard delete — users are anonymized, never hard-deleted; see §3a) |
 | status | text | `'confirmed' \| 'tentative' \| 'cancelled'`, default `'confirmed'` |
 | **reserved for sync (Phase 4):** external_provider, external_id, external_etag, last_synced_at | | INDEX(external_provider, external_id) |
 | created_at / updated_at | integer | |
@@ -174,7 +177,7 @@ Grants access to a **personal** project, or gives a **cross-workspace guest** ac
 | status | text | `'to_learn' \| 'learning' \| 'learned' \| 'archived'`, default `'to_learn'` |
 | favorite | integer | 0/1, default 0 |
 | project_id | text | null, FK projects, ON DELETE SET NULL |
-| added_by | text | FK users, ON DELETE RESTRICT |
+| added_by | text | FK users, no ON DELETE action (blocks a hard delete — users are anonymized, never hard-deleted; see §3a) |
 | last_opened_at | integer | null |
 | created_at / updated_at | integer | |
 | **reserved (backlog):** rating, revisit_at, progress_pct, topic_id | | |
@@ -281,6 +284,18 @@ Events & references: same, minus rule 2; events also visible if `id ∈ event_at
 **Subtask enforcement (service layer):** on create, copy parent's `workspace_id` + `project_id`; reject explicit overrides. On parent re-scope, cascade to children in a transaction. Reject collaborator rows targeting a subtask.
 
 ---
+
+## 3a. Accounts: admin & deletion
+
+**Admin (`users.role = admin`) manages accounts, not content.** `/api/admin/users` lists account metadata; an admin can change roles, disable / re-enable, set a new password, and delete. There is no admin route that reads todos / events / references, so the visibility model above has no bypass. Guards: the last active admin can't be demoted, disabled or deleted; you can't disable or delete yourself from the admin page.
+
+**Delete = anonymize** (`services/users.ts`, one transaction). Hard-deleting a user is never done — the `created_by` / `owner_id` / `added_by` FKs have no ON DELETE action and would block it anyway.
+1. For each todo (top-level; subtasks follow), event, reference and project the user created: **if anyone else can currently see it** (by the rules in §3 — another project/workspace member, a collaborator, an assignee) **it stays**, attributed to the tombstone; otherwise it's deleted.
+2. Personal tags are deleted; workspace tags stay. Workspaces with no other members are deleted; in shared ones, if the user was the only owner, the most senior remaining member (admin › editor › viewer, then earliest) becomes owner.
+3. Their sessions, memberships, collaborator grants, attendee rows, notifications, inbox items and integration accounts are removed; todos assigned to them become unassigned.
+4. The row is scrubbed: `display_name = "Deleted user"`, `email = deleted-<id>@deleted.invalid` (so the real address can sign up again), no password / Google link / avatar, `deleted_at` set.
+
+`activity_log.actor_id` keeps pointing at the tombstone, so history reads "Deleted user".
 
 ## 4. Indexes
 

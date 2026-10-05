@@ -98,6 +98,7 @@ Personal organization is smeared across a calendar app, a to-do app, an email in
 | FR-12 | Real authentication (Google OAuth and/or email+password) + signup/onboarding | 3 |
 | FR-13 | Connect Google account; Gmail read-only pull → incoming; Calendar one-way import | 4 |
 | FR-14 | Two-way calendar sync; send email; send calendar invites | 5 |
+| FR-16 | Hub admin role (`users.role`): user management only — list, change role, disable/enable, set password, delete. Delete = anonymize: items others can see stay as "Deleted user", private ones are removed. First account is admin; the last admin can't be removed. | 3 |
 | FR-15 | Calendar month / week / list views (`?view=`, `?date=`); open todos with a deadline (`due_at`) shown as all-day items on that day; Show filter all / events / todos (`?show=`) | 1 |
 
 ## 8. Non-functional requirements

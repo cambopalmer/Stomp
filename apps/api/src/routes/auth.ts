@@ -77,6 +77,9 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
       } catch (e) {
         // Signups closed + no existing account for this email — send them back
         // to /login with a message instead of a raw JSON error.
+        if (e instanceof AppError && e.code === "account_disabled") {
+          return reply.redirect(`${config.WEB_ORIGIN}/login?error=account_disabled`);
+        }
         if (e instanceof AppError && e.statusCode === 403) {
           return reply.redirect(`${config.WEB_ORIGIN}/login?error=signup_closed`);
         }

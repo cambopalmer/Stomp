@@ -34,7 +34,7 @@ export async function seed(): Promise<void> {
   const todayStart = now - (now % DAY);
 
   const pwHash = await hashPassword(config.SEED_USER_PASSWORD);
-  const owner = { id: newId(), email: config.SEED_USER_EMAIL, displayName: "Cam (owner)", timezone: "America/Denver", passwordHash: pwHash, lastLoginAt: now, createdAt: now, updatedAt: now };
+  const owner = { id: newId(), email: config.SEED_USER_EMAIL, displayName: "Cam (owner)", timezone: "America/Denver", passwordHash: pwHash, role: "admin" as const, lastLoginAt: now, createdAt: now, updatedAt: now };
   const partner = { id: newId(), email: "sam@stomp.local", displayName: "Sam", timezone: "America/Denver", passwordHash: pwHash, lastLoginAt: now, createdAt: now, updatedAt: now };
   await db.insert(t.users).values([owner, partner]);
 

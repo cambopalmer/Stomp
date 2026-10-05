@@ -21,6 +21,7 @@ export const authUser = z.object({
   timezone: z.string(),
   hasPassword: z.boolean(),
   googleLinked: z.boolean(),
+  role: z.enum(["member", "admin"]),
   createdAt: epochMs,
 });
 export type AuthUser = z.infer<typeof authUser>;

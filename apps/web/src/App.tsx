@@ -12,6 +12,7 @@ import { ProjectDetail } from "./routes/ProjectDetail.js";
 import { Projects } from "./routes/Projects.js";
 import { ReferenceDetail } from "./routes/ReferenceDetail.js";
 import { SharedWithMe } from "./routes/SharedWithMe.js";
+import { Admin } from "./routes/Admin.js";
 import { TagPage } from "./routes/TagPage.js";
 import { TodoDetail } from "./routes/TodoDetail.js";
 import { Todos } from "./routes/Todos.js";
@@ -51,6 +52,7 @@ export function App() {
         <Route path="/tags/:name" element={<TagPage />} />
         <Route path="/workspaces" element={<Workspaces />} />
         <Route path="/shared" element={<SharedWithMe />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/signup" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Home />} />

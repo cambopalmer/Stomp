@@ -1,4 +1,6 @@
 import type {
+  AdminUpdateUser,
+  AdminUser,
   CalendarEvent,
   CreateEvent,
   CreateProject,
@@ -35,7 +37,7 @@ function useWsPath(base: string): string {
 
 const WRITE_KEYS = [
   "home", "todos", "projects", "events", "references", "incoming",
-  "tags", "activity", "workspaces", "collab", "shared-with-me", "notifications",
+  "tags", "activity", "workspaces", "collab", "shared-with-me", "notifications", "admin",
 ];
 
 function useInvalidateAll() {
@@ -270,3 +272,18 @@ export const useQuickCapture = () => {
 export const useTriage = mutation(({ id, body }: { id: string; body: TriageIncoming }) =>
   api.post<IncomingItem>(`/incoming-items/${id}/triage`, body),
 );
+
+// ─── admin (user management) ─────────────────────────
+
+export const useAdminUsers = (enabled = true) =>
+  useQuery({ queryKey: ["admin", "users"], queryFn: () => api.get<AdminUser[]>("/admin/users"), enabled });
+
+export const useAdminUpdateUser = mutation(({ id, ...body }: AdminUpdateUser & { id: string }) =>
+  api.patch<AdminUser>(`/admin/users/${id}`, body),
+);
+
+export const useAdminResetPassword = mutation(({ id, password }: { id: string; password: string }) =>
+  api.post(`/admin/users/${id}/password`, { password }),
+);
+
+export const useAdminDeleteUser = mutation((id: string) => api.del(`/admin/users/${id}`));

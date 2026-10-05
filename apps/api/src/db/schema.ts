@@ -56,6 +56,10 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash"),
   googleId: text("google_id").unique(),
   lastLoginAt: ts("last_login_at"),
+  // admin (user management only — no bypass of the visibility model)
+  role: text("role", { enum: ["member", "admin"] }).notNull().default("member"),
+  disabledAt: ts("disabled_at"), // set → can't sign in; sessions are dropped
+  deletedAt: ts("deleted_at"), // set → anonymized tombstone (see services/users.ts)
 });
 
 export const sessions = sqliteTable(

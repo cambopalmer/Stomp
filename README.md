@@ -34,19 +34,20 @@ Open http://localhost:5173 and sign in. Seeded accounts (all created by `db:seed
 
 | Account | Password | Notes |
 |---|---|---|
-| `owner@stomp.local` | `stomp-dev-password` (`SEED_USER_PASSWORD`) | owner of the shared workspace + demo data |
+| `owner@stomp.local` | `stomp-dev-password` (`SEED_USER_PASSWORD`) | **admin** · owner of the shared workspace + demo data |
 | `sam@stomp.local` | same as owner | second member of the shared workspace |
 | `pamcalmer@stomp.local` | `pamcalmer` | **dev/test only** — skipped when `NODE_ENV=production`. A clean account for testing the new-user experience and cross-account sharing. |
 
 ### Authentication
 
-Email/password is always on. Google OAuth is optional — see [`docs/GOOGLE-OAUTH.md`](docs/GOOGLE-OAUTH.md) for the full Cloud Console walkthrough; in short, set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `.env` and a "Continue with Google" button appears. `ALLOW_SIGNUP=false` closes open signup (the first-ever user is always allowed). Sessions are a signed httpOnly cookie (`stomp_session`, 30-day TTL); set a strong `SESSION_SECRET` in production. Tests run with `AUTH_TEST_BYPASS=true`.
+Email/password is always on. Google OAuth is optional — see [`docs/GOOGLE-OAUTH.md`](docs/GOOGLE-OAUTH.md) for the full Cloud Console walkthrough; in short, set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `.env` and a "Continue with Google" button appears. `ALLOW_SIGNUP=false` closes open signup (the first-ever user is always allowed, and becomes the **admin**). Admins get **Manage users** in the account menu (`/admin`): change roles, disable sign-in, set a new password, delete (anonymize) an account — admins never see other people's items. Sessions are a signed httpOnly cookie (`stomp_session`, 30-day TTL); set a strong `SESSION_SECRET` in production. Tests run with `AUTH_TEST_BYPASS=true`.
 
 Useful:
 
 ```bash
 pnpm typecheck                          # all packages
-pnpm test                               # shared + api
+pnpm test                               # unit tests: shared + api + web (vitest)
+pnpm --filter @stomp/web e2e            # Playwright, against a throwaway seeded API
 pnpm build                              # api bundle + web static build
 pnpm --filter @stomp/api db:generate    # regenerate migration after editing src/db/schema.ts
 pnpm --filter @stomp/api db:studio      # Drizzle Studio — browse/edit every table in a GUI
@@ -61,8 +62,8 @@ docker compose -f infra/docker-compose.yml run --rm api node dist/db/seed.js   #
 
 Hub on http://localhost:8080. SQLite persists in the `stomp-data` volume.
 
-## Phase 0 status
+## Status
 
-Working: schema (19 tables) + migrations + seed · API CRUD for todos (incl. subtasks), projects, events, references, incoming + triage, tags, workspaces · `/home/summary` + `/home/hot` · dynamic `/sitemap.xml` · visibility/sharing model enforced · React shell (banner, nav, hot sidebar) · Home, Todos (create/edit/delete), Projects (create), Calendar/Incoming/Learn (read + triage) · Docker + CI.
+Phases 0–3 are done: the full schema + visibility/sharing model; CRUD and detail screens for todos (with subtasks), events, references, projects, incoming triage and tags; workspaces, sharing and notifications; auth (email/password + optional Google) with an admin role for user management; a calendar with month / week / list views that also shows todo deadlines; structured logging + OpenTelemetry; Docker + CI.
 
-Not yet (see [`planning/05-delivery/output/roadmap.md`](planning/05-delivery/output/roadmap.md)): auth/login, workspace switcher & sharing UI, full event/reference edit screens, notifications, Gmail/Calendar sync. The API acts as a single seeded user until Phase 3.
+Next (see [`planning/05-delivery/output/roadmap.md`](planning/05-delivery/output/roadmap.md)): Phase 4 — Gmail pull into Incoming and Google Calendar import (needs Google OAuth credentials).

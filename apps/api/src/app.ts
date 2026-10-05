@@ -12,6 +12,7 @@ import { logger } from "./lib/logger.js";
 import { authContext } from "./plugins/authContext.js";
 import { errorHandler } from "./plugins/errorHandler.js";
 import { googleOAuth } from "./plugins/googleOAuth.js";
+import { adminRoutes } from "./routes/admin.js";
 import { authRoutes } from "./routes/auth.js";
 import { routes } from "./routes/index.js";
 
@@ -34,6 +35,7 @@ export async function buildApp(opts: { authBypass?: boolean } = {}): Promise<Fas
   await app.register(authContext, { testBypass: opts.authBypass });
   await app.register(authRoutes, { prefix: "/api" });
   await app.register(routes, { prefix: "/api" });
+  await app.register(adminRoutes, { prefix: "/api" });
 
   return app;
 }

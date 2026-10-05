@@ -1,11 +1,11 @@
 import { randomBytes } from "node:crypto";
 import type { AuthUser, SignupInput } from "@stomp/shared";
 import { hash, verify } from "@node-rs/argon2";
-import { and, eq, gt, lt } from "drizzle-orm";
+import { and, eq, gt, isNull, lt } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { sessions, users } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
-import { BadRequest, Conflict, Forbidden, NotFound } from "../lib/errors.js";
+import { AppError, BadRequest, Conflict, Forbidden, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
 import { logger } from "../lib/logger.js";
 
@@ -22,12 +22,27 @@ export function toAuthUser(u: UserRow): AuthUser {
     timezone: u.timezone,
     hasPassword: u.passwordHash != null,
     googleLinked: u.googleId != null,
+    role: u.role,
     createdAt: u.createdAt,
   };
 }
 
 export async function hashPassword(pw: string): Promise<string> {
   return hash(pw);
+}
+
+/** Disabled (or deleted) accounts can't sign in. Code is matched by the Google callback. */
+export const AccountDisabled = () =>
+  new AppError(403, "account_disabled", "This account is disabled. Ask an admin to re-enable it.");
+
+function assertActive(u: UserRow): void {
+  if (u.disabledAt != null || u.deletedAt != null) throw AccountDisabled();
+}
+
+/** The very first account on an install becomes its admin. */
+async function roleForNewUser(db: Db): Promise<UserRow["role"]> {
+  const [existing] = await db.select({ id: users.id }).from(users).limit(1);
+  return existing ? "member" : "admin";
 }
 
 async function userByEmail(db: Db, email: string): Promise<UserRow | undefined> {
@@ -64,7 +79,14 @@ export async function resolveSession(db: Db, token: string): Promise<UserRow | n
     .select({ user: users, sessionId: sessions.id })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
-    .where(and(eq(sessions.id, token), gt(sessions.expiresAt, now)))
+    .where(
+      and(
+        eq(sessions.id, token),
+        gt(sessions.expiresAt, now),
+        isNull(users.disabledAt),
+        isNull(users.deletedAt),
+      ),
+    )
     .limit(1);
   if (!row) return null;
   await db.update(sessions).set({ lastSeenAt: now }).where(eq(sessions.id, row.sessionId));
@@ -109,13 +131,21 @@ export async function signup(
     email: input.email.toLowerCase(),
     displayName: input.displayName,
     passwordHash: await hashPassword(input.password),
+    role: await roleForNewUser(db),
     lastLoginAt: now,
     createdAt: now,
     updatedAt: now,
   };
   await db.insert(users).values(row);
   logger.info({ userId: row.id, email: row.email }, "user signed up");
-  return { ...(row as UserRow), avatarUrl: null, timezone: "UTC", googleId: null } as UserRow;
+  return {
+    ...(row as UserRow),
+    avatarUrl: null,
+    timezone: "UTC",
+    googleId: null,
+    disabledAt: null,
+    deletedAt: null,
+  } as UserRow;
 }
 
 // a real argon2id hash of a random string — verified against when no user exists,
@@ -130,6 +160,7 @@ export async function login(db: Db, email: string, password: string): Promise<Us
     logger.warn({ email }, "failed login");
     throw BadRequest("Wrong email or password");
   }
+  assertActive(u); // only after the password checks out — don't reveal account state to guessers
   await db.update(users).set({ lastLoginAt: clock.now() }).where(eq(users.id, u.id));
   return u;
 }
@@ -149,11 +180,15 @@ export async function upsertGoogleUser(
   const byGoogle = (
     await db.select().from(users).where(eq(users.googleId, profile.sub)).limit(1)
   )[0];
-  if (byGoogle) return byGoogle;
+  if (byGoogle) {
+    assertActive(byGoogle);
+    return byGoogle;
+  }
 
   const now = clock.now();
   const byEmail = await userByEmail(db, profile.email);
   if (byEmail) {
+    assertActive(byEmail);
     await db
       .update(users)
       .set({ googleId: profile.sub, avatarUrl: byEmail.avatarUrl ?? profile.picture ?? null, lastLoginAt: now })
@@ -169,13 +204,14 @@ export async function upsertGoogleUser(
     displayName: profile.name?.trim() || profile.email.split("@")[0]!,
     googleId: profile.sub,
     avatarUrl: profile.picture ?? null,
+    role: await roleForNewUser(db),
     lastLoginAt: now,
     createdAt: now,
     updatedAt: now,
   };
   await db.insert(users).values(row);
   logger.info({ userId: row.id, email: row.email }, "user created via Google");
-  return { ...(row as UserRow), passwordHash: null, timezone: "UTC" } as UserRow;
+  return { ...(row as UserRow), passwordHash: null, timezone: "UTC", disabledAt: null, deletedAt: null } as UserRow;
 }
 
 export { NotFound };

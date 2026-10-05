@@ -50,7 +50,9 @@ Active-workspace switcher (incl. "Personal"). Create/manage workspaces + members
 
 **Done (merged to `main` 2026-09-08):** Google OAuth (`@fastify/oauth2`, optional — no-op until `GOOGLE_CLIENT_ID`/`SECRET` set) + email/password fallback (argon2id via `@node-rs/argon2`). `sessions` table, signed httpOnly cookie `stomp_session` (30-day TTL). `authContext` plugin resolves the session and 401s non-public routes; `AUTH_TEST_BYPASS` env keeps API/e2e tests running as the seeded user. Web: `AuthProvider` + `/login` `/signup` screens, `UserMenu` (avatar + sign out), 401→login redirect. `ALLOW_SIGNUP` env gates open signup (first user always allowed). Dev-only `pamcalmer@stomp.local` seed account; `db:studio` for DB browsing. 49 API tests, 16 e2e.
 
-Still open: migrate/prune the legacy `auth_provider`/`auth_provider_id` columns; user-deletion FK-policy consistency pass; in-app admin role + `/admin`; the owner must create Google Cloud OAuth credentials (redirect URI `{PUBLIC_BASE_URL}/api/auth/google/callback`).
+**Leftovers closed 2026-10-05:** legacy `auth_provider*` columns dropped; hub admin role (user management only, no visibility bypass) + `/admin`; user deletion = anonymize, FK policy documented (schema §3a); SQLite WAL + `busy_timeout`.
+
+Still open: the owner must create Google Cloud OAuth credentials (redirect URI `{PUBLIC_BASE_URL}/api/auth/google/callback`).
 
 **Security follow-ups — all resolved:**
 - ~~Scope `GET /sitemap.xml` to the requesting user~~ — **done (2026-09-02):** public `/api/sitemap.xml` lists static routes only; authenticated `/api/sitemap-me.xml` returns the caller's own items. `Disallow: /` in `robots.txt` stays.

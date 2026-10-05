@@ -17,6 +17,7 @@
 /projects/:projectId     Project detail — mixed items (todos, events, refs, incoming) + members
 /tags/:slug              Everything with a tag (cross-section)
 /settings                Profile, timezone (auth + integrations UI later)
+/admin                   Hub admins only — user management (roles, disable, set password, delete)
 /signup                  Phase 0: static stub reached from the banner "Create account" link.
                          Phase 3: real signup / onboarding / invite acceptance.
 /sitemap.xml             Generated (see architecture §5)
@@ -50,6 +51,7 @@ Route patterns live in `apps/web/src/lib/routeManifest.ts`, which the sitemap bu
 | Project detail | run a project | all item types where `project_id = :id` + `project_members` |
 | Tag page | cross-section view of a tag | `taggings` joined to each entity |
 | Settings | profile + timezone | `users` row |
+| Admin — users | manage accounts: role, disable / enable, set password, delete (anonymize) with inline confirm; deleted accounts collapsed below | `GET /admin/users` — account metadata only, never anyone's items |
 
 ## 3. Home layout
 

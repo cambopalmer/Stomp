@@ -9,6 +9,7 @@ import { useAuth } from "../lib/auth.js";
 
 const ERROR_MESSAGES: Record<string, string> = {
   signup_closed: "Sign-ups are closed. Ask an existing member to invite you.",
+  account_disabled: "This account is disabled. Ask an admin to re-enable it.",
 };
 
 export function Login({ mode }: { mode: "login" | "signup" }) {

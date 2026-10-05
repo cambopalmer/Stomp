@@ -9,7 +9,7 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 - [x] `[0]` Scaffold pnpm monorepo (`apps/api`, `apps/web`, `packages/shared`)
 - [x] `[0]` Drizzle schema for all 19 tables in `schema.md` (incl. workspaces, workspace_members, collaborator tables, notifications)
 - [x] `[0]` Generate + wire first migration; run on API boot
-- [ ] `[0]` SQLite client: WAL, `busy_timeout`, `foreign_keys=ON` — **only `foreign_keys=ON` landed** (`apps/api/src/db/client.ts`); WAL + `busy_timeout` still to do
+- [x] `[0]` SQLite client: WAL, `busy_timeout`, `foreign_keys=ON` — `applyPragmas()` in `buildApp()` (2026-10-05; tests previously ran with FKs off)
 - [x] `[0]` Zod DTO schemas in `packages/shared` (create/update/read per entity)
 - [x] `[0]` `authContext` plugin (seeded user; `ctx.userId` only)
 - [x] `[0]` Visibility helper (landed as `services/access.ts`) — `accessibleProjectIds` + per-entity rules + effective-role helper + tests
@@ -81,9 +81,10 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 - [x] `[3]` 🔒 Re-run `/security-review` over the whole app now that auth is real *(run 2026-09-03: 2 MEDIUM findings, both fixed 2026-09-09)*
 - [x] `[3]` 🔒 **Enforce `ALLOW_SIGNUP` on the Google OAuth path** — `assertSignupAllowed()` helper now gates new-account creation in both `signup()` and `upsertGoogleUser()`; linking Google to an existing account stays ungated. Closed-signup Google callback redirects to `/login?error=signup_closed`. *(security-review 2026-09-03 MEDIUM → fixed 2026-09-09)*
 - [x] `[3]` 🔒 **Production guard for `SEED_USER_PASSWORD`** — `seed()` throws in production while the password is the public default (`config.seedUserPasswordIsDefault`). compose + `.env.example` note the requirement. *(security-review 2026-09-03 MEDIUM → fixed 2026-09-09)*
-- [ ] `[3]` ⏳ In-app **admin role** — `users.role` (`member` | `admin`) + migration, `admin@stomp.local` dev account, admin-only read routes that bypass the visibility model, minimal `/admin` table browser in the SPA. Prod-gated seed. Its own authz surface — review before merge.
-- [ ] `[3]` Legacy `auth_provider` / `auth_provider_id` column cleanup (kept to avoid a rename migration)
-- [ ] `[3]` User-deletion FK-policy consistency pass
+- [x] `[3]` In-app **admin role** (2026-10-05) — `users.role` + migration `0004` (earliest account bootstrapped to admin; first signup on a fresh install becomes admin). **Scoped down from the original spec:** user management only (list, role, disable/enable, set password, delete) — *no* routes that bypass the visibility model; `db:studio` stays the operator's escape hatch. Seeded owner is admin. `/admin` page + "Manage users" menu item. API + e2e tests.
+- [x] `[3]` Legacy `auth_provider` / `auth_provider_id` column cleanup — dropped in migration `0003` (2026-10-05)
+- [x] `[3]` User-deletion FK-policy consistency pass (2026-10-05) — decided **delete = anonymize** (schema §3a): items others can see stay as "Deleted user", private ones removed, memberships/sessions/inbox cleared, sole workspace owner replaced. FKs left as NO ACTION (same effect as RESTRICT in SQLite; users are never hard-deleted) and the doc corrected to match, instead of a 10-table rebuild. Found + fixed on the way: deleting a todo orphaned its subtasks (`parent_todo_id` has no FK).
+- [ ] `[3]` Self-service account deletion ("Delete my account" in settings) — reuse `deleteUser`/anonymize; needs a password re-check
 
 ## Phase 4 — Inbound integrations
 
