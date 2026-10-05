@@ -11,7 +11,7 @@ COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @stomp/api build
 # produce a self-contained runtime dir (prod deps only) at /app
-RUN pnpm --filter @stomp/api deploy --prod --legacy /app
+RUN pnpm --filter @stomp/api deploy --prod /app
 
 # --- runtime ---
 FROM base AS runtime
