@@ -384,6 +384,9 @@ export const integrationAccounts = sqliteTable(
     status: text("status", { enum: ["connected", "needs_reauth", "disconnected"] }).notNull().default("connected"),
     syncCursor: text("sync_cursor"),
     lastSyncAt: ts("last_sync_at"),
+    /** provider-specific JSON: calendar → { calendars: [{id, summary, selected, syncToken}] }; gmail → { labelId } */
+    settings: text("settings"),
+    lastError: text("last_error"),
     createdAt: ts("created_at").notNull().default(now),
     updatedAt: ts("updated_at").notNull().default(now),
   },

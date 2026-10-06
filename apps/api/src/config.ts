@@ -30,6 +30,14 @@ const schema = z.object({
   ALLOW_SIGNUP: z.coerce.boolean().default(true),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  // ─── integrations (Phase 4, ADR-0005) ───
+  /** 32 random bytes, base64 — encrypts stored OAuth tokens. Integrations are off until set. */
+  INTEGRATION_ENC_KEY: z
+    .string()
+    .optional()
+    .refine((v) => !v || Buffer.from(v, "base64").length === 32, "must be 32 bytes, base64-encoded"),
+  /** background sync interval; 0 disables the scheduler (tests set 0) */
+  SYNC_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(10),
   /** tests only: fall back to SEED_USER_EMAIL when no session cookie is present */
   AUTH_TEST_BYPASS: z.coerce.boolean().default(false),
 });
@@ -55,5 +63,6 @@ export const config = {
   isProd: env.NODE_ENV === "production",
   version: process.env.BUILD_VERSION ?? process.env.npm_package_version ?? "0.0.0",
   googleOAuthConfigured: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
+  integrationsConfigured: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.INTEGRATION_ENC_KEY),
   seedUserPasswordIsDefault: env.SEED_USER_PASSWORD === DEFAULT_SEED_PASSWORD,
 };

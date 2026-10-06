@@ -1,4 +1,5 @@
 import type {
+  IntegrationsResponse,
   AdminUpdateUser,
   AdminUser,
   CalendarEvent,
@@ -37,7 +38,7 @@ function useWsPath(base: string): string {
 
 const WRITE_KEYS = [
   "home", "todos", "projects", "events", "references", "incoming",
-  "tags", "activity", "workspaces", "collab", "shared-with-me", "notifications", "admin",
+  "tags", "activity", "workspaces", "collab", "shared-with-me", "notifications", "admin", "integrations",
 ];
 
 function useInvalidateAll() {
@@ -287,3 +288,14 @@ export const useAdminResetPassword = mutation(({ id, password }: { id: string; p
 );
 
 export const useAdminDeleteUser = mutation((id: string) => api.del(`/admin/users/${id}`));
+
+// ─── integrations (Phase 4) ──────────────────────────
+
+export const useIntegrations = () =>
+  useQuery({ queryKey: ["integrations"], queryFn: () => api.get<IntegrationsResponse>("/integrations") });
+
+export const useDisconnectIntegration = mutation((id: string) => api.del(`/integrations/${id}`));
+
+/** Full-page navigation — the OAuth dance needs real redirects, not XHR. */
+export const integrationConnectHref = (product: "gmail" | "calendar") =>
+  `/api/integrations/google/connect?product=${product}`;

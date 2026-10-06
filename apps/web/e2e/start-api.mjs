@@ -12,6 +12,12 @@ const env = {
   WEB_ORIGIN: "http://localhost:5273",
   PUBLIC_BASE_URL: "http://localhost:5273",
   SEED_USER_EMAIL: "owner@stomp.local",
+  // pinned so a developer's root .env (loaded by the API via dotenv) can't make local runs
+  // differ from CI. Fake Google app: Connect buttons render, nothing ever calls Google.
+  GOOGLE_CLIENT_ID: "e2e-client.apps.googleusercontent.com",
+  GOOGLE_CLIENT_SECRET: "e2e-secret",
+  INTEGRATION_ENC_KEY: "ZTJlLWUyZS1lMmUtZTJlLWUyZS1lMmUtZTJlLWUyZS0=",
+  SYNC_INTERVAL_MINUTES: "0",
 };
 
 for (const ext of ["", "-shm", "-wal"]) {

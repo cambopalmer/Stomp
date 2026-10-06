@@ -1,4 +1,4 @@
-import { LogOut, ShieldCheck } from "lucide-react";
+import { LogOut, Settings as SettingsIcon, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../lib/auth.js";
@@ -44,6 +44,14 @@ export function UserMenu() {
             <p className="truncate text-xs text-muted">{user.email}</p>
           </div>
           <div className="my-1 border-t border-border" />
+          <Link
+            role="menuitem"
+            to="/settings"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-surface-2"
+          >
+            <SettingsIcon size={14} aria-hidden="true" /> Settings
+          </Link>
           {user.role === "admin" && (
             <Link
               role="menuitem"

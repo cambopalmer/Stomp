@@ -37,12 +37,14 @@ Sections **B** and **C** are answerable as their phase approaches. Section **D**
 
 ---
 
-## C. Phase 4/5 blockers (integrations) — answer later
+## C. Phase 4/5 blockers (integrations)
 
-- **C1** Providers beyond Gmail at Phase 4? (Outlook/Graph, generic IMAP?)
+**C1, C3, C4 resolved 2026-10-06 → [ADR-0005](../../_config/decisions/adr-0005-google-integrations.md).**
+
+- **C1** ~~Providers beyond Gmail at Phase 4?~~ → **Google only**; Outlook (Graph) wanted later, same adapter interface.
 - **C2** Outbound email: send from your Gmail, or draft-only? Invites Google-only?
-- **C3** Sync cadence, and user-configurable?
-- **C4** Token encryption key on a small host: env var vs host secret store?
+- **C3** ~~Sync cadence, and user-configurable?~~ → **every 10 min + Sync now**, not configurable.
+- **C4** ~~Token encryption key?~~ → **`INTEGRATION_ENC_KEY` env var**, AES-256-GCM.
 - **C5** Attachments on todos/references at all? If yes: local disk vs object storage (S3/R2)?
 - **C6** Notifications delivery: in-app only, email digest, browser push?
 - **C7** Comments / discussion threads on todos and events? (not modeled)
@@ -91,6 +93,6 @@ Sections **B** and **C** are answerable as their phase approaches. Section **D**
 **Deferred:**
 1. **No DB-level `CHECK` constraints on enums.** `text('x',{enum:[...]})` in Drizzle is compile-time only; the migration emits no `CHECK`. Zod guards the API boundary, so a bad value only lands via a service bug or raw SQL. Add hand-written `CHECK`s (or `.check()`) if we ever want the DB as the last line of defense.
 2. **`references` is a SQL reserved word.** Fine through Drizzle (auto-quoted) and the generated migration. Any *hand-written* raw SQL must double-quote `"references"`.
-3. **All-day events + timezone.** `events.timezone` exists but range queries compare raw UTC-ms; there's no all-day storage convention. No live bug (the UI can't create all-day events yet), but define the convention before that lands.
-4. **User-deletion policy is inconsistent** — `created_by`/`owner_id` are `RESTRICT`, `tags.owner_id` is `CASCADE`, `incoming_items.created_by` is `SET NULL`. No user-delete flow exists yet; pick one policy and document the procedure in Phase 3.
+3. ~~**All-day events + timezone.**~~ → **Resolved (ADR-0005):** all-day = floating date, stored as UTC midnight of start / exclusive end, rendered from UTC date parts.
+4. ~~**User-deletion policy is inconsistent**~~ → **Resolved 2026-10-06:** delete = anonymize (schema §3a). Original note: — `created_by`/`owner_id` are `RESTRICT`, `tags.owner_id` is `CASCADE`, `incoming_items.created_by` is `SET NULL`. No user-delete flow exists yet; pick one policy and document the procedure in Phase 3.
 5. **Visibility logic is duplicated** across `home.ts` / `todos.ts` / `events.ts` / `references.ts`. `visibleEventsCond` is now shared; the todo/reference ones could be consolidated similarly to prevent drift.
