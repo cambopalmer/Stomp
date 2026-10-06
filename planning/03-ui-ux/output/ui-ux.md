@@ -16,7 +16,7 @@
 /projects                Projects list
 /projects/:projectId     Project detail — mixed items (todos, events, refs, incoming) + members
 /tags/:slug              Everything with a tag (cross-section)
-/settings                Profile, timezone (auth + integrations UI later)
+/settings                Connected accounts (Gmail, Google Calendar: connect / reconnect / disconnect, calendar picker, Sync now); profile + timezone later
 /admin                   Hub admins only — user management (roles, disable, set password, delete)
 /signup                  Phase 0: static stub reached from the banner "Create account" link.
                          Phase 3: real signup / onboarding / invite acceptance.

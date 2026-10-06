@@ -61,7 +61,7 @@ export interface InboundMessage {
 
 - A scheduled job (node-cron in-process, or the host's scheduler) every N minutes per connected account.
 - **Gmail:** use stored `sync_cursor` (Gmail `historyId`). For each new message → create `incoming_item` (`kind='email'`, `source_ref=providerId`, `source_meta` = JSON{from, subject, receivedAt, threadId}). Dedupe on `source_ref`. Write a `sync_log` row.
-- **Calendar:** use `syncToken`. Upsert events by `(external_provider, external_id)`. Honor `deleted[]`. Never overwrite a locally-edited external event without conflict handling (Phase 5 concern).
+- **Calendar (as built — ADR-0005):** windowed refresh (−30 / +180 days, `singleEvents=true`) per selected calendar instead of `syncToken`; upsert by `(external_provider, external_id)` with `external_id = <calendarId>|<eventId>`; mirrors missing from the window are removed. Mirrors are read-only in STOMP (API returns 403 on edit/delete), so there are no local edits to conflict with until Phase 5.
 - Cursors and `last_sync_at` persisted so restarts resume cleanly.
 
 ## Triage of pulled email

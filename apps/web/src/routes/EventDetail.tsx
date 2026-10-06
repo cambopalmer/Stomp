@@ -1,10 +1,10 @@
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { EventForm } from "../components/EventForm.js";
 import { ShareEditor } from "../components/ShareEditor.js";
 import { Button, Card, ErrorState, Spinner } from "../components/ui.js";
-import { fmtDateTime } from "../lib/format.js";
+import { fmtAllDayRange, fmtDateTime } from "../lib/format.js";
 import { useDeleteEvent, useEvent } from "../lib/queries.js";
 
 export function EventDetail() {
@@ -30,6 +30,7 @@ export function EventDetail() {
           <div className="flex flex-col gap-2">
             <div className="flex items-start justify-between gap-3">
               <h1 className="text-xl font-bold">{e.title}</h1>
+              {!e.externalProvider && (
               <div className="flex shrink-0 gap-2">
                 <Button variant="ghost" onClick={() => setEditing(true)}>
                   Edit
@@ -44,9 +45,16 @@ export function EventDetail() {
                   <Trash2 size={16} aria-hidden="true" /> Delete
                 </Button>
               </div>
+              )}
             </div>
+            {e.externalProvider === "google" && (
+              <p className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2.5 py-1.5 text-xs text-muted" role="note">
+                <RefreshCw size={14} aria-hidden="true" />
+                From Google Calendar — read-only here. Change it in Google Calendar; STOMP picks it up on the next sync.
+              </p>
+            )}
             <p className="tnum text-sm text-muted">
-              {fmtDateTime(e.startsAt)} – {fmtDateTime(e.endsAt)}
+              {e.allDay ? `All day · ${fmtAllDayRange(e.startsAt, e.endsAt)}` : `${fmtDateTime(e.startsAt)} – ${fmtDateTime(e.endsAt)}`}
             </p>
             {e.location && <p className="text-sm">{e.location}</p>}
             {e.description && <p className="whitespace-pre-wrap text-sm text-muted">{e.description}</p>}

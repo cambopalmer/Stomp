@@ -1,5 +1,5 @@
 import type { HomeSummary, HotList } from "@stomp/shared";
-import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, isNull, lt, lte, ne, or, sql } from "drizzle-orm";
 import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import type { Db } from "../db/client.js";
 import { events, incomingItems, projects, references, todoCollaborators, todos } from "../db/schema.js";
@@ -35,6 +35,18 @@ function refVisible(userId: string, projIds: string[]) {
   );
 }
 
+/** Events happening today: timed ones by overlap with the local day, all-day ones by their floating date. */
+const eventsToday = (b: { dayStart: number; dayEnd: number; floatingDay: number }) =>
+  or(
+    and(eq(events.allDay, false), lt(events.startsAt, b.dayEnd), gte(events.endsAt, b.dayStart)),
+    and(eq(events.allDay, true), lte(events.startsAt, b.floatingDay), gt(events.endsAt, b.floatingDay)),
+  );
+const eventsAfterToday = (b: { dayEnd: number; floatingDay: number }) =>
+  or(
+    and(eq(events.allDay, false), gte(events.startsAt, b.dayEnd)),
+    and(eq(events.allDay, true), gt(events.startsAt, b.floatingDay)),
+  );
+
 export async function homeSummary(
   db: Db,
   ctx: Ctx,
@@ -42,7 +54,8 @@ export async function homeSummary(
   ws?: string | null,
 ): Promise<HomeSummary> {
   const now = clock.now();
-  const { dayStart, dayEnd } = dayBounds(now, timezone);
+  const bounds = dayBounds(now, timezone);
+  const { dayStart, dayEnd } = bounds;
   const projIds = await accessibleProjectIds(db, ctx.userId); // computed once, threaded everywhere
 
   const vis = await visibleTodoConds(db, ctx.userId, projIds);
@@ -70,8 +83,8 @@ export async function homeSummary(
     one(db.select({ n: sql<number>`count(*)` }).from(todos).where(open)),
     one(db.select({ n: sql<number>`count(*)` }).from(todos).where(and(open, gte(todos.dueAt, dayStart), lt(todos.dueAt, dayEnd)))),
     one(db.select({ n: sql<number>`count(*)` }).from(todos).where(and(open, lt(todos.dueAt, dayStart)))),
-    one(db.select({ n: sql<number>`count(*)` }).from(events).where(and(evVisible, ne(events.status, "cancelled"), lt(events.startsAt, dayEnd), gte(events.endsAt, dayStart)))),
-    one(db.select({ n: sql<number>`count(*)` }).from(events).where(and(evVisible, ne(events.status, "cancelled"), gte(events.startsAt, dayEnd)))),
+    one(db.select({ n: sql<number>`count(*)` }).from(events).where(and(evVisible, ne(events.status, "cancelled"), eventsToday(bounds)))),
+    one(db.select({ n: sql<number>`count(*)` }).from(events).where(and(evVisible, ne(events.status, "cancelled"), eventsAfterToday(bounds)))),
     one(db.select({ n: sql<number>`count(*)` }).from(incomingItems).where(and(eq(incomingItems.forUserId, ctx.userId), eq(incomingItems.status, "unread"), wsCond(incomingItems.workspaceId, ws)))),
     one(db.select({ n: sql<number>`count(*)` }).from(references).where(and(refVis, wsCond(references.workspaceId, ws)))),
     one(db.select({ n: sql<number>`count(*)` }).from(references).where(and(refVis, eq(references.status, "learning"), wsCond(references.workspaceId, ws)))),
@@ -94,7 +107,8 @@ export async function hotList(
   ws?: string | null,
 ): Promise<HotList> {
   const now = clock.now();
-  const { dayStart, dayEnd } = dayBounds(now, timezone);
+  const bounds = dayBounds(now, timezone);
+  const { dayStart, dayEnd } = bounds;
   const projIds = await accessibleProjectIds(db, ctx.userId);
   const vis = await visibleTodoConds(db, ctx.userId, projIds);
   const open = and(
@@ -160,8 +174,7 @@ export async function hotList(
     .where(
       and(
         ne(events.status, "cancelled"),
-        lt(events.startsAt, dayEnd),
-        gte(events.endsAt, dayStart),
+        eventsToday(bounds),
         await visibleEventsCond(db, ctx.userId, projIds),
         wsCond(events.workspaceId, ws),
       ),

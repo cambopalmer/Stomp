@@ -1,11 +1,17 @@
 import type { IntegrationAccount, IntegrationProduct } from "@stomp/shared";
 import { CalendarDays, Mail } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useSearchParams } from "react-router";
 import { Badge, Button, Card, ErrorState, Spinner } from "../components/ui.js";
 import { useAuth } from "../lib/auth.js";
-import { fmtDate } from "../lib/format.js";
-import { integrationConnectHref, useDisconnectIntegration, useIntegrations } from "../lib/queries.js";
+import { fmtDateTime } from "../lib/format.js";
+import {
+  integrationConnectHref,
+  useDisconnectIntegration,
+  useIntegrations,
+  useSelectCalendars,
+  useSyncIntegration,
+} from "../lib/queries.js";
 
 /** Outcome codes the API's OAuth callback appends to /settings. */
 const ERRORS: Record<string, string> = {
@@ -137,6 +143,7 @@ function ProviderCard({
 
 function AccountRow({ account, product }: { account: IntegrationAccount; product: IntegrationProduct }) {
   const disconnect = useDisconnectIntegration();
+  const syncNow = useSyncIntegration();
   const reauth = account.status === "needs_reauth";
 
   return (
@@ -150,7 +157,11 @@ function AccountRow({ account, product }: { account: IntegrationAccount; product
         )}
       </div>
       <p className="tnum text-xs text-muted">
-        {account.lastSyncAt ? `Last synced ${fmtDate(account.lastSyncAt)}` : "Not synced yet"}
+        {syncNow.isPending
+          ? "Syncing…"
+          : account.lastSyncAt
+            ? `Last synced ${fmtDateTime(account.lastSyncAt)}`
+            : "Not synced yet"}
         {account.lastError && !reauth && <span className="text-danger"> · {account.lastError}</span>}
       </p>
       {reauth && (
@@ -159,7 +170,24 @@ function AccountRow({ account, product }: { account: IntegrationAccount; product
           resume syncing.
         </p>
       )}
+      {account.calendars && !reauth && (
+        // remount when the server-side selection changes (first sync, another tab)
+        <CalendarPicker
+          key={account.calendars.map((c) => `${c.id}:${c.selected}`).join()}
+          account={account}
+        />
+      )}
       <div className="flex flex-wrap gap-2">
+        {!reauth && (
+          <Button
+            variant="ghost"
+            className="px-2.5 py-1.5 text-xs"
+            disabled={syncNow.isPending}
+            onClick={() => syncNow.mutate(account.id)}
+          >
+            Sync now
+          </Button>
+        )}
         {reauth && (
           <a
             href={integrationConnectHref(product)}
@@ -183,5 +211,59 @@ function AccountRow({ account, product }: { account: IntegrationAccount; product
         </p>
       )}
     </div>
+  );
+}
+
+/** Pick which Google calendars to mirror. Saving re-syncs straight away. */
+function CalendarPicker({ account }: { account: IntegrationAccount }) {
+  const select = useSelectCalendars();
+  const initial = (account.calendars ?? []).filter((c) => c.selected).map((c) => c.id);
+  const [picked, setPicked] = useState<string[]>(initial);
+  const dirty = picked.length !== initial.length || picked.some((id) => !initial.includes(id));
+
+  if (!account.calendars?.length) {
+    return <p className="text-xs text-muted">Loading your calendars… press Sync now if this doesn’t update.</p>;
+  }
+
+  return (
+    <fieldset className="flex flex-col gap-1.5">
+      <legend className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">Calendars to show</legend>
+      {account.calendars.map((c) => (
+        <label key={c.id} className="flex min-h-8 cursor-pointer items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-[var(--color-primary)]"
+            checked={picked.includes(c.id)}
+            onChange={(e) => setPicked((p) => (e.target.checked ? [...p, c.id] : p.filter((x) => x !== c.id)))}
+          />
+          <span
+            aria-hidden
+            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ background: c.color ?? "var(--color-muted-foreground)" }}
+          />
+          <span className="truncate">{c.summary}</span>
+          {c.primary && <span className="text-xs text-muted">(primary)</span>}
+        </label>
+      ))}
+      {dirty && (
+        <div className="mt-1 flex items-center gap-2">
+          <Button
+            className="px-2.5 py-1.5 text-xs"
+            disabled={select.isPending}
+            onClick={() => select.mutate({ id: account.id, calendarIds: picked })}
+          >
+            {select.isPending ? "Saving…" : "Save & sync"}
+          </Button>
+          <Button variant="ghost" className="px-2.5 py-1.5 text-xs" onClick={() => setPicked(initial)}>
+            Cancel
+          </Button>
+        </div>
+      )}
+      {select.isError && (
+        <p role="alert" className="text-xs text-danger">
+          {select.error instanceof Error ? select.error.message : "Couldn’t save"}
+        </p>
+      )}
+    </fieldset>
   );
 }

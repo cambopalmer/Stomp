@@ -1,7 +1,9 @@
 import type { CalendarEvent, Todo } from "@stomp/shared";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { fmtAllDayRange } from "./format.js";
 import {
   addDays,
+  eventsOnDay,
   groupByDay,
   isCalendarTodo,
   isOverdue,
@@ -101,5 +103,47 @@ describe("groupByDay", () => {
     const groups = groupByDay([], [todo({ title: "solo" })]);
     expect(groups).toHaveLength(1);
     expect(groups[0]!.events).toEqual([]);
+  });
+});
+
+describe("all-day events are floating dates (ADR-0005)", () => {
+  // run west of UTC, where a UTC-midnight date would otherwise leak onto the previous evening
+  const prevTz = process.env.TZ;
+  beforeAll(() => {
+    process.env.TZ = "America/Denver";
+  });
+  afterAll(() => {
+    process.env.TZ = prevTz;
+  });
+
+  const allDay = (title: string, startIso: string, endIso: string): CalendarEvent =>
+    ({
+      id: title,
+      title,
+      allDay: true,
+      startsAt: Date.parse(`${startIso}T00:00:00Z`),
+      endsAt: Date.parse(`${endIso}T00:00:00Z`),
+    }) as CalendarEvent;
+
+  it("matches its own dates only, end exclusive", () => {
+    const trip = allDay("trip", "2031-01-15", "2031-01-17"); // 15th + 16th
+    expect(eventsOnDay([trip], new Date(2031, 0, 14))).toEqual([]);
+    expect(eventsOnDay([trip], new Date(2031, 0, 15))).toEqual([trip]);
+    expect(eventsOnDay([trip], new Date(2031, 0, 16))).toEqual([trip]);
+    expect(eventsOnDay([trip], new Date(2031, 0, 17))).toEqual([]);
+  });
+
+  it("sorts all-day before timed, and groups by its own date in the list", () => {
+    const holiday = allDay("holiday", "2031-01-15", "2031-01-16");
+    const early = event("early", new Date(2031, 0, 15, 7).getTime());
+    expect(eventsOnDay([early, holiday], new Date(2031, 0, 15)).map((e) => e.title)).toEqual(["holiday", "early"]);
+    const groups = groupByDay([early, holiday]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.day).toBe(new Date(2031, 0, 15).getTime());
+  });
+
+  it("formats in UTC so the date doesn't shift", () => {
+    expect(fmtAllDayRange(Date.parse("2031-01-15T00:00:00Z"), Date.parse("2031-01-16T00:00:00Z"))).toMatch(/15/);
+    expect(fmtAllDayRange(Date.parse("2031-01-15T00:00:00Z"), Date.parse("2031-01-17T00:00:00Z"))).toMatch(/15.*16/);
   });
 });

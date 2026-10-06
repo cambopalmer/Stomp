@@ -1,4 +1,5 @@
 import type {
+  IntegrationAccount,
   IntegrationsResponse,
   AdminUpdateUser,
   AdminUser,
@@ -292,9 +293,21 @@ export const useAdminDeleteUser = mutation((id: string) => api.del(`/admin/users
 // ─── integrations (Phase 4) ──────────────────────────
 
 export const useIntegrations = () =>
-  useQuery({ queryKey: ["integrations"], queryFn: () => api.get<IntegrationsResponse>("/integrations") });
+  useQuery({
+    queryKey: ["integrations"],
+    queryFn: () => api.get<IntegrationsResponse>("/integrations"),
+    // a fresh connection syncs in the background — poll until it has run once
+    refetchInterval: (q) =>
+      q.state.data?.accounts.some((a) => a.status === "connected" && !a.lastSyncAt && !a.lastError) ? 2000 : false,
+  });
 
 export const useDisconnectIntegration = mutation((id: string) => api.del(`/integrations/${id}`));
+
+export const useSyncIntegration = mutation((id: string) => api.post<IntegrationAccount>(`/integrations/${id}/sync`));
+
+export const useSelectCalendars = mutation(({ id, calendarIds }: { id: string; calendarIds: string[] }) =>
+  api.put<IntegrationAccount>(`/integrations/${id}/calendars`, { calendarIds }),
+);
 
 /** Full-page navigation — the OAuth dance needs real redirects, not XHR. */
 export const integrationConnectHref = (product: "gmail" | "calendar") =>

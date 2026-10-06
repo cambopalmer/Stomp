@@ -15,6 +15,14 @@ export const fmtDate = (ms: number) => dtf.format(ms);
 export const fmtTime = (ms: number) => tf.format(ms);
 export const fmtDateTime = (ms: number) => `${dtf.format(ms)}, ${tf.format(ms)}`;
 
+// all-day events are floating dates stored at UTC midnight (ADR-0005) — format them in UTC
+const dtfFloating = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+/** "Tue, Oct 6" or "Tue, Oct 6 – Thu, Oct 8" — `endMs` is exclusive. */
+export function fmtAllDayRange(startMs: number, endMs: number): string {
+  const lastDay = Math.max(startMs, endMs - 86_400_000);
+  return lastDay === startMs ? dtfFloating.format(startMs) : `${dtfFloating.format(startMs)} – ${dtfFloating.format(lastDay)}`;
+}
+
 const hourF = new Intl.DateTimeFormat(undefined, { hour: "numeric" });
 /** hour-of-day 0–23 → "12 AM", "9 AM", "12 PM" */
 export const fmtHour = (h: number) => hourF.format(new Date(2024, 0, 1, h));

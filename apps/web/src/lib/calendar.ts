@@ -63,13 +63,30 @@ export function weekDays(anchor: Date): Date[] {
 
 /* ── event helpers ──────────────────────────────────────────── */
 
-/** Events that touch `day` (start, end, or span across it), start-time sorted. */
+/**
+ * All-day events are floating dates stored at UTC midnight (ADR-0005), so they
+ * match a calendar day by its date, not by local-time overlap — otherwise a
+ * UTC-midnight date would also land on the previous evening west of UTC.
+ */
+export const floatingDay = (day: Date | number): number => {
+  const d = new Date(day);
+  return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+};
+
+/** The local-midnight Date for a floating (UTC-midnight) date. */
+const localFromFloating = (ms: number) => {
+  const d = new Date(ms);
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+};
+
+/** Events that touch `day` (start, end, or span across it); all-day first, then by start time. */
 export function eventsOnDay(events: CalendarEvent[], day: Date): CalendarEvent[] {
   const from = startOfDay(day).getTime();
   const to = from + DAY_MS;
+  const fd = floatingDay(day);
   return events
-    .filter((e) => e.startsAt < to && e.endsAt > from)
-    .sort((a, b) => a.startsAt - b.startsAt || a.endsAt - b.endsAt);
+    .filter((e) => (e.allDay ? e.startsAt <= fd && e.endsAt > fd : e.startsAt < to && e.endsAt > from))
+    .sort((a, b) => Number(b.allDay) - Number(a.allDay) || a.startsAt - b.startsAt || a.endsAt - b.endsAt);
 }
 
 /* ── todo helpers ───────────────────────────────────────────── */
@@ -117,7 +134,8 @@ export function groupByDay(events: CalendarEvent[], todos: Todo[] = []): DayGrou
     if (!g) map.set(day, (g = { day, events: [], todos: [] }));
     return g;
   };
-  for (const e of [...events].sort((a, b) => a.startsAt - b.startsAt)) bucket(e.startsAt).events.push(e);
+  const sorted = [...events].sort((a, b) => Number(b.allDay) - Number(a.allDay) || a.startsAt - b.startsAt);
+  for (const e of sorted) bucket(e.allDay ? localFromFloating(e.startsAt).getTime() : e.startsAt).events.push(e);
   for (const t of todos) if (isCalendarTodo(t)) bucket(t.dueAt).todos.push(t);
   const groups = [...map.values()].sort((a, b) => a.day - b.day);
   for (const g of groups) g.todos = todosOnDay(g.todos, new Date(g.day));

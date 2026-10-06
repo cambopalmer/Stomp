@@ -152,7 +152,7 @@ Grants access to a **personal** project, or gives a **cross-workspace guest** ac
 | project_id | text | null, FK projects, ON DELETE SET NULL |
 | created_by | text | FK users, no ON DELETE action (blocks a hard delete — users are anonymized, never hard-deleted; see §3a) |
 | status | text | `'confirmed' \| 'tentative' \| 'cancelled'`, default `'confirmed'` |
-| **reserved for sync (Phase 4):** external_provider, external_id, external_etag, last_synced_at | | INDEX(external_provider, external_id) |
+| external_provider, external_id, external_etag, last_synced_at | | Phase 4 mirrors (ADR-0005): `external_provider='google'`, `external_id = <calendarId>|<eventId>`, owned by the connecting user (`created_by`), personal scope; **read-only** in STOMP. All-day = floating date at UTC midnight (start) / exclusive end. INDEX(external_provider, external_id) |
 | created_at / updated_at | integer | |
 
 ### event_attendees

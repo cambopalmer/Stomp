@@ -85,8 +85,14 @@ export async function createEvent(db: Db, ctx: Ctx, input: CreateEvent): Promise
   return row;
 }
 
+/** Imported events mirror Google; edits there would be overwritten on the next sync (ADR-0005). */
+function assertNotMirror(e: CalendarEvent) {
+  if (e.externalProvider) throw Forbidden("This event comes from Google Calendar — change it there");
+}
+
 export async function updateEvent(db: Db, ctx: Ctx, id: string, input: UpdateEvent): Promise<CalendarEvent> {
   const current = await getEvent(db, ctx, id);
+  assertNotMirror(current);
   if (current.createdBy !== ctx.userId) {
     const a = current.projectId ? await projectAccess(db, ctx.userId, current.projectId) : { canEdit: false };
     if (!a.canEdit) throw Forbidden("You can't edit this event");
@@ -102,6 +108,7 @@ export async function updateEvent(db: Db, ctx: Ctx, id: string, input: UpdateEve
 
 export async function deleteEvent(db: Db, ctx: Ctx, id: string): Promise<void> {
   const current = await getEvent(db, ctx, id);
+  assertNotMirror(current);
   if (current.createdBy !== ctx.userId) throw Forbidden("Only the creator can delete this event");
   await purgePolymorphicRefs(db, "event", id);
   await db.delete(events).where(eq(events.id, id));

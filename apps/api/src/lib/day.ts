@@ -2,7 +2,10 @@
  * "Today" boundaries in a given IANA timezone, returned as UTC epoch-ms.
  * Uses Intl to find the tz offset at `nowMs`; good enough for day-bucket math.
  */
-export function dayBounds(nowMs: number, timeZone: string): { dayStart: number; dayEnd: number } {
+export function dayBounds(
+  nowMs: number,
+  timeZone: string,
+): { dayStart: number; dayEnd: number; floatingDay: number } {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone,
     year: "numeric",
@@ -18,7 +21,8 @@ export function dayBounds(nowMs: number, timeZone: string): { dayStart: number; 
   const offset = tzOffsetMs(utcGuess, timeZone);
   const dayStart = utcGuess - offset;
   const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-  return { dayStart, dayEnd };
+  // all-day events are floating dates at UTC midnight (ADR-0005): today, as one of those
+  return { dayStart, dayEnd, floatingDay: utcGuess };
 }
 
 function tzOffsetMs(utcMs: number, timeZone: string): number {

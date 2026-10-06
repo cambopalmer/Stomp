@@ -9,6 +9,7 @@ import { Button, Card, ErrorState, Spinner } from "../components/ui.js";
 import {
   addDays,
   addMonths,
+  DAY_MS,
   type CalendarShow,
   monthGridDays,
   parseShow,
@@ -60,7 +61,9 @@ export function Calendar() {
     return { from: first.getTime(), to: addDays(last, 1).getTime() };
   }, [view, anchor]);
 
-  const events = useEvents(range, show !== "todos");
+  // all-day events sit at UTC midnight, up to a day off local bounds — pad the fetch, the views filter exactly
+  const eventRange = useMemo(() => ({ from: range.from - DAY_MS, to: range.to + DAY_MS }), [range]);
+  const events = useEvents(eventRange, show !== "todos");
   const todos = useDueTodos(range, show !== "events");
   const eventList = show === "todos" ? [] : (events.data ?? []);
   const todoList = show === "events" ? [] : (todos.data ?? []);

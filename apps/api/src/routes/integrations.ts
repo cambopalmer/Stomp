@@ -8,6 +8,7 @@ import { AppError } from "../lib/errors.js";
 import { GrantRevoked } from "../lib/google.js";
 import { logger } from "../lib/logger.js";
 import * as integrations from "../services/integrations.js";
+import * as sync from "../services/sync.js";
 
 const STATE_COOKIE = "stomp_oauth_state";
 const CALLBACK_PATH = "/api/integrations/google/callback";
@@ -73,7 +74,9 @@ export const integrationRoutes: FastifyPluginAsyncZod = async (app) => {
         return reply.redirect(toSettings({ error: req.query.error === "access_denied" ? "denied" : "google" }));
       }
       try {
-        await integrations.completeConnect(db, req.ctx, parsedProduct.data, req.query.code);
+        const row = await integrations.completeConnect(db, req.ctx, parsedProduct.data, req.query.code);
+        // first import in the background — the user lands on Settings while it runs
+        void sync.syncAccount(db, row).catch((err) => logger.error({ err }, "initial sync failed"));
         return reply.redirect(toSettings({ connected: parsedProduct.data }));
       } catch (e) {
         const msg = e instanceof AppError || e instanceof GrantRevoked ? e.message : "Couldn't finish connecting";
@@ -81,6 +84,18 @@ export const integrationRoutes: FastifyPluginAsyncZod = async (app) => {
         return reply.redirect(toSettings({ error: "connect", message: msg }));
       }
     },
+  );
+
+  app.post(
+    "/integrations/:id/sync",
+    { schema: { params: idParams, response: { 200: S.integrationAccount } } },
+    async (req) => sync.syncNow(db, req.ctx, req.params.id),
+  );
+
+  app.put(
+    "/integrations/:id/calendars",
+    { schema: { params: idParams, body: S.selectCalendarsInput, response: { 200: S.integrationAccount } } },
+    async (req) => sync.selectCalendars(db, req.ctx, req.params.id, req.body.calendarIds),
   );
 
   app.delete("/integrations/:id", { schema: { params: idParams } }, async (req, reply) => {
