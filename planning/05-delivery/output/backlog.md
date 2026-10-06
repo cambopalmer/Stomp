@@ -91,7 +91,7 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 
 - [x] `[4]` Google OAuth connect in Settings + token encryption — slice 1 (2026-10-06): per-product grants, AES-256-GCM tokens, needs-reauth handling, `/settings`
 - [x] `[4]` GoogleCalendarAdapter (one-way import) — slice 2 (2026-10-06): calendar picker, windowed refresh, read-only mirrors, all-day as floating dates, Sync now
-- [ ] `[4]` GmailAdapter (read-only pull → incoming) — slice 3: messages labelled `STOMP`
+- [x] `[4]` GmailAdapter (read-only pull → incoming) — slice 3 (2026-10-06): `STOMP`-labelled mail → Incoming (headers + snippet), idempotent, Open in Gmail link, triage keeps the link + `source=email`
 - [ ] `[4]` Scheduled sync job (every 10 min) + sync_log UI — slice 4
 - [x] `[4]` Provider list beyond Gmail (C1) → **Google only** for Phase 4 (ADR-0005)
 - [ ] `[later]` Outlook / Microsoft 365 (Graph) — mail + calendar adapters behind the same interfaces; needs an Azure app registration. Owner wants this eventually.

@@ -1,5 +1,5 @@
 import type { IncomingItem } from "@stomp/shared";
-import { CalendarPlus, Check, ListPlus, X } from "lucide-react";
+import { CalendarPlus, Check, ExternalLink, ListPlus, X } from "lucide-react";
 import { Link } from "react-router";
 import { type FormEvent, useState } from "react";
 import { Button, Card, EmptyState, ErrorState, Field, Input, Spinner, Textarea } from "../components/ui.js";
@@ -16,6 +16,21 @@ const kindLabel: Record<string, string> = {
 };
 
 type Mode = null | "todo" | "event";
+
+/** Imported email metadata (services/sync.ts → source_meta). Defensive: it's free-form JSON. */
+function emailMeta(item: IncomingItem): { from?: string; url?: string } | null {
+  if (item.kind !== "email" || !item.sourceMeta) return null;
+  try {
+    const m = JSON.parse(item.sourceMeta) as { from?: unknown; url?: unknown };
+    return {
+      from: typeof m.from === "string" ? m.from : undefined,
+      // only ever link out to Gmail itself
+      url: typeof m.url === "string" && m.url.startsWith("https://mail.google.com/") ? m.url : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
 
 const linkFor = (item: IncomingItem) => {
   if (!item.linkedEntityId) return null;
@@ -36,6 +51,7 @@ function Item({ item }: { item: IncomingItem }) {
   const isShare =
     item.kind === "shared_task" || item.kind === "shared_event" || item.kind === "shared_reference";
   const to = linkFor(item);
+  const email = emailMeta(item);
 
   const submitTodo = (e: FormEvent) => {
     e.preventDefault();
@@ -67,7 +83,18 @@ function Item({ item }: { item: IncomingItem }) {
           item.title
         )}
       </p>
+      {email?.from && <p className="mt-0.5 truncate text-xs text-muted">From {email.from}</p>}
       {item.body && <p className="mt-0.5 text-sm text-muted">{item.body}</p>}
+      {email?.url && (
+        <a
+          href={email.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+        >
+          Open in Gmail <ExternalLink size={12} aria-hidden="true" />
+        </a>
+      )}
 
       {isShare ? (
         <div className="mt-3 flex flex-wrap gap-2">

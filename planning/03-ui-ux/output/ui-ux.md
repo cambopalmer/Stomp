@@ -44,7 +44,7 @@ Route patterns live in `apps/web/src/lib/routeManifest.ts`, which the sitemap bu
 | Event detail | view/edit one event, attendees | one `event` + `event_attendees` |
 | Todos landing | work the list | `todos` (visible), grouped by Today / Overdue / Upcoming / No date; filters |
 | Todo detail | edit, subtasks, assignment, project | one `todo` + children + `activity_log` |
-| Incoming landing | triage to zero | `incoming_items` where `for_user_id = me, status = unread` |
+| Incoming landing (email items: sender line + "Open in Gmail" link) | triage to zero | `incoming_items` where `for_user_id = me, status = unread` |
 | Learn landing | pick what to study | `references` (visible), filter tag/status |
 | Reference detail | edit link, status, tags, open | one `reference` |
 | Projects list | see all projects + progress | `projects` (member of) + counts |

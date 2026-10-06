@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `uq_incoming_source` ON `incoming_items` (`for_user_id`,`source_ref`) WHERE "incoming_items"."source_ref" is not null;

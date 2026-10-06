@@ -113,7 +113,13 @@ async function assertCanUseProject(db: Db, ctx: Ctx, projectId: string | null | 
   if (!access.canEdit) throw Forbidden("You can't add items to that project");
 }
 
-export async function createTodo(db: Db, ctx: Ctx, input: CreateTodo): Promise<Todo> {
+export async function createTodo(
+  db: Db,
+  ctx: Ctx,
+  input: CreateTodo,
+  /** service-internal: where the todo came from (not settable through the API) */
+  opts: { source?: Todo["source"] } = {},
+): Promise<Todo> {
   let { workspaceId, projectId } = input;
 
   if (input.parentTodoId) {
@@ -143,7 +149,7 @@ export async function createTodo(db: Db, ctx: Ctx, input: CreateTodo): Promise<T
     parentTodoId: input.parentTodoId ?? null,
     createdBy: ctx.userId,
     assigneeId: input.assigneeId ?? null,
-    source: "manual" as const,
+    source: opts.source ?? ("manual" as const),
     sortOrder: 0,
     createdAt: ts,
     updatedAt: ts,

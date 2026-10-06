@@ -1,7 +1,8 @@
 import type { IntegrationAccount } from "@stomp/shared";
 import { and, eq, inArray } from "drizzle-orm";
 import type { Db } from "../db/client.js";
-import { events, integrationAccounts, syncLog } from "../db/schema.js";
+import { events, incomingItems, integrationAccounts, syncLog } from "../db/schema.js";
+import * as gmail from "../integrations/gmail.js";
 import * as gcal from "../integrations/googleCalendar.js";
 import { clock } from "../lib/clock.js";
 import { BadRequest } from "../lib/errors.js";
@@ -14,6 +15,7 @@ import {
   type AccountRow,
   accessTokenFor,
   type CalendarSettings,
+  type GmailSettings,
   loadOwn,
   readSettings,
   toDto,
@@ -94,8 +96,7 @@ export async function syncAccount(db: Db, row: AccountRow): Promise<SyncResult |
     if (row.provider === "google_calendar") {
       ({ result, summary } = await syncCalendar(db, row));
     } else if (row.provider === "gmail") {
-      result = { added: 0, updated: 0, removed: 0 }; // slice 3
-      summary = "Gmail import arrives in the next update";
+      ({ result, summary } = await syncGmail(db, row));
     } else {
       throw new Error(`No adapter for ${row.provider}`);
     }
@@ -196,6 +197,72 @@ async function syncCalendar(db: Db, row: AccountRow): Promise<{ result: SyncResu
   const summary = `${selected.length} calendar${selected.length === 1 ? "" : "s"}: +${result.added} ~${result.updated} −${result.removed}`;
   logger.info({ accountId: row.id, ...result }, "calendar synced");
   return { result, summary };
+}
+
+/**
+ * Gmail → Incoming: every message carrying the STOMP label becomes one inbox
+ * item (kind=email), once. Removing the label later leaves the item alone;
+ * dismissed items never come back (dedupe is on source_ref, any status).
+ */
+async function syncGmail(db: Db, row: AccountRow): Promise<{ result: SyncResult; summary: string }> {
+  const token = await accessTokenFor(db, row);
+  const labelId = await gmail.findLabelId(token);
+  const prev = readSettings<GmailSettings>(row);
+  if (labelId !== (prev.labelId ?? null)) await saveSettings(db, row, { ...prev, labelId });
+  if (!labelId) {
+    throw new Error(`No Gmail label named “${gmail.LABEL_NAME}” yet — create it in Gmail and add it to a message`);
+  }
+
+  const ids = await gmail.listLabelled(token, labelId);
+  const refs = ids.map((id) => `gmail:${id}`);
+  const have = refs.length
+    ? new Set(
+        (
+          await db
+            .select({ ref: incomingItems.sourceRef })
+            .from(incomingItems)
+            .where(and(eq(incomingItems.forUserId, row.userId), inArray(incomingItems.sourceRef, refs)))
+        ).map((r) => r.ref),
+      )
+    : new Set<string | null>();
+  const fresh = ids.filter((id) => !have.has(`gmail:${id}`));
+
+  // fetch first — a Google error mid-way writes nothing
+  const messages: gmail.InboundMessage[] = [];
+  for (const id of fresh) messages.push(await gmail.getMessage(token, id));
+
+  let added = 0;
+  const stamp = clock.now();
+  for (const m of messages) {
+    const inserted = await db
+      .insert(incomingItems)
+      .values({
+        id: newId(),
+        workspaceId: null,
+        title: m.subject || "(no subject)",
+        body: m.snippet || null,
+        kind: "email",
+        status: "unread",
+        forUserId: row.userId,
+        createdBy: row.userId,
+        sourceRef: `gmail:${m.providerId}`,
+        sourceMeta: JSON.stringify({
+          from: m.from,
+          subject: m.subject,
+          receivedAt: m.receivedAt,
+          threadId: m.threadId,
+          url: gmail.gmailWebUrl(row.email, m.providerId),
+        }),
+        createdAt: stamp,
+      })
+      .onConflictDoNothing() // a concurrent run got there first
+      .returning({ id: incomingItems.id });
+    added += inserted.length;
+  }
+
+  const summary = `label ${gmail.LABEL_NAME}: +${added} new, ${ids.length - fresh.length} already in Incoming`;
+  logger.info({ accountId: row.id, added, seen: ids.length }, "gmail synced");
+  return { result: { added, updated: 0, removed: 0 }, summary };
 }
 
 /** "Sync now" — the user's own account only. */

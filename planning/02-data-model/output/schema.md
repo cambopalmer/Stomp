@@ -215,8 +215,8 @@ Polymorphic. Low integrity risk, high convenience.
 | for_user_id | text | FK users, ON DELETE CASCADE — whose inbox |
 | created_by | text | null, FK users, ON DELETE SET NULL |
 | project_id | text | null, FK projects, ON DELETE SET NULL |
-| source_ref | text | null — e.g. Gmail message id |
-| source_meta | text | null — JSON |
+| source_ref | text | null — `gmail:<messageId>` for imported mail; `todo:<id>` / `event:<id>` / `reference:<id>` for share notices. **UNIQUE (for_user_id, source_ref) WHERE kind = 'email'** (`uq_incoming_email`) — imports are idempotent; share notices may repeat (re-share after decline). |
+| source_meta | text | null — JSON. Email: `{from, subject, receivedAt, threadId, url}` (`url` opens the message in Gmail web). |
 | linked_entity_type / linked_entity_id | text | null — set on triage |
 | created_at | integer | |
 | triaged_at | integer | null |

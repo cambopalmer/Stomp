@@ -78,13 +78,14 @@ export async function triageIncoming(db: Db, ctx: Ctx, id: string, input: Triage
   let linkedEntityId: string | null = null;
 
   if (input.target === "todo") {
+    const notes = input.notes ?? item.body ?? undefined;
     const todo = await createTodo(db, ctx, {
       title: input.title,
-      notes: input.notes ?? item.body ?? undefined,
+      notes: withSourceLink(notes, item),
       dueAt: input.dueAt ?? undefined,
       scheduledFor: input.scheduledFor ?? undefined,
       projectId: input.projectId ?? item.projectId ?? undefined,
-    });
+    }, { source: item.kind === "email" ? "email" : "inbox" });
     linkedEntityType = "todo";
     linkedEntityId = todo.id;
   } else if (input.target === "event") {
@@ -107,4 +108,18 @@ export async function triageIncoming(db: Db, ctx: Ctx, id: string, input: Triage
   await logActivity(db, ctx.userId, "incoming_item", id, input.target === "dismiss" ? "deleted" : "triaged");
 
   return { ...item, status, linkedEntityType, linkedEntityId, triagedAt: clock.now() } as IncomingItem;
+}
+
+/** For an imported email, keep a way back to the original message in the todo's notes. */
+function withSourceLink(notes: string | undefined, item: { kind: string; sourceMeta: string | null }) {
+  if (item.kind !== "email" || !item.sourceMeta) return notes;
+  try {
+    const url = (JSON.parse(item.sourceMeta) as { url?: unknown }).url;
+    if (typeof url !== "string" || (notes ?? "").includes(url)) return notes;
+    return `${notes ? `${notes}
+
+` : ""}Email: ${url}`;
+  } catch {
+    return notes;
+  }
 }

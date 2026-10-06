@@ -338,7 +338,12 @@ export const incomingItems = sqliteTable(
     createdAt: ts("created_at").notNull().default(now),
     triagedAt: ts("triaged_at"),
   },
-  (t) => ({ byInbox: index("idx_incoming_inbox").on(t.forUserId, t.status) }),
+  (t) => ({
+    byInbox: index("idx_incoming_inbox").on(t.forUserId, t.status),
+    // one inbox item per imported email per user — makes Gmail imports idempotent. Scoped to
+    // kind=email: share notices reuse source_ref and may legitimately repeat (re-share after decline).
+    uniqEmail: uniqueIndex("uq_incoming_email").on(t.forUserId, t.sourceRef).where(sql`${t.kind} = 'email'`),
+  }),
 );
 
 // ─────────────────────────────────────── notifications (reserved — Phase 2+)
