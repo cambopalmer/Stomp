@@ -52,7 +52,7 @@ Active-workspace switcher (incl. "Personal"). Create/manage workspaces + members
 
 **Leftovers closed 2026-10-05:** legacy `auth_provider*` columns dropped; hub admin role (user management only, no visibility bypass) + `/admin`; user deletion = anonymize, FK policy documented (schema §3a); SQLite WAL + `busy_timeout`.
 
-Still open: the owner must create Google Cloud OAuth credentials (redirect URI `{PUBLIC_BASE_URL}/api/auth/google/callback`).
+Google Cloud OAuth client created by the owner 2026-10-06 (dev redirect URI `http://localhost:5173/api/auth/google/callback`); Google sign-in verified end-to-end. Phase 3 is fully closed.
 
 **Security follow-ups — all resolved:**
 - ~~Scope `GET /sitemap.xml` to the requesting user~~ — **done (2026-09-02):** public `/api/sitemap.xml` lists static routes only; authenticated `/api/sitemap-me.xml` returns the caller's own items. `Disallow: /` in `robots.txt` stays.

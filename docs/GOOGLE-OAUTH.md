@@ -12,29 +12,30 @@ This is a one-time setup in the Google Cloud Console by the project owner.
 1. Go to <https://console.cloud.google.com/>.
 2. Top bar → project picker → **New Project**. Name it e.g. `stomp`. Create, then select it.
 
-## 2. Configure the OAuth consent screen
+## 2. Set up the app in Google Auth Platform
 
-1. **APIs & Services → OAuth consent screen** (<https://console.cloud.google.com/apis/credentials/consent>).
-2. User type: **External**. Create.
-3. App information:
-   - App name: `STOMP`
-   - User support email: your email
-   - Developer contact email: your email
-4. Scopes: **Add or remove scopes** → tick `.../auth/userinfo.email`,
-   `.../auth/userinfo.profile`, and `openid`. Update → Save and continue.
-   (These match `scope: ["openid", "email", "profile"]` in
-   `apps/api/src/plugins/googleOAuth.ts`.)
-5. Test users: while the app is in "Testing" mode only these accounts can sign in.
-   **Add** every email that needs access (yours + anyone you share STOMP with).
-   Save and continue.
-6. Leave publishing status as **Testing** for a private hub. (Do *not* click
-   "Publish app" unless you want anyone with a Google account to be able to complete
-   the flow — STOMP still gates on `ALLOW_SIGNUP`, but keep the surface small.)
+> Google reorganised this area in 2025: the old "OAuth consent screen" wizard is now
+> **Google Auth Platform**, split into *Branding*, *Audience*, *Data Access* and
+> *Clients* pages. Labels below are as of 2026-10; Google renames things often.
+
+1. **APIs & Services → OAuth consent screen** — this now opens **Google Auth Platform**.
+   Click **Get started**.
+2. App information: name `STOMP`, support email = yours.
+3. Audience: **External**. (*Internal* only exists for Google Workspace orgs, not
+   personal Gmail.)
+4. Contact email = yours → agree → **Create**.
+5. **Audience → Test users**: add every Google account that should be able to sign in
+   (yours + anyone you share STOMP with). Leave publishing status on **Testing** for
+   sign-in — see §7 before Phase 4.
+6. Scopes: nothing to add for sign-in. `openid`, `email` and `profile` are
+   non-sensitive and requested at runtime (`scope: ["openid", "email", "profile"]` in
+   `apps/api/src/plugins/googleOAuth.ts`).
 
 ## 3. Create OAuth client credentials
 
-1. **APIs & Services → Credentials** → **Create Credentials → OAuth client ID**.
-2. Application type: **Web application**. Name: `stomp-web`.
+1. **Google Auth Platform → Clients → Create client**.
+2. Application type: **Web application**. Name: `stomp-dev` (one client per environment
+   is fine, or one client with several redirect URIs).
 3. **Authorized redirect URIs** — add one per environment. The path is always
    `/api/auth/google/callback`; the origin must equal `PUBLIC_BASE_URL` (see §5):
 
@@ -46,7 +47,8 @@ This is a one-time setup in the Google Cloud Console by the project owner.
 
    "Authorized JavaScript origins" is **not** required — the flow is a server-side
    redirect, not a JS SDK.
-4. Create. Copy the **Client ID** and **Client secret**.
+4. **Create**, then copy the **Client ID** and **Client secret** straight away — newer
+   consoles may only show the secret once (you can always add a new secret later).
 
 ## 4. Add the secrets to your environment
 
@@ -99,6 +101,25 @@ cd apps/web && pnpm dev
 - A brand-new email creates an account, subject to `ALLOW_SIGNUP` (the very first
   user in an empty DB is always allowed).
 - Unverified Google emails are rejected (`email_verified === false`).
+- A brand-new Google account is a **member**, not an admin (only the first account on an
+  install is admin). Promote it from **Manage users** (`/admin`) while signed in as an admin.
+
+## 7. Before Phase 4 (Gmail / Calendar)
+
+Sign-in only needs the steps above. The Phase 4 integrations add more:
+
+- **Enable the APIs**: *APIs & Services → Library* → **Gmail API** and **Google Calendar API**.
+- **Scopes** (*Data Access*): `gmail.readonly` is a **restricted** scope and
+  `calendar.readonly` is **sensitive**. They're requested at connect time from Settings,
+  separately from sign-in.
+- **Testing mode expires refresh tokens after 7 days** for these scopes, which would
+  break background sync weekly. For a private hub the usual fix is **Audience → Publish
+  app** to *In production* **without** submitting for verification: users see a
+  "Google hasn't verified this app" warning when connecting, and the app is capped at
+  100 users. Full verification (and a security assessment for restricted scopes) is
+  only needed beyond that.
+- Publishing doesn't open STOMP to strangers: sign-up is still gated by `ALLOW_SIGNUP`,
+  and an admin can disable accounts.
 
 ## Troubleshooting
 
