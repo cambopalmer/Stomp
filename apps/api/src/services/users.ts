@@ -27,6 +27,7 @@ import { logger } from "../lib/logger.js";
 import type { Ctx } from "./access.js";
 import { hashPassword } from "./auth.js";
 import { purgePolymorphicRefs } from "./cleanup.js";
+import { keepMirrorsAsOwn } from "./integrations.js";
 import { purgeTodoTree } from "./todos.js";
 
 /*
@@ -258,6 +259,10 @@ async function anonymize(db: Db, u: UserRow): Promise<void> {
   await db.delete(eventAttendees).where(eq(eventAttendees.userId, U));
   await db.delete(notifications).where(eq(notifications.userId, U));
   await db.delete(incomingItems).where(eq(incomingItems.forUserId, U));
+  // mirrored events that survived step 1 (others can see them) become ordinary events first
+  for (const a of await db.select({ id: integrationAccounts.id }).from(integrationAccounts).where(eq(integrationAccounts.userId, U))) {
+    await keepMirrorsAsOwn(db, a.id);
+  }
   await db.delete(integrationAccounts).where(eq(integrationAccounts.userId, U));
   await db.update(todos).set({ assigneeId: null }).where(eq(todos.assigneeId, U));
 

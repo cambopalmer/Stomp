@@ -57,6 +57,13 @@
       "when": 1791321099248,
       "tag": "0007_incoming_email_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1791387067953,
+      "tag": "0008_event_integration_account",
+      "breakpoints": true
     }
   ]
 }

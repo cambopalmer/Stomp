@@ -189,6 +189,10 @@ export const events = sqliteTable(
     externalId: text("external_id"),
     externalEtag: text("external_etag"),
     lastSyncedAt: ts("last_synced_at"),
+    /** which connected account mirrors this event — sync + disconnect act per account */
+    integrationAccountId: text("integration_account_id").references(() => integrationAccounts.id, {
+      onDelete: "set null",
+    }),
     createdAt: ts("created_at").notNull().default(now),
     updatedAt: ts("updated_at").notNull().default(now),
   },

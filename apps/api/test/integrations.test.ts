@@ -164,7 +164,9 @@ describe("integrations: tokens + disconnect", () => {
   it("disconnect revokes at Google and deletes the row", async () => {
     const calls = fakeGoogle();
     const id = (await row()).id;
-    expect((await app.inject({ method: "DELETE", url: `/api/integrations/${id}` })).statusCode).toBe(204);
+    const del = await app.inject({ method: "DELETE", url: `/api/integrations/${id}` });
+    expect(del.statusCode).toBe(200);
+    expect(del.json()).toEqual({ kept: 0, removed: 0 });
     expect(calls.some((c) => c.url.startsWith("https://oauth2.googleapis.com/revoke") && c.body.includes("rt-secret"))).toBe(true);
     expect(await db.select().from(integrationAccounts).where(eq(integrationAccounts.userId, ownerId))).toEqual([]);
   });

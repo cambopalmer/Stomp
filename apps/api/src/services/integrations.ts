@@ -4,7 +4,7 @@ import type {
   IntegrationProduct,
   IntegrationsResponse,
 } from "@stomp/shared";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, count, eq, inArray } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { events, integrationAccounts } from "../db/schema.js";
 import { config } from "../config.js";
@@ -78,7 +78,23 @@ export async function listAccounts(db: Db, ctx: Ctx): Promise<IntegrationsRespon
     .from(integrationAccounts)
     .where(eq(integrationAccounts.userId, ctx.userId))
     .orderBy(asc(integrationAccounts.createdAt));
-  return { configured: config.integrationsConfigured, accounts: rows.map(toDto) };
+  const counts = new Map<string | null, number>();
+  if (rows.length) {
+    const grouped = await db
+      .select({ id: events.integrationAccountId, n: count() })
+      .from(events)
+      .where(inArray(events.integrationAccountId, rows.map((r) => r.id)))
+      .groupBy(events.integrationAccountId);
+    for (const g of grouped) counts.set(g.id, g.n);
+  }
+  return {
+    configured: config.integrationsConfigured,
+    accounts: rows.map((r) => {
+      const dto = toDto(r);
+      if (r.provider === "google_calendar") dto.mirroredEvents = counts.get(r.id) ?? 0;
+      return dto;
+    }),
+  };
 }
 
 export async function loadOwn(db: Db, ctx: Ctx, id: string): Promise<AccountRow> {
@@ -217,21 +233,50 @@ export async function markNeedsReauth(db: Db, row: AccountRow, reason: string): 
  * Revoke at Google (best effort) and forget the account. Calendar mirrors are
  * removed with it; Gmail items already in Incoming stay (ADR-0005).
  */
-export async function disconnect(db: Db, ctx: Ctx, id: string): Promise<void> {
+/**
+ * Detach a connection's mirrors into ordinary STOMP events: no Google link,
+ * editable, never synced again. Used by "keep my events" and by user deletion.
+ */
+export async function keepMirrorsAsOwn(db: Db, accountId: string): Promise<number> {
+  const res = await db
+    .update(events)
+    .set({
+      externalProvider: null,
+      externalId: null,
+      externalEtag: null,
+      lastSyncedAt: null,
+      integrationAccountId: null,
+      updatedAt: clock.now(),
+    })
+    .where(eq(events.integrationAccountId, accountId))
+    .returning({ id: events.id });
+  return res.length;
+}
+
+export async function disconnect(
+  db: Db,
+  ctx: Ctx,
+  id: string,
+  opts: { keepEvents?: boolean } = {},
+): Promise<{ kept: number; removed: number }> {
   const row = await loadOwn(db, ctx, id);
   const token = row.refreshToken ?? row.accessToken;
   if (token) await revokeToken(unseal(token)).catch(() => undefined);
+  const result = { kept: 0, removed: 0 };
 
   await db.transaction(async (txRaw) => {
     const tx = txRaw as unknown as Db;
-    if (row.provider === "google_calendar") {
-      const mirrored = and(eq(events.createdBy, ctx.userId), eq(events.externalProvider, "google"));
-      for (const e of await tx.select({ id: events.id }).from(events).where(mirrored)) {
-        await purgePolymorphicRefs(tx, "event", e.id);
-      }
+    if (opts.keepEvents) {
+      result.kept = await keepMirrorsAsOwn(tx, row.id);
+    } else {
+      const mirrored = eq(events.integrationAccountId, row.id);
+      const ids = await tx.select({ id: events.id }).from(events).where(mirrored);
+      for (const e of ids) await purgePolymorphicRefs(tx, "event", e.id);
       await tx.delete(events).where(mirrored);
+      result.removed = ids.length;
     }
     await tx.delete(integrationAccounts).where(eq(integrationAccounts.id, row.id));
   });
-  logger.info({ userId: ctx.userId, provider: row.provider }, "integration disconnected");
+  logger.info({ userId: ctx.userId, provider: row.provider, ...result }, "integration disconnected");
+  return result;
 }

@@ -137,7 +137,8 @@ async function syncCalendar(db: Db, row: AccountRow): Promise<{ result: SyncResu
 
   await db.transaction(async (txRaw) => {
     const tx = txRaw as unknown as Db;
-    const mine = and(eq(events.createdBy, row.userId), eq(events.externalProvider, "google"));
+    // this connection's mirrors only — a second calendar account keeps its own
+    const mine = eq(events.integrationAccountId, row.id);
     const existing = await tx
       .select({ id: events.id, externalId: events.externalId, etag: events.externalEtag, startsAt: events.startsAt, endsAt: events.endsAt })
       .from(events)
@@ -169,6 +170,7 @@ async function syncCalendar(db: Db, row: AccountRow): Promise<{ result: SyncResu
             ...cols,
             externalProvider: "google",
             externalId: m.externalId,
+            integrationAccountId: row.id,
             workspaceId: null,
             projectId: null,
             createdBy: row.userId,

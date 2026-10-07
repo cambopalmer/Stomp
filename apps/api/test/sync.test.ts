@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app.js";
@@ -165,11 +165,55 @@ describe("calendar sync", () => {
     expect((await api("DELETE", `/api/events/${standup.id}`)).statusCode).toBe(403);
   });
 
-  it("disconnecting the calendar removes its mirrors", async () => {
+  it("disconnecting (default) removes this connection's mirrors and says how many", async () => {
     await api("POST", `/api/integrations/${accountId}/sync`);
-    expect(await mirrors()).not.toHaveLength(0);
-    await api("DELETE", `/api/integrations/${accountId}`);
+    const list = (await api("GET", "/api/integrations")).json();
+    expect(list.accounts[0].mirroredEvents).toBe(2);
+    const del = await api("DELETE", `/api/integrations/${accountId}`);
+    expect(del.json()).toEqual({ kept: 0, removed: 2 });
     expect(await mirrors()).toHaveLength(0);
+  });
+
+  it("disconnect with keepEvents turns mirrors into ordinary, editable STOMP events", async () => {
+    await api("POST", `/api/integrations/${accountId}/sync`);
+    const before = (await mirrors()).map((e) => e.id).sort();
+    const del = await api("DELETE", `/api/integrations/${accountId}?keepEvents=true`);
+    expect(del.json()).toEqual({ kept: 2, removed: 0 });
+
+    const kept = await db.select().from(events).where(inArray(events.id, before));
+    expect(kept).toHaveLength(2);
+    for (const e of kept) {
+      expect(e).toMatchObject({ externalProvider: null, externalId: null, integrationAccountId: null, createdBy: ownerId });
+    }
+    const edit = await api("PATCH", `/api/events/${before[0]}`, { title: "mine now" });
+    expect(edit.statusCode).toBe(200);
+  });
+
+  it("two calendar connections never touch each other's events (duplicates are fine)", async () => {
+    const second = newId();
+    await db.insert(integrationAccounts).values({
+      id: second,
+      userId: ownerId,
+      provider: "google_calendar",
+      email: "work@gmail.com",
+      accessToken: seal("at-2"),
+      refreshToken: seal("rt-2"),
+      tokenExpiresAt: Date.now() + 3600_000,
+      status: "connected",
+    });
+    await api("POST", `/api/integrations/${accountId}/sync`);
+    await api("POST", `/api/integrations/${second}/sync`);
+    const own = async (id: string) => db.select().from(events).where(eq(events.integrationAccountId, id));
+    expect(await own(accountId)).toHaveLength(2);
+    expect(await own(second)).toHaveLength(2); // same Google events, separate copies
+
+    // re-syncing one doesn't treat the other's copies as stale
+    await api("POST", `/api/integrations/${accountId}/sync`);
+    expect(await own(second)).toHaveLength(2);
+
+    // disconnecting one leaves the other alone
+    await api("DELETE", `/api/integrations/${accountId}`);
+    expect(await own(second)).toHaveLength(2);
   });
 
   it("someone else can't sync or reconfigure your account", async () => {

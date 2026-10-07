@@ -146,6 +146,8 @@ function AccountRow({ account, product }: { account: IntegrationAccount; product
   const disconnect = useDisconnectIntegration();
   const syncNow = useSyncIntegration();
   const reauth = account.status === "needs_reauth";
+  const mirrored = account.mirroredEvents ?? 0;
+  const [askKeep, setAskKeep] = useState(false);
 
   return (
     <div className="flex flex-col gap-2 rounded-md border border-border p-2.5" data-testid={`account-${account.provider}`}>
@@ -201,11 +203,41 @@ function AccountRow({ account, product }: { account: IntegrationAccount; product
           variant="ghost"
           className="px-2.5 py-1.5 text-xs"
           disabled={disconnect.isPending}
-          onClick={() => disconnect.mutate(account.id)}
+          aria-expanded={askKeep}
+          onClick={() => (mirrored > 0 ? setAskKeep((v) => !v) : disconnect.mutate({ id: account.id }))}
         >
           Disconnect
         </Button>
       </div>
+      {askKeep && (
+        <div role="group" aria-label="Keep imported events?" className="flex flex-col gap-2 rounded-md bg-surface-2 p-2.5 text-sm">
+          <p>
+            <strong>Keep the {mirrored} imported event{mirrored === 1 ? "" : "s"}?</strong> Kept events become your own
+            STOMP events — editable, no longer synced. If you connect another Google account with the same events,
+            they may show up twice.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="px-2.5 py-1.5 text-xs"
+              disabled={disconnect.isPending}
+              onClick={() => disconnect.mutate({ id: account.id, keepEvents: true })}
+            >
+              Keep as my events
+            </Button>
+            <Button
+              variant="danger"
+              className="px-2.5 py-1.5 text-xs"
+              disabled={disconnect.isPending}
+              onClick={() => disconnect.mutate({ id: account.id, keepEvents: false })}
+            >
+              Remove them
+            </Button>
+            <Button variant="ghost" className="px-2.5 py-1.5 text-xs" onClick={() => setAskKeep(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
       <SyncHistory accountId={account.id} />
       {disconnect.isError && (
         <p role="alert" className="text-xs text-danger">

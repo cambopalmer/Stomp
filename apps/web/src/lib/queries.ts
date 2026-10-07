@@ -302,7 +302,9 @@ export const useIntegrations = () =>
       q.state.data?.accounts.some((a) => a.status === "connected" && !a.lastSyncAt && !a.lastError) ? 2000 : false,
   });
 
-export const useDisconnectIntegration = mutation((id: string) => api.del(`/integrations/${id}`));
+export const useDisconnectIntegration = mutation(({ id, keepEvents }: { id: string; keepEvents?: boolean }) =>
+  api.del(`/integrations/${id}${keepEvents === undefined ? "" : `?keepEvents=${keepEvents}`}`),
+);
 
 export const useSyncLog = (id: string, enabled: boolean) =>
   useQuery({

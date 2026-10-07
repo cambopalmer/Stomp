@@ -110,8 +110,16 @@ export const integrationRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req) => sync.selectCalendars(db, req.ctx, req.params.id, req.body.calendarIds),
   );
 
-  app.delete("/integrations/:id", { schema: { params: idParams } }, async (req, reply) => {
-    await integrations.disconnect(db, req.ctx, req.params.id);
-    reply.code(204);
-  });
+  // ?keepEvents=true turns a calendar's imported events into ordinary STOMP events instead of removing them
+  app.delete(
+    "/integrations/:id",
+    {
+      schema: {
+        params: idParams,
+        querystring: z.object({ keepEvents: z.enum(["true", "false"]).optional() }),
+        response: { 200: S.disconnectResult },
+      },
+    },
+    async (req) => integrations.disconnect(db, req.ctx, req.params.id, { keepEvents: req.query.keepEvents === "true" }),
+  );
 };

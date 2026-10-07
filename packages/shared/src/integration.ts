@@ -28,6 +28,8 @@ export const integrationAccount = z.object({
   createdAt: epochMs,
   /** google_calendar only */
   calendars: z.array(googleCalendarChoice).optional(),
+  /** google_calendar only: events currently mirrored from this connection */
+  mirroredEvents: z.number().int().optional(),
 });
 export type IntegrationAccount = z.infer<typeof integrationAccount>;
 
@@ -40,6 +42,9 @@ export type IntegrationsResponse = z.infer<typeof integrationsResponse>;
 
 export const selectCalendarsInput = z.object({ calendarIds: z.array(z.string()).max(100) });
 export type SelectCalendarsInput = z.infer<typeof selectCalendarsInput>;
+
+export const disconnectResult = z.object({ kept: z.number().int(), removed: z.number().int() });
+export type DisconnectResult = z.infer<typeof disconnectResult>;
 
 export const syncLogEntry = z.object({
   id,
