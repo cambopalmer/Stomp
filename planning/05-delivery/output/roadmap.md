@@ -62,6 +62,19 @@ Google Cloud OAuth client created by the owner 2026-10-06 (dev redirect URI `htt
 
 Google OAuth connect in Settings. `GmailAdapter` (read-only pull → incoming). `GoogleCalendarAdapter` (one-way import → read-only events). Scheduled sync job + `sync_log` UI. Token encryption.
 
+## Phase 4.5 — Day planner (next after Phase 4; owner request 2026-10-07)
+
+**Problem it solves:** todos and events don't give you a *flexible schedule for the day*. The planner is a scannable, colour-coded day on a 15-minute grid where loose time blocks sit around the concrete events (own + imported Google), and the plan for each day is kept so past days can be reviewed.
+
+**Owner direction so far:**
+- Time blocks are **less rigid than todos**. Explore an underlying shared type ("time block" / "task") rather than forcing every block to be a todo.
+- **Categories:** ship an intuitive default set, and let users create their own with colours. Goal: help people stay organised and steer them toward a scannable day (never colour-only meaning).
+- Liked all of: morning plan + end-of-day shutdown (Sunsama), planned vs actual (Newport), drag todos onto the timeline, category colours, drag-to-resize on 15-min grid, day/week time totals, buffers, daily notes, templates, roll-over of unfinished items.
+- **Smart planning, later but design for it now:** prerequisites around concrete events, e.g. *gymnastics at 6pm, 30-min drive, she needs dinner first* → the planner asks "how long is the drive?" / "what needs doing before you leave?" and suggests the travel block and the dinner block before it. Implies blocks can depend on / anchor to an event (offset + duration), and events can carry location + travel time.
+- `scheduled_for` ("Plan for", on hold for the calendar) gets its home here.
+
+**Open questions to settle before building** (expect more): the shared block/task data type; are categories per user or per workspace; planned-vs-actual in v1; sharing a day with the household; how prerequisite suggestions are modelled (rules? templates per recurring event?); travel time source (manual entry first; maps API later?).
+
 ## Phase 5 — Outbound + two-way
 
 Two-way calendar sync with conflict handling. Send email from Gmail. Send calendar invites. Outlook/IMAP adapters if wanted.

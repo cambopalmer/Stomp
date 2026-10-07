@@ -97,6 +97,15 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 - [ ] `[later]` Outlook / Microsoft 365 (Graph) — mail + calendar adapters behind the same interfaces; needs an Azure app registration. Owner wants this eventually.
 - [x] `[4]` Home tiles + hot sidebar match all-day events by floating date (`dayBounds().floatingDay`) — fixed in slice 2
 
+## Phase 4.5 — Day planner (see roadmap for the problem statement + owner direction)
+
+- [ ] `[4.5]` Design session: block/task data type, categories, planned-vs-actual, sharing, prerequisite model (grill before building)
+- [ ] `[4.5]` `time_blocks` + `day_notes` + `categories` (defaults + user-defined colours) schema
+- [ ] `[4.5]` `/plan/:date` day view — 15-min grid, drag-create / resize, events as fixed blocks, todo tray (due / Plan for / Incoming)
+- [ ] `[4.5]` Morning plan + end-of-day shutdown (roll over / reschedule / drop), daily notes, day + week totals
+- [ ] `[4.5]` Past-day review (planned vs actual if kept), templates
+- [ ] `[later]` Smart prerequisites: travel time + "before you leave" suggestions anchored to events (gymnastics example in roadmap)
+
 ## Phase 5 — Outbound + two-way
 
 - [ ] `[5]` Two-way calendar sync + conflict handling
