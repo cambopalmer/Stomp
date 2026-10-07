@@ -73,7 +73,7 @@ Google Cloud OAuth client created by the owner 2026-10-06 (dev redirect URI `htt
 - **Smart planning, later but design for it now:** prerequisites around concrete events, e.g. *gymnastics at 6pm, 30-min drive, she needs dinner first* → the planner asks "how long is the drive?" / "what needs doing before you leave?" and suggests the travel block and the dinner block before it. Implies blocks can depend on / anchor to an event (offset + duration), and events can carry location + travel time.
 - `scheduled_for` ("Plan for", on hold for the calendar) gets its home here.
 
-**Open questions to settle before building** (expect more): the shared block/task data type; are categories per user or per workspace; planned-vs-actual in v1; sharing a day with the household; how prerequisite suggestions are modelled (rules? templates per recurring event?); travel time source (manual entry first; maps API later?).
+**Design settled 2026-10-07 → [ADR-0006](../../_config/decisions/adr-0006-day-planner.md)** (time blocks as their own entity with optional todo link; wall-clock 15-min time; events as fixed blocks; per-user categories with admin-editable defaults; automatic planned-vs-actual; anchored "Add before…" blocks; mobile-first installable web app). Build plan: 6 slices in the backlog.
 
 ## Phase 5 — Outbound + two-way
 

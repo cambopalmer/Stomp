@@ -99,12 +99,14 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 
 ## Phase 4.5 — Day planner (see roadmap for the problem statement + owner direction)
 
-- [ ] `[4.5]` Design session: block/task data type, categories, planned-vs-actual, sharing, prerequisite model (grill before building)
-- [ ] `[4.5]` `time_blocks` + `day_notes` + `categories` (defaults + user-defined colours) schema
-- [ ] `[4.5]` `/plan/:date` day view — 15-min grid, drag-create / resize, events as fixed blocks, todo tray (due / Plan for / Incoming)
-- [ ] `[4.5]` Morning plan + end-of-day shutdown (roll over / reschedule / drop), daily notes, day + week totals
-- [ ] `[4.5]` Past-day review (planned vs actual if kept), templates
-- [ ] `[later]` Smart prerequisites: travel time + "before you leave" suggestions anchored to events (gymnastics example in roadmap)
+- [x] `[4.5]` Design session (2026-10-07) → ADR-0006
+- [ ] `[4.5]` **Slice 1 — foundation:** `categories` + `default_categories` (seeded 8 + Uncategorized), `time_blocks`, `day_notes`; API CRUD with wall-clock validation (15-min grid, no midnight crossing); lazy planned-time snapshot; web saves browser timezone to `users.timezone`
+- [ ] `[4.5]` **Slice 2 — day view (mobile-first):** `/plan/:date` timeline, now-line, events as fixed blocks (all visible, ignores workspace switcher), overlap layout, tap-a-slot bottom sheet (title, category chips, duration presets, −15/+15), Plan nav item
+- [ ] `[4.5]` **Slice 3 — todos:** tray (Plan for today / due today / overdue → Schedule at…), linked blocks, "also complete the todo?" prompt, struck-through blocks for completed todos
+- [ ] `[4.5]` **Slice 4 — review:** status (done/skipped), planned vs actual on past days, day notes, totals by category; desktop drag-create/move/resize + keyboard; long-press drag on touch
+- [ ] `[4.5]` **Slice 5 — anchored blocks:** "Add before…" on events (first = Travel), blocks follow event moves (incl. day changes), flagged + kept on cancel/delete/sync removal
+- [ ] `[4.5]` **Slice 6 — extras:** copy a previous day's plan, Home "Now / Next" tile, admin default-category editor (additions reach everyone), installable PWA (manifest + icons)
+- [ ] `[4.5+]` Prep templates (suggest "before Gymnastics: Drive 30, Dinner 30"); weekly totals; named templates; reminders; sharing; travel-time lookup; offline
 
 ## Phase 5 — Outbound + two-way
 
