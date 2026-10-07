@@ -92,6 +92,18 @@ export const integrationRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req) => sync.syncNow(db, req.ctx, req.params.id),
   );
 
+  app.get(
+    "/integrations/:id/log",
+    {
+      schema: {
+        params: idParams,
+        querystring: z.object({ limit: z.coerce.number().int().min(1).max(100).default(20) }),
+        response: { 200: z.array(S.syncLogEntry) },
+      },
+    },
+    async (req) => sync.listSyncLog(db, req.ctx, req.params.id, req.query.limit),
+  );
+
   app.put(
     "/integrations/:id/calendars",
     { schema: { params: idParams, body: S.selectCalendarsInput, response: { 200: S.integrationAccount } } },

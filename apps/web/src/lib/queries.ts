@@ -1,6 +1,7 @@
 import type {
   IntegrationAccount,
   IntegrationsResponse,
+  SyncLogEntry,
   AdminUpdateUser,
   AdminUser,
   CalendarEvent,
@@ -302,6 +303,13 @@ export const useIntegrations = () =>
   });
 
 export const useDisconnectIntegration = mutation((id: string) => api.del(`/integrations/${id}`));
+
+export const useSyncLog = (id: string, enabled: boolean) =>
+  useQuery({
+    queryKey: ["integrations", "log", id],
+    queryFn: () => api.get<SyncLogEntry[]>(`/integrations/${id}/log?limit=15`),
+    enabled,
+  });
 
 export const useSyncIntegration = mutation((id: string) => api.post<IntegrationAccount>(`/integrations/${id}/sync`));
 

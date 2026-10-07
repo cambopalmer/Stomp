@@ -11,6 +11,7 @@ import {
   useIntegrations,
   useSelectCalendars,
   useSyncIntegration,
+  useSyncLog,
 } from "../lib/queries.js";
 
 /** Outcome codes the API's OAuth callback appends to /settings. */
@@ -205,6 +206,7 @@ function AccountRow({ account, product }: { account: IntegrationAccount; product
           Disconnect
         </Button>
       </div>
+      <SyncHistory accountId={account.id} />
       {disconnect.isError && (
         <p role="alert" className="text-xs text-danger">
           {disconnect.error instanceof Error ? disconnect.error.message : "Couldn't disconnect"}
@@ -265,5 +267,35 @@ function CalendarPicker({ account }: { account: IntegrationAccount }) {
         </p>
       )}
     </fieldset>
+  );
+}
+
+/** Last runs for one account — fetched only when opened. */
+function SyncHistory({ accountId }: { accountId: string }) {
+  const [open, setOpen] = useState(false);
+  const log = useSyncLog(accountId, open);
+  return (
+    <details className="text-xs" onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
+      <summary className="cursor-pointer text-muted hover:text-text">Sync history</summary>
+      {log.isLoading ? (
+        <p className="mt-1 text-muted">Loading…</p>
+      ) : log.isError ? (
+        <p className="mt-1 text-danger">Couldn’t load the history.</p>
+      ) : log.data?.length ? (
+        <ul className="mt-1 flex flex-col gap-0.5">
+          {log.data.map((r) => (
+            <li key={r.id} className="tnum flex gap-2">
+              <span className="w-32 shrink-0 text-muted">{fmtDateTime(r.startedAt)}</span>
+              <span className={r.error ? "text-danger" : ""}>
+                {r.summary}
+                {r.error && ` — ${r.error}`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-1 text-muted">No syncs yet.</p>
+      )}
+    </details>
   );
 }

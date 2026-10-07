@@ -60,7 +60,7 @@ Google Cloud OAuth client created by the owner 2026-10-06 (dev redirect URI `htt
 
 ## Phase 4 — Inbound integrations
 
-Google OAuth connect in Settings. `GmailAdapter` (read-only pull → incoming). `GoogleCalendarAdapter` (one-way import → read-only events). Scheduled sync job + `sync_log` UI. Token encryption.
+**Built 2026-10-06/07 (ADR-0005)**, on branch `phase-4-integrations`: Google connect in Settings (per-product grants, AES-256-GCM tokens), Google Calendar import (picked calendars, read-only mirrors, all-day as floating dates), Gmail → Incoming (`STOMP` label), background sync every 10 min + Sync now + history. Before relying on background sync, the Google app must leave *Testing* (7-day token expiry) — `docs/GOOGLE-OAUTH.md` §7.
 
 ## Phase 4.5 — Day planner (next after Phase 4; owner request 2026-10-07)
 

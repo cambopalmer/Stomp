@@ -36,14 +36,15 @@ This is a one-time setup in the Google Cloud Console by the project owner.
 1. **Google Auth Platform → Clients → Create client**.
 2. Application type: **Web application**. Name: `stomp-dev` (one client per environment
    is fine, or one client with several redirect URIs).
-3. **Authorized redirect URIs** — add one per environment. The path is always
-   `/api/auth/google/callback`; the origin must equal `PUBLIC_BASE_URL` (see §5):
+3. **Authorized redirect URIs** — **two per environment**: sign-in (`/api/auth/google/callback`)
+   and connecting Gmail / Calendar (`/api/integrations/google/callback`, Phase 4). The origin
+   must equal `PUBLIC_BASE_URL` (see §5):
 
-   | Environment | Redirect URI |
+   | Environment | Redirect URIs |
    |---|---|
-   | Local dev (Vite proxies `/api`) | `http://localhost:5173/api/auth/google/callback` |
-   | Docker compose / nginx | `http://localhost:8080/api/auth/google/callback` |
-   | Production | `https://stomp.example.com/api/auth/google/callback` |
+   | Local dev (Vite proxies `/api`) | `http://localhost:5173/api/auth/google/callback`<br>`http://localhost:5173/api/integrations/google/callback` |
+   | Docker compose / nginx | `http://localhost:8080/api/auth/google/callback`<br>`http://localhost:8080/api/integrations/google/callback` |
+   | Production | `https://stomp.example.com/api/auth/google/callback`<br>`https://stomp.example.com/api/integrations/google/callback` |
 
    "Authorized JavaScript origins" is **not** required — the flow is a server-side
    redirect, not a JS SDK.
@@ -109,7 +110,11 @@ cd apps/web && pnpm dev
 Sign-in only needs the steps above. The Phase 4 integrations add more:
 
 - **Enable the APIs**: *APIs & Services → Library* → **Gmail API** and **Google Calendar API**.
-- **Scopes** (*Data Access*): `gmail.readonly` is a **restricted** scope and
+- **Encryption key**: set `INTEGRATION_ENC_KEY` (32 random bytes, base64 — the command is in
+  `.env.example`). Integrations stay off until it's set; losing it means everyone reconnects.
+- **Scopes** (*Data Access* → *Manually add scopes*, full URLs):
+  `https://www.googleapis.com/auth/gmail.readonly` and
+  `https://www.googleapis.com/auth/calendar.readonly`. `gmail.readonly` is a **restricted** scope and
   `calendar.readonly` is **sensitive**. They're requested at connect time from Settings,
   separately from sign-in.
 - **Testing mode expires refresh tokens after 7 days** for these scopes, which would

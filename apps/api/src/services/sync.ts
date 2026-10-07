@@ -1,5 +1,6 @@
 import type { IntegrationAccount } from "@stomp/shared";
-import { and, eq, inArray } from "drizzle-orm";
+import type { SyncLogEntry } from "@stomp/shared";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { events, incomingItems, integrationAccounts, syncLog } from "../db/schema.js";
 import * as gmail from "../integrations/gmail.js";
@@ -271,4 +272,22 @@ export async function syncNow(db: Db, ctx: Ctx, id: string): Promise<Integration
   if (row.provider === "google_calendar") await refreshCalendarList(db, row).catch(() => undefined);
   await syncAccount(db, row);
   return toDto(await loadOwn(db, ctx, id));
+}
+
+/** Recent sync runs for one of the user's accounts, newest first. */
+export async function listSyncLog(db: Db, ctx: Ctx, id: string, limit = 20): Promise<SyncLogEntry[]> {
+  const row = await loadOwn(db, ctx, id);
+  return db
+    .select({
+      id: syncLog.id,
+      entityType: syncLog.entityType,
+      summary: syncLog.summary,
+      error: syncLog.error,
+      startedAt: syncLog.startedAt,
+      finishedAt: syncLog.finishedAt,
+    })
+    .from(syncLog)
+    .where(eq(syncLog.integrationAccountId, row.id))
+    .orderBy(desc(syncLog.startedAt))
+    .limit(limit);
 }
