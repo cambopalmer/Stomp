@@ -108,3 +108,57 @@ export const tint = (hex: string, alpha: number) => {
   const n = Number.parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 };
+
+// ─────────────────────────────────────── direct manipulation + review (slice 4)
+
+/**
+ * Where a drag lands, snapped to the grid and kept inside the day.
+ * move: keeps the duration; resize: drags the end, at least one slot long.
+ */
+export function dragTo(
+  mode: "move" | "resize",
+  block: { startMin: number; endMin: number },
+  deltaMin: number,
+): { startMin: number; endMin: number } {
+  const step = Math.round(deltaMin / SLOT_MIN) * SLOT_MIN;
+  const duration = block.endMin - block.startMin;
+  if (mode === "move") {
+    const startMin = Math.min(Math.max(0, block.startMin + step), DAY_MIN - duration);
+    return { startMin, endMin: startMin + duration };
+  }
+  return { startMin: block.startMin, endMin: Math.min(DAY_MIN, Math.max(block.startMin + SLOT_MIN, block.endMin + step)) };
+}
+
+/** A drag-to-create range on empty time: from where you pressed to where you let go, either direction. */
+export function rangeFrom(aMin: number, bMin: number): { startMin: number; endMin: number } {
+  const lo = snap(Math.min(aMin, bMin));
+  const hi = Math.min(DAY_MIN, Math.max(lo + SLOT_MIN, Math.ceil(Math.max(aMin, bMin) / SLOT_MIN) * SLOT_MIN));
+  return { startMin: lo, endMin: hi };
+}
+
+export interface CategoryTotal {
+  categoryId: string | null;
+  minutes: number;
+}
+
+/** Minutes per category for the day, largest first; skipped blocks don't count. */
+export function categoryTotals(blocks: { categoryId: string | null; startMin: number; endMin: number; status: string }[]): CategoryTotal[] {
+  const by = new Map<string | null, number>();
+  for (const b of blocks) {
+    if (b.status === "skipped") continue;
+    by.set(b.categoryId, (by.get(b.categoryId) ?? 0) + (b.endMin - b.startMin));
+  }
+  return [...by.entries()].map(([categoryId, minutes]) => ({ categoryId, minutes })).sort((a, b) => b.minutes - a.minutes);
+}
+
+/** Planned vs actual: the original time when the block moved after it started, else null. */
+export function plannedIfMoved(b: {
+  startMin: number;
+  endMin: number;
+  plannedStartMin: number | null;
+  plannedEndMin: number | null;
+}): { startMin: number; endMin: number } | null {
+  if (b.plannedStartMin == null || b.plannedEndMin == null) return null;
+  if (b.plannedStartMin === b.startMin && b.plannedEndMin === b.endMin) return null;
+  return { startMin: b.plannedStartMin, endMin: b.plannedEndMin };
+}

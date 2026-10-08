@@ -8,7 +8,7 @@ import { CategoryIcon } from "./CategoryIcon.js";
 
 /** A new block may be for a todo from the tray; an edit carries its own todo. */
 export type SheetTarget =
-  | { kind: "new"; startMin: number; todo?: { id: string; title: string } }
+  | { kind: "new"; startMin: number; endMin?: number; todo?: { id: string; title: string } }
   | { kind: "edit"; block: TimeBlock };
 
 const STATUSES: { id: BlockStatus; label: string }[] = [
@@ -47,7 +47,9 @@ export function BlockSheet({
   const [title, setTitle] = useState(editing?.title ?? "");
   const [categoryId, setCategoryId] = useState<string | null>(editing?.categoryId ?? null);
   const [start, setStart] = useState(initialStart);
-  const [end, setEnd] = useState(editing ? editing.endMin : Math.min(initialStart + 30, DAY_MIN));
+  const [end, setEnd] = useState(
+    editing ? editing.endMin : target.kind === "new" && target.endMin ? target.endMin : Math.min(initialStart + 30, DAY_MIN),
+  );
   const [notes, setNotes] = useState(editing?.notes ?? "");
 
   const create = useCreateBlock();

@@ -343,3 +343,7 @@ export const useUpdateBlock = mutation(({ id, ...body }: UpdateTimeBlock & { id:
 );
 
 export const useDeleteBlock = mutation((id: string) => api.del(`/time-blocks/${id}`));
+
+export const useSaveDayNotes = mutation(({ date, body }: { date: string; body: string }) =>
+  api.put<{ notes: string }>(`/plan/${date}/notes`, { body }),
+);

@@ -1,8 +1,10 @@
-import type { Category, PlannerEvent, TimeBlock, TrayTodo } from "@stomp/shared";
-import { CalendarDays, CheckSquare, ChevronLeft, ChevronRight, ListTodo, Plus, X } from "lucide-react";
-import { type MouseEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
+import type { PlannerEvent, TrayTodo } from "@stomp/shared";
+import { CalendarDays, ChevronLeft, ChevronRight, ListTodo, Plus, X } from "lucide-react";
+import { type MouseEvent, type PointerEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
+import { BlockItem, type Times } from "../components/planner/BlockItem.js";
 import { BlockSheet, type SheetTarget } from "../components/planner/BlockSheet.js";
+import { DaySummary } from "../components/planner/DaySummary.js";
 import { CategoryIcon } from "../components/planner/CategoryIcon.js";
 import { Button, ErrorState, Spinner } from "../components/ui.js";
 import {
@@ -14,13 +16,12 @@ import {
   isoLocal,
   layoutSpans,
   MIN_PX,
-  PALETTE,
+  plannedIfMoved,
+  rangeFrom,
   SLOT_MIN,
   snap,
-  tint,
-  UNCATEGORIZED_HEX,
 } from "../lib/planner.js";
-import { useCategories, usePlan } from "../lib/queries.js";
+import { useCategories, usePlan, useUpdateBlock } from "../lib/queries.js";
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const GRID_H = DAY_MIN * MIN_PX;
@@ -38,6 +39,14 @@ export function Plan() {
   const cats = useCategories();
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
   const [trayOpen, setTrayOpen] = useState(false);
+  /** a block mid-drag (or mid-save): drawn here instead of where the server has it */
+  const [override, setOverride] = useState<({ id: string } & Times) | null>(null);
+  /** drag-to-create preview on empty time */
+  const [creating, setCreating] = useState<Times | null>(null);
+  const [announce, setAnnounce] = useState("");
+  const update = useUpdateBlock();
+  const press = useRef<{ y0: number; min0: number } | null>(null);
+  const lastPointer = useRef("mouse");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isToday = plan.data?.today === date;
@@ -57,15 +66,46 @@ export function Plan() {
   const addAtNextSlot = () =>
     setSheet({ kind: "new", startMin: isToday ? Math.min(snap(nowMin) + SLOT_MIN, DAY_MIN - SLOT_MIN) : 9 * 60 });
 
-  const onGridClick = (e: MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setSheet({ kind: "new", startMin: snap((e.clientY - rect.top) / MIN_PX) });
+  const minAt = (e: { clientY: number; currentTarget: HTMLDivElement }) =>
+    (e.clientY - e.currentTarget.getBoundingClientRect().top) / MIN_PX;
+  // empty time: a tap adds at that slot; with a mouse, dragging sweeps out a range
+  const onGridDown = (e: PointerEvent<HTMLDivElement>) => {
+    lastPointer.current = e.pointerType;
+    if (e.pointerType === "touch" || e.button !== 0) return; // touch: tap (click) adds, swipes scroll
+    e.currentTarget.setPointerCapture(e.pointerId);
+    press.current = { y0: e.clientY, min0: minAt(e) };
+  };
+  const onGridMove = (e: PointerEvent<HTMLDivElement>) => {
+    const p = press.current;
+    if (!p || Math.abs(e.clientY - p.y0) < 6) return;
+    setCreating(rangeFrom(p.min0, minAt(e)));
+  };
+  const onGridUp = () => {
+    const p = press.current;
+    press.current = null;
+    if (!p) return;
+    const range = creating ?? { startMin: snap(p.min0), endMin: Math.min(DAY_MIN, snap(p.min0) + 2 * SLOT_MIN) };
+    setCreating(null);
+    setSheet({ kind: "new", ...range });
+  };
+  const onGridTap = (e: MouseEvent<HTMLDivElement>) => {
+    if (lastPointer.current !== "touch") return; // mouse and pen are handled on pointer up
+    setSheet({ kind: "new", startMin: snap(minAt(e)) });
   };
 
   if (plan.isLoading || cats.isLoading) return <Spinner />;
   if (plan.isError) return <ErrorState error={plan.error} retry={plan.refetch} />;
   if (cats.isError) return <ErrorState error={cats.error} retry={cats.refetch} />;
-  const { blocks, events, tray } = plan.data!;
+  const { blocks: serverBlocks, events, tray } = plan.data!;
+  const blocks = override
+    ? serverBlocks.map((b) => (b.id === override.id ? { ...b, startMin: override.startMin, endMin: override.endMin } : b))
+    : serverBlocks;
+  const started = date <= plan.data!.today;
+  const commit = (id: string, t: Times, label: string) => {
+    setOverride({ id, ...t });
+    setAnnounce(`${label} moved to ${fmtRange(t.startMin, t.endMin)}`);
+    update.mutate({ id, ...t }, { onSettled: () => setOverride(null) });
+  };
   const scheduleTodo = (t: TrayTodo) => {
     setTrayOpen(false);
     setSheet({
@@ -155,7 +195,37 @@ export function Plan() {
             ))}
 
             {/* pointer shortcut: tap empty time to add there (keyboard users: "Add block") */}
-            <div aria-hidden="true" className="absolute inset-0 cursor-copy" onClick={onGridClick} data-testid="plan-tap-layer" />
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 cursor-copy"
+              onPointerDown={onGridDown}
+              onPointerMove={onGridMove}
+              onPointerUp={onGridUp}
+              onClick={onGridTap}
+              data-testid="plan-tap-layer"
+            />
+            {creating && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-1 z-10 rounded-md border-2 border-dashed border-primary bg-primary/10"
+                style={{ top: creating.startMin * MIN_PX, height: (creating.endMin - creating.startMin) * MIN_PX }}
+                data-testid="plan-creating"
+              />
+            )}
+            {/* planned vs actual: a faint outline where a block was planned before it moved */}
+            {started &&
+              blocks.map((b) => {
+                const was = plannedIfMoved(b);
+                return was ? (
+                  <div
+                    key={`ghost-${b.id}`}
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-1 rounded-md border border-dashed border-muted/60"
+                    style={{ top: was.startMin * MIN_PX, height: (was.endMin - was.startMin) * MIN_PX - 2 }}
+                    data-testid="plan-ghost"
+                  />
+                ) : null;
+              })}
 
             {timedEvents.map((e) => (
               <EventItem key={e.id} event={e} style={pos(`e:${e.id}`, e.startMin, e.endMin)} />
@@ -167,6 +237,8 @@ export function Plan() {
                 category={b.categoryId ? catById.get(b.categoryId) : undefined}
                 style={pos(`b:${b.id}`, b.startMin, b.endMin)}
                 onOpen={() => setSheet({ kind: "edit", block: b })}
+                onPreview={(t) => setOverride(t ? { id: b.id, ...t } : null)}
+                onCommit={(t) => commit(b.id, t, b.title ?? b.todo?.title ?? "Block")}
               />
             ))}
 
@@ -179,11 +251,21 @@ export function Plan() {
         </div>
       </div>
 
-      {/* desktop: the tray sits alongside */}
-      <aside aria-label="To schedule" className="hidden lg:block">
-        <TrayList tray={tray} onSchedule={scheduleTodo} />
-      </aside>
+      <div className="flex flex-col gap-3">
+        {/* desktop: the tray sits alongside */}
+        <aside aria-label="To schedule" className="hidden lg:block">
+          <TrayList tray={tray} onSchedule={scheduleTodo} />
+        </aside>
+        <DaySummary date={date} blocks={blocks} categories={catById} started={started} notes={plan.data!.notes} />
       </div>
+      </div>
+
+      <p id="plan-block-keys" className="sr-only">
+        Arrow keys move a block 15 minutes; Shift with arrows changes when it ends.
+      </p>
+      <p aria-live="polite" className="sr-only" data-testid="plan-announce">
+        {announce}
+      </p>
 
       {trayOpen && (
         <TraySheet onClose={() => setTrayOpen(false)}>
@@ -197,7 +279,7 @@ export function Plan() {
 
       {sheet && (
         <BlockSheet
-          key={sheet.kind === "edit" ? sheet.block.id : `new-${sheet.startMin}`}
+          key={sheet.kind === "edit" ? sheet.block.id : `new-${sheet.startMin}-${sheet.endMin ?? ""}`}
           date={date}
           target={sheet}
           categories={cats.data ?? []}
@@ -225,52 +307,6 @@ function EventItem({ event, style }: { event: PlannerEvent; style: Pos }) {
       </span>
       {style.height > 30 && <span className="tnum block truncate">{fmtRange(event.startMin, event.endMin)}</span>}
     </Link>
-  );
-}
-
-function BlockItem({
-  block,
-  category,
-  style,
-  onOpen,
-}: {
-  block: TimeBlock;
-  category?: Category;
-  style: Pos;
-  onOpen: () => void;
-}) {
-  const hex = category ? PALETTE[category.color] : UNCATEGORIZED_HEX;
-  const title = block.title ?? block.todo?.title ?? "Linked todo";
-  const finished = block.status === "done" || !!block.todo?.done;
-  const skipped = block.status === "skipped";
-  const state = block.status === "done" ? ", done" : skipped ? ", skipped" : block.todo?.done ? ", todo complete" : "";
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-label={`${title}, ${fmtRange(block.startMin, block.endMin)}${category ? `, ${category.name}` : ""}${state}`}
-      className={`absolute z-10 overflow-hidden rounded-md border border-l-4 px-1.5 py-0.5 text-left text-xs text-text hover:brightness-95 ${
-        skipped ? "border-dashed opacity-60" : ""
-      }`}
-      // tint over the opaque card colour, so grid lines don't show through
-      style={{
-        ...style,
-        borderColor: tint(hex, 0.45),
-        borderLeftColor: hex,
-        background: `linear-gradient(${tint(hex, 0.14)}, ${tint(hex, 0.14)}), var(--color-card)`,
-      }}
-      data-testid="plan-block"
-    >
-      <span className="flex items-center gap-1 font-medium">
-        {finished ? (
-          <CheckSquare size={12} aria-hidden="true" className="shrink-0 text-success" />
-        ) : (
-          <CategoryIcon icon={category?.icon} color={hex} size={12} />
-        )}
-        <span className={`truncate ${finished || skipped ? "line-through decoration-1" : ""}`}>{title}</span>
-      </span>
-      {style.height > 30 && <span className="tnum block truncate text-muted">{fmtRange(block.startMin, block.endMin)}</span>}
-    </button>
   );
 }
 

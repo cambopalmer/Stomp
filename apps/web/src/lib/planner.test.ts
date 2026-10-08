@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDaysIso, fmtDuration, isoLocal, layoutSpans, snap, tint } from "./planner.js";
+import { addDaysIso, categoryTotals, dragTo, fmtDuration, isoLocal, layoutSpans, plannedIfMoved, rangeFrom, snap, tint } from "./planner.js";
 
 describe("planner helpers", () => {
   it("snaps to the 15-minute grid and stays inside the day", () => {
@@ -44,5 +44,49 @@ describe("planner helpers", () => {
 
   it("tints a hex colour", () => {
     expect(tint("#2563eb", 0.15)).toBe("rgba(37, 99, 235, 0.15)");
+  });
+});
+
+describe("slice 4 helpers", () => {
+  it("moves keep duration, snap, and stay inside the day", () => {
+    const b = { startMin: 600, endMin: 660 };
+    expect(dragTo("move", b, 20)).toEqual({ startMin: 615, endMin: 675 }); // 20 → nearest slot 15
+    expect(dragTo("move", b, -9999)).toEqual({ startMin: 0, endMin: 60 });
+    expect(dragTo("move", b, 9999)).toEqual({ startMin: 1380, endMin: 1440 });
+  });
+
+  it("resizes the end, never shorter than one slot or past midnight", () => {
+    const b = { startMin: 600, endMin: 660 };
+    expect(dragTo("resize", b, 30)).toEqual({ startMin: 600, endMin: 690 });
+    expect(dragTo("resize", b, -9999)).toEqual({ startMin: 600, endMin: 615 });
+    expect(dragTo("resize", b, 9999)).toEqual({ startMin: 600, endMin: 1440 });
+  });
+
+  it("drag-to-create covers both directions and at least one slot", () => {
+    expect(rangeFrom(545, 610)).toEqual({ startMin: 540, endMin: 615 });
+    expect(rangeFrom(610, 545)).toEqual({ startMin: 540, endMin: 615 });
+    expect(rangeFrom(600, 600)).toEqual({ startMin: 600, endMin: 615 });
+  });
+
+  it("totals by category, skipped excluded, largest first", () => {
+    expect(
+      categoryTotals([
+        { categoryId: "work", startMin: 540, endMin: 720, status: "done" },
+        { categoryId: "fam", startMin: 1080, endMin: 1140, status: "planned" },
+        { categoryId: "work", startMin: 780, endMin: 840, status: "planned" },
+        { categoryId: "fam", startMin: 1200, endMin: 1320, status: "skipped" },
+        { categoryId: null, startMin: 0, endMin: 30, status: "planned" },
+      ]),
+    ).toEqual([
+      { categoryId: "work", minutes: 240 },
+      { categoryId: "fam", minutes: 60 },
+      { categoryId: null, minutes: 30 },
+    ]);
+  });
+
+  it("reports the planned time only when the block moved after starting", () => {
+    expect(plannedIfMoved({ startMin: 600, endMin: 660, plannedStartMin: null, plannedEndMin: null })).toBeNull();
+    expect(plannedIfMoved({ startMin: 600, endMin: 660, plannedStartMin: 600, plannedEndMin: 660 })).toBeNull();
+    expect(plannedIfMoved({ startMin: 690, endMin: 750, plannedStartMin: 600, plannedEndMin: 660 })).toEqual({ startMin: 600, endMin: 660 });
   });
 });
