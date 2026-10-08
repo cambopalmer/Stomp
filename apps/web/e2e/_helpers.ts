@@ -5,7 +5,8 @@ export const main = (page: Page) => page.getByRole("main");
 
 export async function setWorkspace(page: Page, name: "Personal" | string) {
   // the switcher button is labelled with the current workspace name
-  const current = page.locator("header button").first();
+  // the switcher is the header's listbox trigger (not "the first button" — that's ☰ on phones)
+  const current = page.locator('header button[aria-haspopup="listbox"]');
   await current.click();
   await page.getByRole("option", { name, exact: true }).click();
 }

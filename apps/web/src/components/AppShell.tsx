@@ -17,11 +17,12 @@ import { useQuickCapture } from "../lib/queries.js";
 import { useTheme } from "../lib/theme.js";
 import { Button, Input } from "./ui.js";
 import { HotSidebar } from "./HotSidebar.js";
+import { MobileNav, type NavItem } from "./MobileNav.js";
 import { NotificationsBell } from "./NotificationsBell.js";
 import { UserMenu } from "./UserMenu.js";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher.js";
 
-const nav = [
+const nav: NavItem[] = [
   { to: "/", label: "Home", icon: Home, end: true },
   { to: "/plan", label: "Plan", icon: CalendarClock },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
@@ -62,6 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-3">
         <div className="flex items-center gap-3">
+          <MobileNav items={nav} />
           <span className="text-lg font-bold tracking-tight">STOMP</span>
           <WorkspaceSwitcher />
           <span className="hidden text-sm text-muted lg:inline">
@@ -98,8 +100,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
 
       <div className="flex flex-1 flex-col gap-6 py-6 lg:flex-row">
-        <nav aria-label="Sections" className="lg:w-44 lg:shrink-0">
-          <ul className="flex flex-wrap gap-1 lg:flex-col">
+        {/* desktop sidebar; phones use the ☰ drawer (MobileNav) */}
+        <nav aria-label="Sections" className="hidden lg:block lg:w-44 lg:shrink-0">
+          <ul className="flex flex-col gap-1">
             {nav.map(({ to, label, icon: Icon, end }) => (
               <li key={to}>
                 <NavLink
