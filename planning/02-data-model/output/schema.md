@@ -317,7 +317,7 @@ Copied from the defaults on a user's first use.
 | title / notes | text | title optional when linked to a todo |
 | category_id | text | null = Uncategorized; FK ON DELETE SET NULL |
 | todo_id | text | optional link; deleting the todo copies its title onto the block and unlinks |
-| anchor_event_id / anchor_offset_min / anchor_lost | | slice 5 (anchored "Add before…" blocks) |
+| anchor_event_id / anchor_offset_min / anchor_lost | | "Add before…": offset = block start − event start (local minutes). The event moving moves the block (`services/anchors.ts`, also on Google sync); the event cancelled / deleted / synced away → anchor cleared, `anchor_lost = 1`, block kept. Moving the block by hand re-anchors it; moving it to another day detaches it. |
 | status | text | planned \| done \| skipped |
 
 INDEX (user_id, date), (todo_id), (anchor_event_id).

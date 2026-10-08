@@ -1,5 +1,5 @@
 import type { BlockStatus, Category, TimeBlock } from "@stomp/shared";
-import { CheckSquare, Minus, Plus, Square, Trash2, X } from "lucide-react";
+import { CheckSquare, Link2, Minus, Plus, Square, Trash2, X } from "lucide-react";
 import { type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { DAY_MIN, fmtDuration, fmtMin, PALETTE, SLOT_MIN, tint, UNCATEGORIZED_HEX } from "../../lib/planner.js";
 import { useCreateBlock, useDeleteBlock, useUpdateBlock, useUpdateTodo } from "../../lib/queries.js";
@@ -30,11 +30,14 @@ export function BlockSheet({
   target,
   categories,
   onClose,
+  anchorTitle,
 }: {
   date: string;
   target: SheetTarget;
   categories: Category[];
   onClose: () => void;
+  /** the event this block is attached to (slice 5) */
+  anchorTitle?: string;
 }) {
   const editing = target.kind === "edit" ? target.block : null;
   /** the todo this block is for, if any — its title stands in when the block has none */
@@ -127,6 +130,29 @@ export function BlockSheet({
   return (
     <SheetFrame headingId={headingId} title={editing ? "Edit block" : "New block"} onClose={onClose}>
         <form onSubmit={submit} className="flex flex-col gap-4">
+          {editing?.anchorLost && (
+            <div role="alert" className="flex flex-col gap-2 rounded-md border border-warning/50 bg-warning/10 p-2.5 text-sm">
+              <p>Its event was cancelled or removed. Keep this block, or remove it?</p>
+              <div className="flex gap-2">
+                <Button type="button" variant="danger" disabled={busy} onClick={() => del.mutate(editing.id, { onSuccess: onClose })}>
+                  Remove block
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => update.mutate({ id: editing.id, anchorLost: false }, { onSuccess: onClose })}
+                >
+                  Keep it
+                </Button>
+              </div>
+            </div>
+          )}
+          {editing?.anchorEventId && (
+            <p className="flex items-center gap-1.5 text-xs text-muted" data-testid="sheet-anchor">
+              <Link2 size={13} aria-hidden="true" /> Attached to {anchorTitle ? <strong>{anchorTitle}</strong> : "an event"} — moves when it moves
+            </p>
+          )}
           {linked && (
             <p className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2.5 py-1.5 text-sm" data-testid="sheet-linked-todo">
               {"done" in linked && linked.done ? (

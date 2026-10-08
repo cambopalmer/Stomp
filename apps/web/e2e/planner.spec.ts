@@ -49,7 +49,7 @@ test("calendar events sit on the plan as fixed blocks; overlapping blocks are al
   expect(ev.ok()).toBeTruthy();
 
   await page.goto(`/plan/${DAY}`);
-  await expect(main(page).getByRole("link", { name: /Gymnastics/ })).toBeVisible();
+  await expect(main(page).getByRole("button", { name: /Event: Gymnastics/ })).toBeVisible();
 
   // a block on top of the event is fine — side by side, nothing refused
   await main(page).getByRole("button", { name: "Add block" }).click();
@@ -57,7 +57,7 @@ test("calendar events sit on the plan as fixed blocks; overlapping blocks are al
   await sheet(page).getByLabel("Title").fill("Podcast in the car");
   await sheet(page).getByRole("button", { name: "Add block" }).click();
   await expect(blocks(page).filter({ hasText: "Podcast in the car" })).toBeVisible();
-  await expect(main(page).getByRole("link", { name: /Gymnastics/ })).toBeVisible();
+  await expect(main(page).getByRole("button", { name: /Event: Gymnastics/ })).toBeVisible();
 });
 
 test("day navigation with prev / next / Today", async ({ page }) => {
@@ -291,4 +291,52 @@ test("review: a past day shows totals, planned → actual (with an outline), and
   await expect(summary.getByText("Saved")).toBeVisible();
   await page.reload();
   await expect(main(page).getByLabel("Notes for the day")).toHaveValue("Deep work slipped an hour — school run ran long.");
+});
+
+/* ── slice 5: prep blocks attached to an event ─────────────── */
+
+test("Add before… stacks prep blocks that follow the event, and are flagged when it's cancelled", async ({ page }) => {
+  const D = "2031-03-04";
+  const title = `Gym ${Date.now()}`;
+  const start = new Date(2031, 2, 4, 18, 0).getTime();
+  const ev = (await (await page.request.post("/api/events", { data: { title, startsAt: start, endsAt: start + 90 * 60_000 } })).json()) as {
+    id: string;
+  };
+  await page.goto(`/plan/${D}`);
+  await main(page).getByRole("button", { name: new RegExp(`Event: ${title}`) }).click();
+
+  const evSheet = page.getByRole("dialog");
+  await expect(evSheet.getByLabel("What needs to happen first?")).toHaveValue("Travel");
+  await expect(evSheet.getByRole("button", { name: /Travel/, pressed: true })).toBeVisible(); // Travel category preselected
+  await expect(evSheet.getByText(/5:30\sPM – 6:00\sPM · moves with the event/)).toBeVisible();
+  await evSheet.getByRole("button", { name: "Add before" }).click();
+
+  await evSheet.getByLabel("What needs to happen first?").fill("Dinner");
+  await expect(evSheet.getByText(/5:00\sPM – 5:30\sPM/)).toBeVisible(); // stacks in front of Travel
+  await evSheet.getByRole("button", { name: "Add before" }).click();
+  await expect(evSheet.getByTestId("event-attached")).toContainText("Dinner");
+  await expect(evSheet.getByTestId("event-attached")).toContainText("Travel");
+  await page.keyboard.press("Escape");
+
+  await expect(blocks(page).filter({ hasText: "Travel" })).toHaveAttribute("aria-label", /5:30\sPM – 6:00\sPM.*attached to an event/);
+  await expect(blocks(page).filter({ hasText: "Dinner" })).toHaveAttribute("aria-label", /5:00\sPM – 5:30\sPM/);
+
+  // the event moves an hour later → prep moves with it
+  await page.request.patch(`/api/events/${ev.id}`, { data: { startsAt: start + 3_600_000, endsAt: start + 150 * 60_000 } });
+  await page.reload();
+  await expect(blocks(page).filter({ hasText: "Travel" })).toHaveAttribute("aria-label", /6:30\sPM – 7:00\sPM/);
+  await expect(blocks(page).filter({ hasText: "Dinner" })).toHaveAttribute("aria-label", /6:00\sPM – 6:30\sPM/);
+
+  // cancelled → blocks stay, flagged; remove one, keep the other
+  await page.request.patch(`/api/events/${ev.id}`, { data: { status: "cancelled" } });
+  await page.reload();
+  const travel = blocks(page).filter({ hasText: "Travel" });
+  await expect(travel).toHaveAttribute("aria-label", /its event was cancelled/);
+  await travel.click();
+  await sheet(page).getByRole("button", { name: "Remove block" }).click();
+  await expect(blocks(page).filter({ hasText: "Travel" })).toHaveCount(0);
+
+  await blocks(page).filter({ hasText: "Dinner" }).click();
+  await sheet(page).getByRole("button", { name: "Keep it" }).click();
+  await expect(blocks(page).filter({ hasText: "Dinner" })).not.toHaveAttribute("aria-label", /cancelled/);
 });

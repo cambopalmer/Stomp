@@ -104,7 +104,7 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 - [x] `[4.5]` **Slice 2 — day view (mobile-first):** (done 2026-10-07; 24 px per 15 min) `/plan/:date` timeline, now-line, events as fixed blocks (all visible, ignores workspace switcher), overlap layout, tap-a-slot bottom sheet (title, category chips, duration presets, −15/+15), Plan nav item
 - [x] `[4.5]` **Slice 3 — todos:** (done 2026-10-07) tray (Plan for today / due today / overdue → Schedule at…), linked blocks, "also complete the todo?" prompt, struck-through blocks for completed todos
 - [x] `[4.5]` **Slice 4 — review:** (done 2026-10-08; touch resize stays in the sheet — an edge handle is too small for fingers) status (done/skipped), planned vs actual on past days, day notes, totals by category; desktop drag-create/move/resize + keyboard; long-press drag on touch
-- [ ] `[4.5]` **Slice 5 — anchored blocks:** "Add before…" on events (first = Travel), blocks follow event moves (incl. day changes), flagged + kept on cancel/delete/sync removal
+- [x] `[4.5]` **Slice 5 — anchored blocks:** (done 2026-10-08; a block that would cross midnight is pulled back to end at 24:00) "Add before…" on events (first = Travel), blocks follow event moves (incl. day changes), flagged + kept on cancel/delete/sync removal
 - [ ] `[4.5]` **Slice 6 — extras:** copy a previous day's plan, Home "Now / Next" tile, admin default-category editor (additions reach everyone), installable PWA (manifest + icons)
 - [ ] `[4.5+]` Prep templates (suggest "before Gymnastics: Drive 30, Dinner 30"); weekly totals; named templates; reminders; sharing; travel-time lookup; offline
 

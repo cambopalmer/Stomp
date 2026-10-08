@@ -249,3 +249,36 @@ describe("all-day events on Home (floating dates)", () => {
     expect(names).not.toContain("AD tomorrow");
   });
 });
+
+describe("planner blocks anchored to a Google event (ADR-0006)", () => {
+  it("follow upstream moves and are kept + flagged when the event disappears", async () => {
+    const { eventLocalStart } = await import("../src/services/anchors.js");
+    const { timeBlocks } = await import("../src/db/schema.js");
+    await api("POST", `/api/integrations/${accountId}/sync`);
+    const standup = (await mirrors()).find((e) => e.title === "Standup")!;
+    const at = await eventLocalStart(db, ownerId, standup);
+    const blk = (
+      await api("POST", "/api/time-blocks", {
+        date: at.date,
+        startMin: at.minute - 15,
+        endMin: at.minute,
+        title: "Prep notes",
+        anchorEventId: standup.id,
+      })
+    ).json();
+    expect(blk.anchorOffsetMin).toBe(-15);
+
+    // moved an hour later in Google
+    const e0 = feed["cam@gmail.com"]![0]!;
+    feed["cam@gmail.com"]![0] = { ...e0, etag: '"9"', start: { dateTime: soon(1, 16) }, end: { dateTime: soon(1, 17) } };
+    await api("POST", `/api/integrations/${accountId}/sync`);
+    const moved = (await db.select().from(timeBlocks).where(eq(timeBlocks.id, blk.id)))[0]!;
+    expect(moved.startMin).toBe(blk.startMin + 60);
+
+    // deleted in Google → the plan keeps the block, flagged
+    feed["cam@gmail.com"]!.splice(0, 1);
+    await api("POST", `/api/integrations/${accountId}/sync`);
+    const kept = (await db.select().from(timeBlocks).where(eq(timeBlocks.id, blk.id)))[0]!;
+    expect(kept).toMatchObject({ anchorEventId: null, anchorLost: true });
+  });
+});

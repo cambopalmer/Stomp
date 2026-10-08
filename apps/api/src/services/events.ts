@@ -8,6 +8,7 @@ import { Forbidden, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
 import { accessibleProjectIds, assertWorkspaceMember, type Ctx, projectAccess } from "./access.js";
 import { logActivity } from "./activity.js";
+import { realignAnchors, releaseAnchors } from "./anchors.js";
 import { purgePolymorphicRefs } from "./cleanup.js";
 
 /** SQL condition: events visible to `userId` (creator, accessible project, or collaborator). */
@@ -103,6 +104,7 @@ export async function updateEvent(db: Db, ctx: Ctx, id: string, input: UpdateEve
     if (input[f] !== undefined) (patch as Record<string, unknown>)[f] = input[f];
   }
   await db.update(events).set(patch).where(eq(events.id, id));
+  await realignAnchors(db, [id]); // planner blocks anchored here follow (or are released if cancelled)
   await logActivity(db, ctx.userId, "event", id, "updated");
   return { ...current, ...patch } as CalendarEvent;
 }
@@ -112,6 +114,7 @@ export async function deleteEvent(db: Db, ctx: Ctx, id: string): Promise<void> {
   assertNotMirror(current);
   if (current.createdBy !== ctx.userId) throw Forbidden("Only the creator can delete this event");
   await purgePolymorphicRefs(db, "event", id);
+  await releaseAnchors(db, [id]);
   await db.delete(events).where(eq(events.id, id));
   await logActivity(db, ctx.userId, "event", id, "deleted");
 }

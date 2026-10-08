@@ -133,6 +133,8 @@ export const createTimeBlock = blockTimes.and(
     notes: z.string().max(5_000).nullish(),
     categoryId: id.nullish(),
     todoId: id.nullish(),
+    /** "Add before…": hang this block off an event; the server records the offset */
+    anchorEventId: id.nullish(),
   }),
 );
 export type CreateTimeBlock = z.infer<typeof createTimeBlock>;
@@ -146,6 +148,8 @@ export const updateTimeBlock = z.object({
   categoryId: id.nullish(),
   todoId: id.nullish(),
   status: blockStatus.optional(),
+  /** dismiss the "its event was cancelled" flag (keep the block as a plain one) */
+  anchorLost: z.literal(false).optional(),
 });
 export type UpdateTimeBlock = z.infer<typeof updateTimeBlock>;
 

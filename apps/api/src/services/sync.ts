@@ -11,6 +11,7 @@ import { GrantRevoked } from "../lib/google.js";
 import { newId } from "../lib/ids.js";
 import { logger } from "../lib/logger.js";
 import type { Ctx } from "./access.js";
+import { realignAnchors, releaseAnchors } from "./anchors.js";
 import { purgePolymorphicRefs } from "./cleanup.js";
 import {
   type AccountRow,
@@ -144,6 +145,7 @@ async function syncCalendar(db: Db, row: AccountRow): Promise<{ result: SyncResu
       .from(events)
       .where(mine);
     const byExt = new Map(existing.map((e) => [e.externalId!, e]));
+    const changed: string[] = [];
     const seen = new Set<string>();
     const stamp = clock.now();
 
@@ -180,6 +182,7 @@ async function syncCalendar(db: Db, row: AccountRow): Promise<{ result: SyncResu
         } else if (hit.etag !== m.etag) {
           await tx.update(events).set(cols).where(eq(events.id, hit.id));
           result.updated++;
+          changed.push(hit.id);
         }
       }
     }
@@ -193,6 +196,8 @@ async function syncCalendar(db: Db, row: AccountRow): Promise<{ result: SyncResu
       return e.endsAt > timeMin && e.startsAt < timeMax;
     });
     for (const s of stale) await purgePolymorphicRefs(tx, "event", s.id);
+    await realignAnchors(tx, changed); // moved upstream → anchored planner blocks follow
+    await releaseAnchors(tx, stale.map((s) => s.id)); // gone upstream → kept, flagged
     if (stale.length) await tx.delete(events).where(inArray(events.id, stale.map((s) => s.id)));
     result.removed = stale.length;
   });

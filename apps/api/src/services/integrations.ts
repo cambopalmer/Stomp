@@ -23,6 +23,7 @@ import {
 import { newId } from "../lib/ids.js";
 import { logger } from "../lib/logger.js";
 import type { Ctx } from "./access.js";
+import { releaseAnchors } from "./anchors.js";
 import { purgePolymorphicRefs } from "./cleanup.js";
 
 export type AccountRow = typeof integrationAccounts.$inferSelect;
@@ -272,6 +273,7 @@ export async function disconnect(
       const mirrored = eq(events.integrationAccountId, row.id);
       const ids = await tx.select({ id: events.id }).from(events).where(mirrored);
       for (const e of ids) await purgePolymorphicRefs(tx, "event", e.id);
+      await releaseAnchors(tx, ids.map((e) => e.id));
       await tx.delete(events).where(mirrored);
       result.removed = ids.length;
     }

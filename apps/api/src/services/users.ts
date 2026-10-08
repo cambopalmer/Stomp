@@ -30,6 +30,7 @@ import { logger } from "../lib/logger.js";
 import type { Ctx } from "./access.js";
 import { hashPassword } from "./auth.js";
 import { purgePolymorphicRefs } from "./cleanup.js";
+import { releaseAnchors } from "./anchors.js";
 import { keepMirrorsAsOwn } from "./integrations.js";
 import { purgeTodoTree } from "./todos.js";
 
@@ -206,6 +207,7 @@ async function anonymize(db: Db, u: UserRow): Promise<void> {
       (await hasOtherCollaborator(eventCollaborators, eventCollaborators.eventId, e.id));
     if (!shared) {
       await purgePolymorphicRefs(db, "event", e.id);
+      await releaseAnchors(db, [e.id]);
       await db.delete(events).where(eq(events.id, e.id));
     }
   }

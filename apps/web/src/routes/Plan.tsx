@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { BlockItem, type Times } from "../components/planner/BlockItem.js";
 import { BlockSheet, type SheetTarget } from "../components/planner/BlockSheet.js";
 import { DaySummary } from "../components/planner/DaySummary.js";
+import { EventSheet } from "../components/planner/EventSheet.js";
 import { CategoryIcon } from "../components/planner/CategoryIcon.js";
 import { Button, ErrorState, Spinner } from "../components/ui.js";
 import {
@@ -39,6 +40,7 @@ export function Plan() {
   const cats = useCategories();
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
   const [trayOpen, setTrayOpen] = useState(false);
+  const [eventOpen, setEventOpen] = useState<string | null>(null);
   /** a block mid-drag (or mid-save): drawn here instead of where the server has it */
   const [override, setOverride] = useState<({ id: string } & Times) | null>(null);
   /** drag-to-create preview on empty time */
@@ -228,7 +230,7 @@ export function Plan() {
               })}
 
             {timedEvents.map((e) => (
-              <EventItem key={e.id} event={e} style={pos(`e:${e.id}`, e.startMin, e.endMin)} />
+              <EventItem key={e.id} event={e} style={pos(`e:${e.id}`, e.startMin, e.endMin)} onOpen={() => setEventOpen(e.id)} />
             ))}
             {blocks.map((b) => (
               <BlockItem
@@ -284,29 +286,51 @@ export function Plan() {
           target={sheet}
           categories={cats.data ?? []}
           onClose={() => setSheet(null)}
+          anchorTitle={
+            sheet.kind === "edit" && sheet.block.anchorEventId
+              ? events.find((e) => e.id === sheet.block.anchorEventId)?.title
+              : undefined
+          }
         />
       )}
+
+      {eventOpen &&
+        (() => {
+          const ev = events.find((e) => e.id === eventOpen);
+          return ev ? (
+            <EventSheet
+              date={date}
+              event={ev}
+              attached={serverBlocks.filter((b) => b.anchorEventId === ev.id)}
+              categories={cats.data ?? []}
+              onClose={() => setEventOpen(null)}
+            />
+          ) : null;
+        })()}
     </div>
   );
 }
 
 type Pos = { top: number; height: number; left: string; width: string };
 
-/** A calendar event: fixed, quiet, links to the event (edit it in Calendar, not here). */
-function EventItem({ event, style }: { event: PlannerEvent; style: Pos }) {
+/** A calendar event: fixed and quiet. Opens the event sheet (prep blocks); edit the event itself in Calendar. */
+function EventItem({ event, style, onOpen }: { event: PlannerEvent; style: Pos; onOpen: () => void }) {
   return (
-    <Link
-      to={`/calendar/${event.id}`}
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`Event: ${event.title}, ${fmtRange(event.startMin, event.endMin)}`}
       title={`${event.title} · ${fmtRange(event.startMin, event.endMin)}${event.location ? ` · ${event.location}` : ""}`}
-      className="absolute z-10 overflow-hidden rounded-md border border-dashed border-border bg-surface-2 px-1.5 py-0.5 text-xs text-muted hover:text-text"
+      className="absolute z-10 overflow-hidden rounded-md border border-dashed border-border bg-surface-2 px-1.5 py-0.5 text-left text-xs text-muted hover:text-text"
       style={style}
+      data-testid="plan-event"
     >
       <span className="flex items-center gap-1 font-medium text-text">
         <CalendarDays size={12} aria-hidden="true" className="shrink-0" />
         <span className="truncate">{event.title}</span>
       </span>
       {style.height > 30 && <span className="tnum block truncate">{fmtRange(event.startMin, event.endMin)}</span>}
-    </Link>
+    </button>
   );
 }
 

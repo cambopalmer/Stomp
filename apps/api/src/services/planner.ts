@@ -18,6 +18,7 @@ import { dateBounds, isIsoDate, isTimeZone, localNow } from "../lib/day.js";
 import { AppError, BadRequest, Conflict, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
 import type { Ctx } from "./access.js";
+import { eventLocalStart } from "./anchors.js";
 import { eventsOnLocalDay, visibleEventsCond } from "./events.js";
 import { getTodo, visibleTodosCond } from "./todos.js";
 
@@ -267,8 +268,26 @@ async function assertTodoVisible(db: Db, ctx: Ctx, id: string | null | undefined
   }
 }
 
+/**
+ * An event a block may anchor to: visible to you, timed, not cancelled, and
+ * starting on the block's day. Returns the event's local start minute.
+ */
+async function anchorStart(db: Db, ctx: Ctx, eventId: string, date: string): Promise<number> {
+  const [ev] = await db
+    .select()
+    .from(events)
+    .where(and(eq(events.id, eventId), await visibleEventsCond(db, ctx.userId)))
+    .limit(1);
+  if (!ev) throw BadRequest("That event isn't available");
+  if (ev.status === "cancelled" || ev.allDay) throw BadRequest("Blocks can only attach to timed, upcoming events");
+  const at = await eventLocalStart(db, ctx.userId, ev);
+  if (at.date !== date) throw BadRequest("An attached block has to be on the event's day");
+  return at.minute;
+}
+
 export async function createBlock(db: Db, ctx: Ctx, input: CreateTimeBlock): Promise<TimeBlock> {
   assertTimes(input.date, input.startMin, input.endMin);
+  const anchorAt = input.anchorEventId ? await anchorStart(db, ctx, input.anchorEventId, input.date) : null;
   const title = input.title?.trim() || null;
   if (!title && !input.todoId) throw BadRequest("Give the block a title or link a todo");
   await assertCategoryUsable(db, ctx, input.categoryId);
@@ -288,8 +307,8 @@ export async function createBlock(db: Db, ctx: Ctx, input: CreateTimeBlock): Pro
     notes: input.notes ?? null,
     categoryId: input.categoryId ?? null,
     todoId: input.todoId ?? null,
-    anchorEventId: null,
-    anchorOffsetMin: null,
+    anchorEventId: input.anchorEventId ?? null,
+    anchorOffsetMin: anchorAt == null ? null : input.startMin - anchorAt,
     anchorLost: false,
     status: "planned",
     createdAt: stamp,
@@ -323,6 +342,14 @@ export async function updateBlock(db: Db, ctx: Ctx, id: string, input: UpdateTim
   if (input.todoId !== undefined && input.todoId !== current.todoId) await assertTodoVisible(db, ctx, input.todoId);
 
   const set: Partial<BlockRow> = { date, startMin, endMin, title, todoId, updatedAt: clock.now() };
+  if (input.anchorLost === false) set.anchorLost = false;
+  // moving an attached block by hand re-anchors it at the new offset; another day detaches it
+  if (current.anchorEventId && (date !== current.date || startMin !== current.startMin)) {
+    const [ev] = await db.select().from(events).where(eq(events.id, current.anchorEventId)).limit(1);
+    const at = ev ? await eventLocalStart(db, ctx.userId, ev) : null;
+    if (at && at.date === date) set.anchorOffsetMin = startMin - at.minute;
+    else Object.assign(set, { anchorEventId: null, anchorOffsetMin: null });
+  }
   if (input.notes !== undefined) set.notes = input.notes;
   if (input.categoryId !== undefined) set.categoryId = input.categoryId;
   if (input.status !== undefined) set.status = input.status;

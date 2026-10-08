@@ -1,5 +1,5 @@
 import type { Category, TimeBlock } from "@stomp/shared";
-import { CheckSquare } from "lucide-react";
+import { CheckSquare, Link2 } from "lucide-react";
 import { type KeyboardEvent, type PointerEvent, useEffect, useRef } from "react";
 import { dragTo, fmtRange, MIN_PX, PALETTE, SLOT_MIN, tint, UNCATEGORIZED_HEX } from "../../lib/planner.js";
 import { CategoryIcon } from "./CategoryIcon.js";
@@ -185,6 +185,7 @@ export function BlockItem({
           <CategoryIcon icon={category?.icon} color={hex} size={12} />
         )}
         <span className={`truncate ${finished || skipped ? "line-through decoration-1" : ""}`}>{title}</span>
+        {anchored && <Link2 size={11} aria-hidden="true" className="ml-auto shrink-0 text-muted" />}
       </span>
       {style.height > 30 && <span className="tnum block truncate text-muted">{fmtRange(block.startMin, block.endMin)}</span>}
 
