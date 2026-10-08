@@ -397,3 +397,17 @@ test("installable: manifest + icons are served and linked", async ({ page }) => 
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/manifest.json");
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/apple-touch-icon.png");
 });
+
+test("the timeline opens at 8 am on other days and an hour before now today", async ({ page }) => {
+  const PX_PER_MIN = 24 / 15;
+  await page.goto(`/plan/${DAY}`);
+  const grid = main(page).getByTestId("plan-grid");
+  await expect.poll(() => grid.evaluate((el) => el.scrollTop)).toBeCloseTo(8 * 60 * PX_PER_MIN, -1); // ±5 px of rounding
+
+  await page.goto("/plan");
+  const now = new Date();
+  const want = Math.max(0, now.getHours() * 60 + now.getMinutes() - 60) * PX_PER_MIN;
+  // late in the day the grid can't scroll that far — it stops at the bottom
+  const max = await grid.evaluate((el) => el.scrollHeight - el.clientHeight);
+  await expect.poll(() => grid.evaluate((el) => el.scrollTop)).toBeCloseTo(Math.min(want, max), -1);
+});

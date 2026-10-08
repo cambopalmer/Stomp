@@ -56,13 +56,16 @@ export function Plan() {
   const isToday = plan.data?.today === date;
   const nowMin = plan.data?.nowMin ?? 0;
 
-  // open near "now" today, otherwise at 7 am — once per day shown
+  // open an hour before "now" today, otherwise at 8 am — once per day shown.
+  // Wait for everything the grid needs: until both queries land it's a spinner, and
+  // scrolling then would hit nothing (it raced when the plan arrived before categories).
+  const gridReady = !!plan.data && !!cats.data;
   useEffect(() => {
-    if (!plan.data || !scrollRef.current) return;
-    const target = isToday ? Math.max(0, nowMin - 90) : 7 * 60;
+    if (!gridReady || !scrollRef.current) return;
+    const target = isToday ? Math.max(0, nowMin - 60) : 8 * 60;
     scrollRef.current.scrollTo({ top: target * MIN_PX });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, !!plan.data]);
+  }, [date, gridReady]);
 
   const catById = useMemo(() => new Map((cats.data ?? []).map((c) => [c.id, c])), [cats.data]);
 
