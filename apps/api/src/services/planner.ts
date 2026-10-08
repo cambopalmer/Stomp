@@ -5,20 +5,21 @@ import type {
   DayPlan,
   PlannerEvent,
   TimeBlock,
+  TrayTodo,
   UpdateCategory,
   UpdateTimeBlock,
 } from "@stomp/shared";
 import { DAY_MIN } from "@stomp/shared";
-import { and, asc, count, eq, isNull, ne } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, isNull, lt, ne, notInArray, or } from "drizzle-orm";
 import type { Db } from "../db/client.js";
-import { categories, dayNotes, defaultCategories, events, timeBlocks, users } from "../db/schema.js";
+import { categories, dayNotes, defaultCategories, events, timeBlocks, todos, users } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { dateBounds, isIsoDate, isTimeZone, localNow } from "../lib/day.js";
 import { AppError, BadRequest, Conflict, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
 import type { Ctx } from "./access.js";
 import { eventsOnLocalDay, visibleEventsCond } from "./events.js";
-import { getTodo } from "./todos.js";
+import { getTodo, visibleTodosCond } from "./todos.js";
 
 /*
  * Day planner (ADR-0006). Blocks are personal (user_id), wall-clock
@@ -168,7 +169,37 @@ export async function deleteCategory(db: Db, ctx: Ctx, id: string): Promise<{ ar
 
 // ─────────────────────────────────────── blocks
 
-const toBlock = (b: BlockRow): TimeBlock => ({
+type TodoInfo = NonNullable<TimeBlock["todo"]>;
+
+/**
+ * The linked todo as each block should show it — only todos the user can
+ * still see, and how many of the user's blocks share each one.
+ */
+async function todoInfo(db: Db, ctx: Ctx, rows: BlockRow[]): Promise<Map<string, TodoInfo>> {
+  const ids = [...new Set(rows.map((r) => r.todoId).filter((x): x is string => !!x))];
+  const out = new Map<string, TodoInfo>();
+  if (!ids.length) return out;
+  const visible = await db
+    .select({ id: todos.id, title: todos.title, status: todos.status })
+    .from(todos)
+    .where(and(inArray(todos.id, ids), await visibleTodosCond(db, ctx.userId)));
+  const counts = await db
+    .select({ id: timeBlocks.todoId, n: count() })
+    .from(timeBlocks)
+    .where(and(eq(timeBlocks.userId, ctx.userId), inArray(timeBlocks.todoId, ids)))
+    .groupBy(timeBlocks.todoId);
+  const n = new Map(counts.map((c) => [c.id, c.n]));
+  for (const t of visible) {
+    out.set(t.id, { id: t.id, title: t.title, done: t.status === "done" || t.status === "cancelled", blockCount: n.get(t.id) ?? 1 });
+  }
+  return out;
+}
+
+async function withTodo(db: Db, ctx: Ctx, row: BlockRow): Promise<TimeBlock> {
+  return toBlock(row, await todoInfo(db, ctx, [row]));
+}
+
+const toBlock = (b: BlockRow, info: Map<string, TodoInfo>): TimeBlock => ({
   id: b.id,
   date: b.date,
   startMin: b.startMin,
@@ -185,6 +216,7 @@ const toBlock = (b: BlockRow): TimeBlock => ({
   status: b.status,
   createdAt: b.createdAt,
   updatedAt: b.updatedAt,
+  todo: (b.todoId && info.get(b.todoId)) || null,
 });
 
 /** Has this block's start time arrived (in the user's zone)? */
@@ -270,7 +302,7 @@ export async function createBlock(db: Db, ctx: Ctx, input: CreateTimeBlock): Pro
     row.plannedEndMin = row.endMin;
   }
   await db.insert(timeBlocks).values(row);
-  return toBlock(row);
+  return withTodo(db, ctx, row);
 }
 
 export async function updateBlock(db: Db, ctx: Ctx, id: string, input: UpdateTimeBlock): Promise<TimeBlock> {
@@ -295,7 +327,7 @@ export async function updateBlock(db: Db, ctx: Ctx, id: string, input: UpdateTim
   if (input.categoryId !== undefined) set.categoryId = input.categoryId;
   if (input.status !== undefined) set.status = input.status;
   await db.update(timeBlocks).set(set).where(eq(timeBlocks.id, id));
-  return toBlock(await loadBlock(db, ctx, id));
+  return withTodo(db, ctx, await loadBlock(db, ctx, id));
 }
 
 export async function deleteBlock(db: Db, ctx: Ctx, id: string): Promise<void> {
@@ -323,8 +355,10 @@ export async function getDayPlan(db: Db, ctx: Ctx, date: string): Promise<DayPla
     .from(timeBlocks)
     .where(and(eq(timeBlocks.userId, ctx.userId), eq(timeBlocks.date, date)))
     .orderBy(asc(timeBlocks.startMin), asc(timeBlocks.endMin));
-  const blocks: TimeBlock[] = [];
-  for (const r of rows) blocks.push(toBlock(await captureIfStarted(db, r, now)));
+  const captured: BlockRow[] = [];
+  for (const r of rows) captured.push(await captureIfStarted(db, r, now));
+  const info = await todoInfo(db, ctx, captured);
+  const blocks = captured.map((r) => toBlock(r, info));
 
   // every event you can see — the planner ignores the workspace switcher (ADR-0006)
   const evs = await db
@@ -354,7 +388,18 @@ export async function getDayPlan(db: Db, ctx: Ctx, date: string): Promise<DayPla
     .where(and(eq(dayNotes.userId, ctx.userId), eq(dayNotes.date, date)))
     .limit(1);
 
-  return { date, timezone: tz, today: now.date, nowMin: now.minute, blocks, events: plannerEvents, notes: note?.body ?? "" };
+  const tray = await trayFor(db, ctx, date, tz, now.date, rows);
+
+  return {
+    date,
+    timezone: tz,
+    today: now.date,
+    nowMin: now.minute,
+    blocks,
+    events: plannerEvents,
+    tray,
+    notes: note?.body ?? "",
+  };
 }
 
 /** One note per day; saving an empty note removes it. */
@@ -370,4 +415,62 @@ export async function saveDayNotes(db: Db, ctx: Ctx, date: string, body: string)
     .values({ id: newId(), userId: ctx.userId, date, body, updatedAt: clock.now() })
     .onConflictDoUpdate({ target: [dayNotes.userId, dayNotes.date], set: { body, updatedAt: clock.now() } });
   return { notes: body };
+}
+
+// ─────────────────────────────────────── the tray (slice 3)
+
+
+/**
+ * Todos waiting for a time on `date` (ADR-0006: "today, no time yet" is a
+ * todo with Plan for): open todos you can see that are planned for the day,
+ * due that day, or — on today only — overdue. Ones already given a block that
+ * day are left out; they're on the timeline.
+ */
+async function trayFor(
+  db: Db,
+  ctx: Ctx,
+  date: string,
+  tz: string,
+  today: string,
+  blocksThatDay: BlockRow[],
+): Promise<TrayTodo[]> {
+  const { dayStart, dayEnd } = dateBounds(date, tz);
+  const reasons = [
+    and(gte(todos.scheduledFor, dayStart), lt(todos.scheduledFor, dayEnd)),
+    and(gte(todos.dueAt, dayStart), lt(todos.dueAt, dayEnd)),
+  ];
+  if (date === today) reasons.push(lt(todos.dueAt, dayStart));
+
+  const rows = await db
+    .select({
+      id: todos.id,
+      title: todos.title,
+      priority: todos.priority,
+      dueAt: todos.dueAt,
+      scheduledFor: todos.scheduledFor,
+    })
+    .from(todos)
+    .where(
+      and(
+        await visibleTodosCond(db, ctx.userId),
+        notInArray(todos.status, ["done", "cancelled"]),
+        or(...reasons),
+      ),
+    );
+
+  const scheduled = new Set(blocksThatDay.map((b) => b.todoId).filter(Boolean));
+  const rank = { overdue: 0, due: 1, planned: 2 } as const;
+  const prio = { urgent: 0, high: 1, medium: 2, low: 3, none: 4 } as const;
+  return rows
+    .filter((t) => !scheduled.has(t.id))
+    .map((t): TrayTodo => {
+      const reason: TrayTodo["reason"] =
+        t.dueAt != null && t.dueAt < dayStart
+          ? "overdue"
+          : t.dueAt != null && t.dueAt < dayEnd
+            ? "due"
+            : "planned";
+      return { id: t.id, title: t.title, priority: t.priority, reason, dueAt: t.dueAt };
+    })
+    .sort((a, b) => rank[a.reason] - rank[b.reason] || prio[a.priority] - prio[b.priority] || a.title.localeCompare(b.title));
 }

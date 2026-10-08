@@ -100,9 +100,9 @@ Legend: `[phase]` target phase · `⏳` deferred/uncertain pending an open quest
 ## Phase 4.5 — Day planner (see roadmap for the problem statement + owner direction)
 
 - [x] `[4.5]` Design session (2026-10-07) → ADR-0006
-- [ ] `[4.5]` **Slice 1 — foundation:** `categories` + `default_categories` (seeded 8 + Uncategorized), `time_blocks`, `day_notes`; API CRUD with wall-clock validation (15-min grid, no midnight crossing); lazy planned-time snapshot; web saves browser timezone to `users.timezone`
-- [ ] `[4.5]` **Slice 2 — day view (mobile-first):** `/plan/:date` timeline, now-line, events as fixed blocks (all visible, ignores workspace switcher), overlap layout, tap-a-slot bottom sheet (title, category chips, duration presets, −15/+15), Plan nav item
-- [ ] `[4.5]` **Slice 3 — todos:** tray (Plan for today / due today / overdue → Schedule at…), linked blocks, "also complete the todo?" prompt, struck-through blocks for completed todos
+- [x] `[4.5]` **Slice 1 — foundation:** (done 2026-10-07) `categories` + `default_categories` (seeded 8 + Uncategorized), `time_blocks`, `day_notes`; API CRUD with wall-clock validation (15-min grid, no midnight crossing); lazy planned-time snapshot; web saves browser timezone to `users.timezone`
+- [x] `[4.5]` **Slice 2 — day view (mobile-first):** (done 2026-10-07; 24 px per 15 min) `/plan/:date` timeline, now-line, events as fixed blocks (all visible, ignores workspace switcher), overlap layout, tap-a-slot bottom sheet (title, category chips, duration presets, −15/+15), Plan nav item
+- [x] `[4.5]` **Slice 3 — todos:** (done 2026-10-07) tray (Plan for today / due today / overdue → Schedule at…), linked blocks, "also complete the todo?" prompt, struck-through blocks for completed todos
 - [ ] `[4.5]` **Slice 4 — review:** status (done/skipped), planned vs actual on past days, day notes, totals by category; desktop drag-create/move/resize + keyboard; long-press drag on touch
 - [ ] `[4.5]` **Slice 5 — anchored blocks:** "Add before…" on events (first = Travel), blocks follow event moves (incl. day changes), flagged + kept on cancel/delete/sync removal
 - [ ] `[4.5]` **Slice 6 — extras:** copy a previous day's plan, Home "Now / Next" tile, admin default-category editor (additions reach everyone), installable PWA (manifest + icons)

@@ -230,3 +230,57 @@ describe("planner + the rest of STOMP", () => {
     }
   });
 });
+
+describe("todos on the planner (slice 3)", () => {
+  const todoApi = async (payload: object) =>
+    (await app.inject({ method: "POST", url: "/api/todos", payload })).json() as { id: string; title: string };
+  const trayOf = async (date: string) =>
+    (await api("GET", `/api/plan/${date}`)).json().tray as { id: string; reason: string }[];
+
+  it("the tray holds open todos planned for, due on, or (today only) overdue by the day", async () => {
+    clock.freeze(at("10:00"));
+    const planned = await todoApi({ title: "tray: plan for", scheduledFor: at("00:00") });
+    const due = await todoApi({ title: "tray: due today", dueAt: at("17:00") });
+    const overdue = await todoApi({ title: "tray: overdue", dueAt: at("17:00") - 2 * 86_400_000 });
+    const tomorrow = await todoApi({ title: "tray: tomorrow", dueAt: at("17:00") + 86_400_000 });
+    const finished = await todoApi({ title: "tray: done", dueAt: at("17:00") });
+    await app.inject({ method: "PATCH", url: `/api/todos/${finished.id}`, payload: { status: "done" } });
+    const { todos } = await import("../src/db/schema.js");
+    const hidden = newId();
+    await db.insert(todos).values({ id: hidden, title: "tray: sam's", createdBy: samId, dueAt: at("12:00") });
+
+    const tray = await trayOf(DAY);
+    const reason = (id: string) => tray.find((t) => t.id === id)?.reason;
+    expect(reason(planned.id)).toBe("planned");
+    expect(reason(due.id)).toBe("due");
+    expect(reason(overdue.id)).toBe("overdue");
+    expect(reason(tomorrow.id)).toBeUndefined();
+    expect(reason(finished.id)).toBeUndefined();
+    expect(reason(hidden)).toBeUndefined();
+    // overdue first
+    expect(tray.findIndex((t) => t.id === overdue.id)).toBeLessThan(tray.findIndex((t) => t.id === due.id));
+
+    // tomorrow's tray: its own due todo, but not "overdue" (only today chases the past)
+    const next = await trayOf("2031-01-16");
+    expect(next.find((t) => t.id === tomorrow.id)?.reason).toBe("due");
+    expect(next.find((t) => t.id === overdue.id)).toBeUndefined();
+  });
+
+  it("scheduling a todo takes it out of the tray; blocks carry the todo's title, state and block count", async () => {
+    clock.freeze(at("10:00"));
+    const t = await todoApi({ title: "Renew passport", dueAt: at("17:00") });
+    const b1 = (await block({ startMin: 780, endMin: 810, todoId: t.id })).json();
+    expect(b1.todo).toEqual({ id: t.id, title: "Renew passport", done: false, blockCount: 1 });
+    expect((await trayOf(DAY)).map((x) => x.id)).not.toContain(t.id);
+
+    const b2 = (await block({ startMin: 900, endMin: 930, todoId: t.id })).json();
+    expect(b2.todo.blockCount).toBe(2);
+
+    await app.inject({ method: "PATCH", url: `/api/todos/${t.id}`, payload: { status: "done" } });
+    const plan = (await api("GET", `/api/plan/${DAY}`)).json();
+    const shown = plan.blocks.filter((b: { todoId: string }) => b.todoId === t.id);
+    expect(shown).toHaveLength(2);
+    expect(shown.every((b: { todo: { done: boolean } }) => b.todo.done)).toBe(true); // struck through, not changed
+    expect(shown.every((b: { status: string }) => b.status === "planned")).toBe(true);
+  });
+});

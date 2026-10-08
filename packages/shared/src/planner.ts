@@ -110,6 +110,16 @@ export const timeBlock = z.object({
   status: blockStatus,
   createdAt: epochMs,
   updatedAt: epochMs,
+  /** the linked todo as the planner shows it (null when unlinked / not visible) */
+  todo: z
+    .object({
+      id,
+      title: z.string(),
+      done: z.boolean(),
+      /** how many blocks link to this todo — "also complete it?" defaults to yes when it's 1 */
+      blockCount: z.number().int(),
+    })
+    .nullable(),
 });
 export type TimeBlock = z.infer<typeof timeBlock>;
 
@@ -152,6 +162,17 @@ export const plannerEvent = z.object({
 });
 export type PlannerEvent = z.infer<typeof plannerEvent>;
 
+/** A todo waiting to be given a time on this day (the planner's tray). */
+export const trayTodo = z.object({
+  id,
+  title: z.string(),
+  priority: z.enum(["none", "low", "medium", "high", "urgent"]),
+  /** why it's in today's tray */
+  reason: z.enum(["planned", "due", "overdue"]),
+  dueAt: epochMs.nullable(),
+});
+export type TrayTodo = z.infer<typeof trayTodo>;
+
 export const dayPlan = z.object({
   date: isoDate,
   timezone: z.string(),
@@ -160,6 +181,7 @@ export const dayPlan = z.object({
   nowMin: z.number().int(),
   blocks: z.array(timeBlock),
   events: z.array(plannerEvent),
+  tray: z.array(trayTodo),
   notes: z.string(),
 });
 export type DayPlan = z.infer<typeof dayPlan>;

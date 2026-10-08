@@ -42,6 +42,12 @@ function visibleFilter(userId: string, projIds: string[], collabIds: string[]) {
   );
 }
 
+/** SQL condition: todos visible to `userId` (ADR-0003) — for callers outside this module. */
+export async function visibleTodosCond(db: Db, userId: string) {
+  const [projIds, collabIds] = await Promise.all([accessibleProjectIds(db, userId), collaboratingTodoIds(db, userId)]);
+  return visibleFilter(userId, projIds, collabIds);
+}
+
 async function collaboratingTodoIds(db: Db, userId: string): Promise<string[]> {
   const rows = await db
     .select({ id: todoCollaborators.todoId })

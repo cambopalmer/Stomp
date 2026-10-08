@@ -17,6 +17,7 @@
 /projects/:projectId     Project detail — mixed items (todos, events, refs, incoming) + members
 /tags/:slug              Everything with a tag (cross-section)
 /settings                Connected accounts (Gmail, Google Calendar: connect / reconnect / disconnect, calendar picker, Sync now); profile + timezone later
+/plan, /plan/:date       Day planner (ADR-0006): 15-min timeline (24 px/slot), events as fixed blocks, tap-to-add bottom sheet, To-schedule tray
 /admin                   Hub admins only — user management (roles, disable, set password, delete)
 /signup                  Phase 0: static stub reached from the banner "Create account" link.
                          Phase 3: real signup / onboarding / invite acceptance.

@@ -286,6 +286,47 @@ Events & references: same, minus rule 2; events also visible if `id ∈ event_at
 
 ---
 
+## 2b. Day planner tables (Phase 4.5, [ADR-0006](../../_config/decisions/adr-0006-day-planner.md), migration `0009`)
+
+### default_categories — hub config (admin-edited)
+| column | type | notes |
+|---|---|---|
+| id | text PK | the 8 seeded rows have fixed ids, shared with `SEED_DEFAULT_CATEGORIES` in `packages/shared/src/planner.ts` |
+| name / color / icon / sort_order | | color + icon are keys from curated sets (never colour-only meaning) |
+
+### categories — per user
+| column | type | notes |
+|---|---|---|
+| id | text PK | |
+| user_id | text FK users | ON DELETE CASCADE |
+| name / color / icon / sort_order | | UNIQUE (user_id, name) WHERE archived_at IS NULL |
+| default_id | text | null, FK default_categories ON DELETE SET NULL — which default it came from |
+| archived_at | integer | null; used categories are archived, never deleted |
+
+Copied from the defaults on a user's first use.
+
+### time_blocks — a planned stretch of a day (wall-clock)
+| column | type | notes |
+|---|---|---|
+| id | text PK | |
+| user_id | text FK users | ON DELETE CASCADE — personal in v1 |
+| workspace_id | text | reserved for sharing; null in v1 |
+| date | text | YYYY-MM-DD, the user's local date |
+| start_min / end_min | integer | minutes since local midnight, multiples of 15, `0 ≤ start < end ≤ 1440` |
+| planned_start_min / planned_end_min | integer | null until the block's start time passes; then the first read or write records them once (planned vs actual) |
+| title / notes | text | title optional when linked to a todo |
+| category_id | text | null = Uncategorized; FK ON DELETE SET NULL |
+| todo_id | text | optional link; deleting the todo copies its title onto the block and unlinks |
+| anchor_event_id / anchor_offset_min / anchor_lost | | slice 5 (anchored "Add before…" blocks) |
+| status | text | planned \| done \| skipped |
+
+INDEX (user_id, date), (todo_id), (anchor_event_id).
+
+### day_notes
+One per (user_id, date); saving an empty note deletes it.
+
+Deleting a user removes their blocks, notes and categories (private data — §3a).
+
 ## 3a. Accounts: admin & deletion
 
 **Admin (`users.role = admin`) manages accounts, not content.** `/api/admin/users` lists account metadata; an admin can change roles, disable / re-enable, set a new password, and delete. There is no admin route that reads todos / events / references, so the visibility model above has no bypass. Guards: the last active admin can't be demoted, disabled or deleted; you can't disable or delete yourself from the admin page.

@@ -1,6 +1,6 @@
-import type { Category, PlannerEvent, TimeBlock } from "@stomp/shared";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { Category, PlannerEvent, TimeBlock, TrayTodo } from "@stomp/shared";
+import { CalendarDays, CheckSquare, ChevronLeft, ChevronRight, ListTodo, Plus, X } from "lucide-react";
+import { type MouseEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { BlockSheet, type SheetTarget } from "../components/planner/BlockSheet.js";
 import { CategoryIcon } from "../components/planner/CategoryIcon.js";
@@ -37,6 +37,7 @@ export function Plan() {
   const plan = usePlan(date);
   const cats = useCategories();
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
+  const [trayOpen, setTrayOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isToday = plan.data?.today === date;
@@ -64,7 +65,15 @@ export function Plan() {
   if (plan.isLoading || cats.isLoading) return <Spinner />;
   if (plan.isError) return <ErrorState error={plan.error} retry={plan.refetch} />;
   if (cats.isError) return <ErrorState error={cats.error} retry={cats.refetch} />;
-  const { blocks, events } = plan.data!;
+  const { blocks, events, tray } = plan.data!;
+  const scheduleTodo = (t: TrayTodo) => {
+    setTrayOpen(false);
+    setSheet({
+      kind: "new",
+      startMin: isToday ? Math.min(snap(nowMin) + SLOT_MIN, DAY_MIN - SLOT_MIN) : 9 * 60,
+      todo: { id: t.id, title: t.title },
+    });
+  };
   const allDay = events.filter((e) => e.allDay);
   const timedEvents = events.filter((e) => !e.allDay);
   const placed = layoutSpans([
@@ -120,6 +129,14 @@ export function Plan() {
         </ul>
       )}
 
+      {/* phones: the tray opens as a bottom sheet */}
+      {tray.length > 0 && (
+        <Button variant="ghost" className="lg:hidden" onClick={() => setTrayOpen(true)} aria-haspopup="dialog">
+          <ListTodo size={16} aria-hidden="true" /> To schedule ({tray.length})
+        </Button>
+      )}
+
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_16rem]">
       <div ref={scrollRef} className="max-h-[72dvh] overflow-y-auto rounded-lg border border-border bg-surface" data-testid="plan-grid">
         <div className="relative grid" style={{ gridTemplateColumns: "3.25rem 1fr", height: GRID_H }}>
           <div className="relative" aria-hidden="true">
@@ -162,6 +179,18 @@ export function Plan() {
         </div>
       </div>
 
+      {/* desktop: the tray sits alongside */}
+      <aside aria-label="To schedule" className="hidden lg:block">
+        <TrayList tray={tray} onSchedule={scheduleTodo} />
+      </aside>
+      </div>
+
+      {trayOpen && (
+        <TraySheet onClose={() => setTrayOpen(false)}>
+          <TrayList tray={tray} onSchedule={scheduleTodo} />
+        </TraySheet>
+      )}
+
       {blocks.length === 0 && (
         <p className="text-sm text-muted">Nothing planned yet — tap a time or use “Add block”.</p>
       )}
@@ -173,7 +202,6 @@ export function Plan() {
           target={sheet}
           categories={cats.data ?? []}
           onClose={() => setSheet(null)}
-          titleHint={sheet.kind === "edit" && sheet.block.todoId ? "Linked todo" : undefined}
         />
       )}
     </div>
@@ -212,13 +240,18 @@ function BlockItem({
   onOpen: () => void;
 }) {
   const hex = category ? PALETTE[category.color] : UNCATEGORIZED_HEX;
-  const title = block.title ?? "Linked todo";
+  const title = block.title ?? block.todo?.title ?? "Linked todo";
+  const finished = block.status === "done" || !!block.todo?.done;
+  const skipped = block.status === "skipped";
+  const state = block.status === "done" ? ", done" : skipped ? ", skipped" : block.todo?.done ? ", todo complete" : "";
   return (
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`${title}, ${fmtRange(block.startMin, block.endMin)}${category ? `, ${category.name}` : ""}`}
-      className="absolute z-10 overflow-hidden rounded-md border border-l-4 px-1.5 py-0.5 text-left text-xs text-text hover:brightness-95"
+      aria-label={`${title}, ${fmtRange(block.startMin, block.endMin)}${category ? `, ${category.name}` : ""}${state}`}
+      className={`absolute z-10 overflow-hidden rounded-md border border-l-4 px-1.5 py-0.5 text-left text-xs text-text hover:brightness-95 ${
+        skipped ? "border-dashed opacity-60" : ""
+      }`}
       // tint over the opaque card colour, so grid lines don't show through
       style={{
         ...style,
@@ -229,10 +262,87 @@ function BlockItem({
       data-testid="plan-block"
     >
       <span className="flex items-center gap-1 font-medium">
-        <CategoryIcon icon={category?.icon} color={hex} size={12} />
-        <span className="truncate">{title}</span>
+        {finished ? (
+          <CheckSquare size={12} aria-hidden="true" className="shrink-0 text-success" />
+        ) : (
+          <CategoryIcon icon={category?.icon} color={hex} size={12} />
+        )}
+        <span className={`truncate ${finished || skipped ? "line-through decoration-1" : ""}`}>{title}</span>
       </span>
       {style.height > 30 && <span className="tnum block truncate text-muted">{fmtRange(block.startMin, block.endMin)}</span>}
     </button>
+  );
+}
+
+const REASON: Record<TrayTodo["reason"], { label: string; className: string }> = {
+  overdue: { label: "Overdue", className: "border-danger/40 text-danger" },
+  due: { label: "Due", className: "border-warning/40 text-warning" },
+  planned: { label: "Planned", className: "border-border text-muted" },
+};
+
+/** Todos waiting for a time today (ADR-0006: "no time yet" lives here, not as time-less blocks). */
+function TrayList({ tray, onSchedule }: { tray: TrayTodo[]; onSchedule: (t: TrayTodo) => void }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <h2 className="flex items-center gap-1.5 text-sm font-semibold">
+        <ListTodo size={15} aria-hidden="true" /> To schedule
+      </h2>
+      {tray.length === 0 ? (
+        <p className="text-xs text-muted">Nothing waiting — todos planned for or due on this day show up here.</p>
+      ) : (
+        <ul className="flex flex-col gap-1.5" data-testid="plan-tray">
+          {tray.map((t) => (
+            <li key={t.id} className="flex items-center gap-2 rounded-md border border-border bg-surface p-2">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{t.title}</p>
+                <span className={`mt-0.5 inline-block rounded-full border px-1.5 text-[11px] ${REASON[t.reason].className}`}>
+                  {REASON[t.reason].label}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                className="min-h-11 shrink-0 px-2.5 text-xs"
+                onClick={() => onSchedule(t)}
+                aria-label={`Schedule ${t.title}`}
+              >
+                Schedule
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function TraySheet({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+  const headingId = useId();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center">
+      <div aria-hidden="true" className="absolute inset-0" style={{ background: "rgba(15, 23, 42, 0.45)" }} onClick={onClose} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={headingId}
+        className="relative max-h-[75dvh] w-full overflow-y-auto rounded-t-2xl border border-border bg-surface p-4 shadow-xl"
+        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      >
+        <div className="mb-2 flex items-center justify-between">
+          <span id={headingId} className="sr-only">
+            Todos to schedule
+          </span>
+          <span />
+          <button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-2 text-muted hover:bg-surface-2">
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
   );
 }
