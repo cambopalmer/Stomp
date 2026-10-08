@@ -20,6 +20,9 @@ import {
   users,
   workspaceMembers,
   workspaces,
+  timeBlocks,
+  dayNotes,
+  categories,
 } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { BadRequest, Forbidden, NotFound } from "../lib/errors.js";
@@ -251,6 +254,10 @@ async function anonymize(db: Db, u: UserRow): Promise<void> {
 
   /* 2. remove U's footprint */
   await db.delete(sessions).where(eq(sessions.userId, U));
+  // the day planner is personal — nothing in it is shared (ADR-0006)
+  await db.delete(timeBlocks).where(eq(timeBlocks.userId, U));
+  await db.delete(dayNotes).where(eq(dayNotes.userId, U));
+  await db.delete(categories).where(eq(categories.userId, U));
   await db.delete(workspaceMembers).where(eq(workspaceMembers.userId, U));
   await db.delete(projectMembers).where(eq(projectMembers.userId, U));
   await db.delete(todoCollaborators).where(eq(todoCollaborators.userId, U));

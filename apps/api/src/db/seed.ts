@@ -22,6 +22,7 @@ export async function seed(): Promise<void> {
 
   // Idempotent: wipe user data (keeps schema).
   for (const table of [
+    t.timeBlocks, t.dayNotes, t.categories, // planner (default_categories are hub config — kept)
     t.taggings, t.tags, t.activityLog, t.eventAttendees, t.todoCollaborators,
     t.eventCollaborators, t.referenceCollaborators, t.incomingItems, t.notifications,
     t.todos, t.events, t.references, t.projectMembers, t.projects,

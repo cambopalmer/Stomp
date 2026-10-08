@@ -1,6 +1,6 @@
 import type { AuthUser, Credentials, MeResponse, SignupInput } from "@stomp/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createContext, type ReactNode, useContext } from "react";
+import { createContext, type ReactNode, useContext, useEffect } from "react";
 import { api, ApiError } from "./api.js";
 
 interface AuthState {
@@ -25,6 +25,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const refresh = () => qc.invalidateQueries();
+
+  // Keep the account's zone in step with this device — the planner's "today" is wall-clock (ADR-0006).
+  const serverTz = me.data?.user?.timezone;
+  useEffect(() => {
+    if (!serverTz) return;
+    const local = browserTimeZone();
+    if (local && local !== serverTz) {
+      void api
+        .put("/me/timezone", { timezone: local })
+        .then(() => qc.invalidateQueries({ queryKey: ["auth", "me"] }))
+        .catch(() => {}); // best effort; retried on the next load
+    }
+  }, [serverTz, qc]);
 
   const value: AuthState = {
     user: me.data?.user ?? null,
@@ -55,3 +68,11 @@ export function useAuth(): AuthState {
 }
 
 export { ApiError };
+
+function browserTimeZone(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
+}

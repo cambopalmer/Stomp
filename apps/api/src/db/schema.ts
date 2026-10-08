@@ -437,3 +437,88 @@ export const activityLog = sqliteTable(
     byCreated: index("idx_activity_created").on(t.createdAt),
   }),
 );
+
+// ─────────────────────────────────────── day planner (Phase 4.5, ADR-0006)
+
+/** Hub-wide starting set, edited by an admin. Users get a copy; additions reach everyone. */
+export const defaultCategories = sqliteTable("default_categories", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  color: text("color").notNull(), // palette key — see packages/shared planner.ts
+  icon: text("icon").notNull(), // curated icon key
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: ts("created_at").notNull().default(now),
+});
+
+/** A user's own categories. Used ones are archived, never deleted (past days must still render). */
+export const categories = sqliteTable(
+  "categories",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    color: text("color").notNull(),
+    icon: text("icon").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    /** which hub default this came from — lets admin additions reach users once */
+    defaultId: text("default_id").references(() => defaultCategories.id, { onDelete: "set null" }),
+    archivedAt: ts("archived_at"),
+    createdAt: ts("created_at").notNull().default(now),
+    updatedAt: ts("updated_at").notNull().default(now),
+  },
+  (t) => ({
+    byUser: index("idx_categories_user").on(t.userId),
+    // one live category per name per user; archived ones may repeat
+    uniqLiveName: uniqueIndex("uq_categories_live_name")
+      .on(t.userId, t.name)
+      .where(sql`${t.archivedAt} is null`),
+  }),
+);
+
+/**
+ * A planned stretch of a day. Wall-clock time: `date` + minutes since local
+ * midnight on a 15-minute grid, never crossing midnight (ADR-0006).
+ */
+export const timeBlocks = sqliteTable(
+  "time_blocks",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    /** reserved for household sharing — always null in v1 */
+    workspaceId: text("workspace_id").references(() => workspaces.id, { onDelete: "set null" }),
+    date: text("date").notNull(), // YYYY-MM-DD, the user's local date
+    startMin: integer("start_min").notNull(),
+    endMin: integer("end_min").notNull(),
+    /** snapshot taken when the block's start time arrives — planned vs actual */
+    plannedStartMin: integer("planned_start_min"),
+    plannedEndMin: integer("planned_end_min"),
+    title: text("title"),
+    notes: text("notes"),
+    categoryId: text("category_id").references(() => categories.id, { onDelete: "set null" }),
+    todoId: text("todo_id").references(() => todos.id, { onDelete: "set null" }),
+    anchorEventId: text("anchor_event_id").references(() => events.id, { onDelete: "set null" }),
+    anchorOffsetMin: integer("anchor_offset_min"),
+    /** set when the anchor event went away (cancelled / deleted / dropped by sync) */
+    anchorLost: bool("anchor_lost").notNull().default(false),
+    status: text("status", { enum: ["planned", "done", "skipped"] }).notNull().default("planned"),
+    createdAt: ts("created_at").notNull().default(now),
+    updatedAt: ts("updated_at").notNull().default(now),
+  },
+  (t) => ({
+    byUserDate: index("idx_time_blocks_user_date").on(t.userId, t.date),
+    byTodo: index("idx_time_blocks_todo").on(t.todoId),
+    byAnchor: index("idx_time_blocks_anchor").on(t.anchorEventId),
+  }),
+);
+
+export const dayNotes = sqliteTable(
+  "day_notes",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    date: text("date").notNull(),
+    body: text("body").notNull(),
+    updatedAt: ts("updated_at").notNull().default(now),
+  },
+  (t) => ({ uniq: unique().on(t.userId, t.date) }),
+);

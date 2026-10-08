@@ -1,7 +1,7 @@
 import type { CreateTodo, Todo, UpdateTodo } from "@stomp/shared";
 import { and, desc, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
-import { todoCollaborators, todos, workspaceMembers } from "../db/schema.js";
+import { timeBlocks, todoCollaborators, todos, workspaceMembers } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { BadRequest, Forbidden, NotFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
@@ -239,6 +239,13 @@ export async function purgeTodoTree(db: Db, rootId: string): Promise<void> {
     ids.push(...kids.map((k) => k.id));
   }
   for (const tid of ids) await purgePolymorphicRefs(db, "todo", tid);
+  // planner blocks linked to these todos keep a title and lose the link (ADR-0006)
+  for (const t of await db.select({ id: todos.id, title: todos.title }).from(todos).where(inArray(todos.id, ids))) {
+    await db
+      .update(timeBlocks)
+      .set({ title: sql`coalesce(${timeBlocks.title}, ${t.title})`, todoId: null })
+      .where(eq(timeBlocks.todoId, t.id));
+  }
   await db.delete(todos).where(inArray(todos.id, ids));
 }
 

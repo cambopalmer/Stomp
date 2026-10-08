@@ -15,6 +15,7 @@ import { googleOAuth } from "./plugins/googleOAuth.js";
 import { adminRoutes } from "./routes/admin.js";
 import { authRoutes } from "./routes/auth.js";
 import { integrationRoutes } from "./routes/integrations.js";
+import { plannerRoutes } from "./routes/planner.js";
 import { routes } from "./routes/index.js";
 
 export async function buildApp(opts: { authBypass?: boolean } = {}): Promise<FastifyInstance> {
@@ -38,6 +39,7 @@ export async function buildApp(opts: { authBypass?: boolean } = {}): Promise<Fas
   await app.register(routes, { prefix: "/api" });
   await app.register(adminRoutes, { prefix: "/api" });
   await app.register(integrationRoutes, { prefix: "/api" });
+  await app.register(plannerRoutes, { prefix: "/api" });
 
   return app;
 }

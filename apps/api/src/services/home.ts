@@ -2,6 +2,7 @@ import type { HomeSummary, HotList } from "@stomp/shared";
 import { and, asc, desc, eq, gt, gte, inArray, isNull, lt, lte, ne, or, sql } from "drizzle-orm";
 import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import type { Db } from "../db/client.js";
+import { eventsOnLocalDay } from "./events.js";
 import { events, incomingItems, projects, references, todoCollaborators, todos } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { dayBounds } from "../lib/day.js";
@@ -35,12 +36,7 @@ function refVisible(userId: string, projIds: string[]) {
   );
 }
 
-/** Events happening today: timed ones by overlap with the local day, all-day ones by their floating date. */
-const eventsToday = (b: { dayStart: number; dayEnd: number; floatingDay: number }) =>
-  or(
-    and(eq(events.allDay, false), lt(events.startsAt, b.dayEnd), gte(events.endsAt, b.dayStart)),
-    and(eq(events.allDay, true), lte(events.startsAt, b.floatingDay), gt(events.endsAt, b.floatingDay)),
-  );
+const eventsToday = eventsOnLocalDay;
 const eventsAfterToday = (b: { dayEnd: number; floatingDay: number }) =>
   or(
     and(eq(events.allDay, false), gte(events.startsAt, b.dayEnd)),

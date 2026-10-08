@@ -11,6 +11,7 @@ export * from "./share.js";
 export * from "./home.js";
 export * from "./admin.js";
 export * from "./integration.js";
+export * from "./planner.js";
 
 /** Shape of an API error body (RFC 7807-ish). */
 export interface ApiErrorBody {

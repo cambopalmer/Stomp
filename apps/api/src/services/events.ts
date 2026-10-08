@@ -1,6 +1,7 @@
 import type { CalendarEvent, CreateEvent, UpdateEvent } from "@stomp/shared";
-import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
+import { and, asc, eq, gt, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
+import type { DayBounds } from "../lib/day.js";
 import { eventCollaborators, events } from "../db/schema.js";
 import { clock } from "../lib/clock.js";
 import { Forbidden, NotFound } from "../lib/errors.js";
@@ -114,3 +115,13 @@ export async function deleteEvent(db: Db, ctx: Ctx, id: string): Promise<void> {
   await db.delete(events).where(eq(events.id, id));
   await logActivity(db, ctx.userId, "event", id, "deleted");
 }
+
+/**
+ * Events on a local day: timed ones by overlap with the day's UTC bounds,
+ * all-day ones by their floating date (ADR-0005). Used by Home and the planner.
+ */
+export const eventsOnLocalDay = (b: DayBounds) =>
+  or(
+    and(eq(events.allDay, false), lt(events.startsAt, b.dayEnd), gt(events.endsAt, b.dayStart)),
+    and(eq(events.allDay, true), lte(events.startsAt, b.floatingDay), gt(events.endsAt, b.floatingDay)),
+  );
