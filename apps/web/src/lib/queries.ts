@@ -1,4 +1,9 @@
 import type {
+  Category,
+  CreateTimeBlock,
+  DayPlan,
+  TimeBlock,
+  UpdateTimeBlock,
   IntegrationAccount,
   IntegrationsResponse,
   SyncLogEntry,
@@ -40,7 +45,7 @@ function useWsPath(base: string): string {
 
 const WRITE_KEYS = [
   "home", "todos", "projects", "events", "references", "incoming",
-  "tags", "activity", "workspaces", "collab", "shared-with-me", "notifications", "admin", "integrations",
+  "tags", "activity", "workspaces", "collab", "shared-with-me", "notifications", "admin", "integrations", "plan",
 ];
 
 function useInvalidateAll() {
@@ -322,3 +327,19 @@ export const useSelectCalendars = mutation(({ id, calendarIds }: { id: string; c
 /** Full-page navigation — the OAuth dance needs real redirects, not XHR. */
 export const integrationConnectHref = (product: "gmail" | "calendar") =>
   `/api/integrations/google/connect?product=${product}`;
+
+// ─── day planner (Phase 4.5, ADR-0006) ───────────────
+
+export const usePlan = (date: string) =>
+  useQuery({ queryKey: ["plan", date], queryFn: () => api.get<DayPlan>(`/plan/${date}`) });
+
+export const useCategories = () =>
+  useQuery({ queryKey: ["plan", "categories"], queryFn: () => api.get<Category[]>("/categories") });
+
+export const useCreateBlock = mutation((body: CreateTimeBlock) => api.post<TimeBlock>("/time-blocks", body));
+
+export const useUpdateBlock = mutation(({ id, ...body }: UpdateTimeBlock & { id: string }) =>
+  api.patch<TimeBlock>(`/time-blocks/${id}`, body),
+);
+
+export const useDeleteBlock = mutation((id: string) => api.del(`/time-blocks/${id}`));

@@ -39,7 +39,7 @@
 - **Later — real travel time** (maps API: key, cost, home address) and **"leave by" reminders** (needs notifications, open question C6).
 
 ### UX (mobile-first)
-- One vertical timeline per day (~16 px per 15 min), opens at **now** with a now-line.
+- One vertical timeline per day, **24 px per 15 min** (amended in build from ~16 px: a 15-min slot must meet WCAG 2.2 SC 2.5.8's 24 px minimum target), opens at **now** with a now-line.
 - **Tap a slot → bottom sheet**: title, category chips, start, duration presets (15/30/45/60/90/custom).
 - **Move / resize:** long-press drag snapping to 15 min **and** −15 / +15 controls in the sheet (WCAG 2.2 SC 2.5.7 dragging alternative; thumb-friendly). Targets ≥ 44 px.
 - **Tray:** a bottom drawer with today's todos (Plan for today, due today, overdue) → "Schedule at…".

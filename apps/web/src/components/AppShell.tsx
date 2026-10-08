@@ -1,4 +1,5 @@
 import {
+  CalendarClock,
   CalendarDays,
   FolderKanban,
   GraduationCap,
@@ -22,6 +23,7 @@ import { WorkspaceSwitcher } from "./WorkspaceSwitcher.js";
 
 const nav = [
   { to: "/", label: "Home", icon: Home, end: true },
+  { to: "/plan", label: "Plan", icon: CalendarClock },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/todos", label: "Todos", icon: ListTodo },
   { to: "/incoming", label: "Incoming", icon: Inbox },

@@ -34,7 +34,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (local && local !== serverTz) {
       void api
         .put("/me/timezone", { timezone: local })
-        .then(() => qc.invalidateQueries({ queryKey: ["auth", "me"] }))
+        .then(() =>
+          Promise.all([
+            qc.invalidateQueries({ queryKey: ["auth", "me"] }),
+            qc.invalidateQueries({ queryKey: ["plan"] }), // "today" and event minutes depend on the zone
+          ]),
+        )
         .catch(() => {}); // best effort; retried on the next load
     }
   }, [serverTz, qc]);
