@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDaysIso, categoryTotals, dragTo, fmtDuration, isoLocal, layoutSpans, plannedIfMoved, rangeFrom, snap, tint } from "./planner.js";
+import { addDaysIso, categoryTotals, dragTo, fmtDuration, isoLocal, layoutSpans, nowNext, plannedIfMoved, rangeFrom, snap, tint } from "./planner.js";
 
 describe("planner helpers", () => {
   it("snaps to the 15-minute grid and stays inside the day", () => {
@@ -88,5 +88,26 @@ describe("slice 4 helpers", () => {
     expect(plannedIfMoved({ startMin: 600, endMin: 660, plannedStartMin: null, plannedEndMin: null })).toBeNull();
     expect(plannedIfMoved({ startMin: 600, endMin: 660, plannedStartMin: 600, plannedEndMin: 660 })).toBeNull();
     expect(plannedIfMoved({ startMin: 690, endMin: 750, plannedStartMin: 600, plannedEndMin: 660 })).toEqual({ startMin: 600, endMin: 660 });
+  });
+});
+
+describe("now / next", () => {
+  const blocks = [
+    { title: "Deep work", startMin: 540, endMin: 660, status: "planned" },
+    { title: null, todo: { title: "Call the vet" }, startMin: 720, endMin: 735, status: "planned" },
+    { title: "Skipped thing", startMin: 600, endMin: 615, status: "skipped" },
+  ];
+  const events = [
+    { title: "Standup", startMin: 690, endMin: 705, allDay: false },
+    { title: "Holiday", startMin: 0, endMin: 1440, allDay: true },
+  ];
+  it("finds what's on now and the next thing (blocks + timed events)", () => {
+    const r = nowNext(blocks, events, 605);
+    expect(r.now?.title).toBe("Deep work"); // the skipped block doesn't count
+    expect(r.next).toMatchObject({ title: "Standup", kind: "event" });
+    expect(nowNext(blocks, events, 700).next?.title).toBe("Call the vet");
+  });
+  it("is empty after the last thing", () => {
+    expect(nowNext(blocks, events, 800)).toEqual({ now: null, next: null });
   });
 });

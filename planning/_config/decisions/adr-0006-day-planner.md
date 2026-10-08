@@ -44,7 +44,7 @@
 - **Move / resize:** long-press drag snapping to 15 min **and** −15 / +15 controls in the sheet (WCAG 2.2 SC 2.5.7 dragging alternative; thumb-friendly). Targets ≥ 44 px.
 - **Tray:** a bottom drawer with today's todos (Plan for today, due today, overdue) → "Schedule at…".
 - Desktop: same view, mouse drag-to-create, tray alongside; keyboard: arrows move the selected block 15 min, Shift+arrows resize.
-- **Installable PWA** (manifest + icons, "Add to Home Screen"); **no offline** in v1.
+- **Installable PWA** (manifest + icons, "Add to Home Screen"); **no offline** in v1. As built: the installed app **opens straight to `/plan`** (`start_url`), standalone, portrait.
 
 ### v1 scope
 - **In:** the above + day notes, day totals by category, **copy a previous day's plan to today** (as a routine: blocks stamped as *planned*; links to completed todos dropped; anchors not copied), Home "Now / Next" tile, **Plan** nav item, admin default-category editor.

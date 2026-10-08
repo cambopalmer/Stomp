@@ -1,5 +1,7 @@
 import type {
   Category,
+  CreateCategory,
+  DefaultCategory,
   CreateTimeBlock,
   DayPlan,
   TimeBlock,
@@ -347,3 +349,19 @@ export const useDeleteBlock = mutation((id: string) => api.del(`/time-blocks/${i
 export const useSaveDayNotes = mutation(({ date, body }: { date: string; body: string }) =>
   api.put<{ notes: string }>(`/plan/${date}/notes`, { body }),
 );
+
+export const useCopyDay = mutation(({ date, fromDate }: { date: string; fromDate: string }) =>
+  api.post<{ copied: number }>(`/plan/${date}/copy`, { fromDate }),
+);
+
+// hub default categories (admin)
+export const useDefaultCategories = (enabled = true) =>
+  useQuery({
+    queryKey: ["admin", "default-categories"],
+    queryFn: () => api.get<DefaultCategory[]>("/admin/default-categories"),
+    enabled,
+  });
+export const useAddDefaultCategory = mutation((body: CreateCategory) =>
+  api.post<{ category: DefaultCategory; addedTo: number }>("/admin/default-categories", body),
+);
+export const useDeleteDefaultCategory = mutation((id: string) => api.del(`/admin/default-categories/${id}`));

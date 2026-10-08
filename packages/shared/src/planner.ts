@@ -190,6 +190,19 @@ export const dayPlan = z.object({
 });
 export type DayPlan = z.infer<typeof dayPlan>;
 
+export const copyDayInput = z.object({ fromDate: isoDate });
+export type CopyDayInput = z.infer<typeof copyDayInput>;
+
+/** Hub default categories (admin): additions reach every user; edits/removals never touch theirs. */
+export const defaultCategory = z.object({
+  id,
+  name: z.string(),
+  color: categoryColor,
+  icon: categoryIcon,
+  sortOrder: z.number().int(),
+});
+export type DefaultCategory = z.infer<typeof defaultCategory>;
+
 export const dayNotesInput = z.object({ body: z.string().max(10_000) });
 export type DayNotesInput = z.infer<typeof dayNotesInput>;
 

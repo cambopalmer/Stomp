@@ -16,6 +16,9 @@ export const plannerRoutes: FastifyPluginAsyncZod = async (app) => {
   app.put("/plan/:date/notes", { schema: { params: dateParams, body: S.dayNotesInput } }, async (req) =>
     planner.saveDayNotes(db, req.ctx, req.params.date, req.body.body),
   );
+  app.post("/plan/:date/copy", { schema: { params: dateParams, body: S.copyDayInput } }, async (req) =>
+    planner.copyDay(db, req.ctx, req.params.date, req.body.fromDate),
+  );
 
   // ─── blocks ───
   app.post(

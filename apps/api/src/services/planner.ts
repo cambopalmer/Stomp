@@ -1,5 +1,6 @@
 import type {
   Category,
+  DefaultCategory,
   CreateCategory,
   CreateTimeBlock,
   DayPlan,
@@ -500,4 +501,122 @@ async function trayFor(
       return { id: t.id, title: t.title, priority: t.priority, reason, dueAt: t.dueAt };
     })
     .sort((a, b) => rank[a.reason] - rank[b.reason] || prio[a.priority] - prio[b.priority] || a.title.localeCompare(b.title));
+}
+
+// ─────────────────────────────────────── copy a day (slice 6)
+
+/**
+ * Stamp another day's plan onto `date` — a routine, not a roll-over (ADR-0006):
+ * blocks arrive as fresh *planned* blocks; links to todos that are done or no
+ * longer visible are dropped; anchors aren't copied (that event isn't today).
+ */
+export async function copyDay(db: Db, ctx: Ctx, date: string, fromDate: string): Promise<{ copied: number }> {
+  if (!isIsoDate(date) || !isIsoDate(fromDate)) throw BadRequest("Not a real date");
+  if (date === fromDate) throw BadRequest("Pick a different day to copy from");
+  const source = await db
+    .select()
+    .from(timeBlocks)
+    .where(and(eq(timeBlocks.userId, ctx.userId), eq(timeBlocks.date, fromDate)))
+    .orderBy(asc(timeBlocks.startMin));
+  if (!source.length) return { copied: 0 };
+
+  const info = await todoInfo(db, ctx, source);
+  const stamp = clock.now();
+  const now = localNow(stamp, await userTimezone(db, ctx.userId));
+  const rows: BlockRow[] = source.map((b) => {
+    const t = b.todoId ? info.get(b.todoId) : undefined;
+    const keepTodo = t && !t.done ? t.id : null;
+    const row: BlockRow = {
+      ...b,
+      id: newId(),
+      date,
+      // an untitled block that loses its todo keeps the todo's title
+      title: b.title ?? (keepTodo ? null : (t?.title ?? "Block")),
+      todoId: keepTodo,
+      anchorEventId: null,
+      anchorOffsetMin: null,
+      anchorLost: false,
+      status: "planned",
+      plannedStartMin: null,
+      plannedEndMin: null,
+      createdAt: stamp,
+      updatedAt: stamp,
+    };
+    if (hasStarted(row, now)) {
+      row.plannedStartMin = row.startMin;
+      row.plannedEndMin = row.endMin;
+    }
+    return row;
+  });
+  await db.insert(timeBlocks).values(rows);
+  return { copied: rows.length };
+}
+
+// ─────────────────────────────────────── hub default categories (admin, slice 6)
+
+const toDefault = (d: typeof defaultCategories.$inferSelect): DefaultCategory => ({
+  id: d.id,
+  name: d.name,
+  color: d.color as DefaultCategory["color"],
+  icon: d.icon as DefaultCategory["icon"],
+  sortOrder: d.sortOrder,
+});
+
+export async function listDefaultCategories(db: Db): Promise<DefaultCategory[]> {
+  return (await db.select().from(defaultCategories).orderBy(asc(defaultCategories.sortOrder))).map(toDefault);
+}
+
+/**
+ * Add a hub default. ADR-0006: additions reach everyone — every user who
+ * already has categories gets a copy, unless they already have a live
+ * category by that name (theirs wins). Users seeded later get it anyway.
+ */
+export async function addDefaultCategory(db: Db, input: CreateCategory): Promise<{ category: DefaultCategory; addedTo: number }> {
+  const [{ n }] = (await db.select({ n: count() }).from(defaultCategories)) as [{ n: number }];
+  const row = { id: newId(), name: input.name, color: input.color, icon: input.icon, sortOrder: n, createdAt: clock.now() };
+  await db.insert(defaultCategories).values(row);
+
+  const owners = await db.selectDistinct({ userId: categories.userId }).from(categories);
+  let addedTo = 0;
+  for (const { userId } of owners) {
+    const [{ max }] = (await db.select({ max: count() }).from(categories).where(eq(categories.userId, userId))) as [{ max: number }];
+    const res = await db
+      .insert(categories)
+      .values({
+        id: newId(),
+        userId,
+        name: row.name,
+        color: row.color,
+        icon: row.icon,
+        sortOrder: max,
+        defaultId: row.id,
+        createdAt: row.createdAt,
+        updatedAt: row.createdAt,
+      })
+      .onConflictDoNothing() // they already have a live one by that name
+      .returning({ id: categories.id });
+    addedTo += res.length;
+  }
+  return { category: toDefault(row), addedTo };
+}
+
+/** Rename / recolour / reorder a default. Never touches users' existing categories. */
+export async function updateDefaultCategory(db: Db, id: string, input: UpdateCategory): Promise<DefaultCategory> {
+  const set: Partial<typeof defaultCategories.$inferInsert> = {};
+  if (input.name !== undefined) set.name = input.name;
+  if (input.color !== undefined) set.color = input.color;
+  if (input.icon !== undefined) set.icon = input.icon;
+  if (input.sortOrder !== undefined) set.sortOrder = input.sortOrder;
+  if (Object.keys(set).length) await db.update(defaultCategories).set(set).where(eq(defaultCategories.id, id));
+  const [d] = await db.select().from(defaultCategories).where(eq(defaultCategories.id, id)).limit(1);
+  if (!d) throw NotFound("Default category");
+  return toDefault(d);
+}
+
+/** Remove a default for future users only — existing copies stay (categories.default_id → null). */
+export async function deleteDefaultCategory(db: Db, id: string): Promise<void> {
+  const [d] = await db.select({ id: defaultCategories.id }).from(defaultCategories).where(eq(defaultCategories.id, id)).limit(1);
+  if (!d) throw NotFound("Default category");
+  await db.update(categories).set({ defaultId: null }).where(eq(categories.defaultId, id));
+  await db.delete(defaultCategories).where(eq(defaultCategories.id, id));
 }

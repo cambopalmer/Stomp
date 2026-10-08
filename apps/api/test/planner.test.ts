@@ -284,3 +284,37 @@ describe("todos on the planner (slice 3)", () => {
     expect(shown.every((b: { status: string }) => b.status === "planned")).toBe(true);
   });
 });
+
+describe("copy a previous day (slice 6)", () => {
+  it("stamps the source day's blocks as fresh planned blocks; done todos unlink, anchors don't copy", async () => {
+    clock.freeze(at("10:00"));
+    const SRC = "2031-01-20";
+    const DST = "2031-01-27";
+    const openTodo = (await app.inject({ method: "POST", url: "/api/todos", payload: { title: "still open" } })).json();
+    const doneTodo = (await app.inject({ method: "POST", url: "/api/todos", payload: { title: "already done" } })).json();
+    await api("POST", "/api/time-blocks", { date: SRC, startMin: 540, endMin: 600, title: "Standup prep" });
+    await api("POST", "/api/time-blocks", { date: SRC, startMin: 600, endMin: 660, todoId: openTodo.id });
+    await api("POST", "/api/time-blocks", { date: SRC, startMin: 660, endMin: 690, todoId: doneTodo.id });
+    const done = (await api("POST", "/api/time-blocks", { date: SRC, startMin: 700 - 10, endMin: 720, title: "x" }));
+    expect(done.statusCode).toBe(201);
+    await app.inject({ method: "PATCH", url: `/api/todos/${doneTodo.id}`, payload: { status: "done" } });
+
+    const r = await api("POST", `/api/plan/${DST}/copy`, { fromDate: SRC });
+    expect(r.json()).toEqual({ copied: 4 });
+    const copied = (await api("GET", `/api/plan/${DST}`)).json().blocks as {
+      startMin: number;
+      title: string | null;
+      todoId: string | null;
+      status: string;
+      plannedStartMin: number | null;
+      anchorEventId: string | null;
+    }[];
+    expect(copied.map((b) => b.startMin)).toEqual([540, 600, 660, 690]);
+    expect(copied.every((b) => b.status === "planned" && b.plannedStartMin === null && b.anchorEventId === null)).toBe(true);
+    expect(copied[1]).toMatchObject({ todoId: openTodo.id, title: null }); // open todo stays linked
+    expect(copied[2]).toMatchObject({ todoId: null, title: "already done" }); // done todo unlinks, keeps its name
+
+    expect((await api("POST", `/api/plan/${DST}/copy`, { fromDate: DST })).statusCode).toBe(400);
+    expect((await api("POST", `/api/plan/${DST}/copy`, { fromDate: "2031-01-01" })).json()).toEqual({ copied: 0 });
+  });
+});

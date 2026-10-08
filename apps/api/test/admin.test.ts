@@ -178,3 +178,39 @@ describe("admin: delete = anonymize", () => {
     expect(members.find((m) => m.role === "owner")).toBeTruthy();
   });
 });
+
+describe("admin: hub default categories (day planner)", () => {
+  it("members can't touch them; additions reach every user who has categories, unless they already have that name", async () => {
+    expect((await as(member, "GET", "/api/admin/default-categories")).statusCode).toBe(403);
+    expect((await as(member, "POST", "/api/admin/default-categories", { name: "X", color: "blue", icon: "star" })).statusCode).toBe(403);
+
+    const defaults = (await as(admin, "GET", "/api/admin/default-categories")).json();
+    expect(defaults.map((d: { name: string }) => d.name)).toContain("Travel");
+
+    // two users with categories: the admin, and sam who already made a "School" of his own
+    await as(admin, "GET", "/api/categories");
+    await as(member, "GET", "/api/categories");
+    await as(member, "POST", "/api/categories", { name: "School", color: "rose", icon: "book" });
+
+    const add = await as(admin, "POST", "/api/admin/default-categories", { name: "School", color: "sky", icon: "graduation-cap" });
+    expect(add.statusCode).toBe(201);
+    expect(add.json().addedTo).toBeGreaterThanOrEqual(1);
+
+    const mine = (await as(admin, "GET", "/api/categories")).json().filter((c: { name: string }) => c.name === "School");
+    expect(mine).toHaveLength(1);
+    expect(mine[0]).toMatchObject({ color: "sky", icon: "graduation-cap" });
+    const sams = (await as(member, "GET", "/api/categories")).json().filter((c: { name: string }) => c.name === "School");
+    expect(sams).toHaveLength(1);
+    expect(sams[0].color).toBe("rose"); // his own wins
+
+    // renaming / removing the default never touches existing copies
+    const id = add.json().category.id;
+    await as(admin, "PATCH", `/api/admin/default-categories/${id}`, { name: "Kids' school" });
+    expect((await as(admin, "DELETE", `/api/admin/default-categories/${id}`)).statusCode).toBe(204);
+    const after = (await as(admin, "GET", "/api/categories")).json().map((c: { name: string }) => c.name);
+    expect(after).toContain("School");
+    expect((await as(admin, "GET", "/api/admin/default-categories")).json().map((d: { name: string }) => d.name)).not.toContain(
+      "Kids' school",
+    );
+  });
+});

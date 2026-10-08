@@ -1,7 +1,8 @@
-import { CalendarDays, GraduationCap, Inbox, ListTodo, FolderKanban } from "lucide-react";
+import { CalendarClock, CalendarDays, GraduationCap, Inbox, ListTodo, FolderKanban } from "lucide-react";
 import { Link } from "react-router";
 import { Card, ErrorState, Spinner } from "../components/ui.js";
-import { useHomeSummary, useProjects } from "../lib/queries.js";
+import { fmtMin, isoLocal, nowNext } from "../lib/planner.js";
+import { useHomeSummary, usePlan, useProjects } from "../lib/queries.js";
 
 function Tile({
   to,
@@ -19,7 +20,7 @@ function Tile({
   return (
     <Link
       to={to}
-      className="group rounded-lg border border-border bg-surface p-4 transition-shadow hover:shadow-md"
+      className="group block rounded-lg border border-border bg-surface p-4 transition-shadow hover:shadow-md"
     >
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2 text-sm font-semibold">
@@ -37,6 +38,26 @@ function Tile({
   );
 }
 
+/** Today's plan at a glance (ADR-0006): what's on now and what's next. */
+function PlanTile() {
+  const plan = usePlan(isoLocal(new Date()));
+  const p = plan.data;
+  const { now, next } = p ? nowNext(p.blocks, p.events, p.nowMin) : { now: null, next: null };
+  const lines = !p
+    ? ["Loading…"]
+    : !p.blocks.length && !now && !next
+      ? ["Nothing planned yet — plan your day"]
+      : [
+          now ? `Now: ${now.title} · until ${fmtMin(now.endMin)}` : "Now: free",
+          next ? `Next: ${next.title} at ${fmtMin(next.startMin)}` : "Nothing else today",
+        ];
+  return (
+    <div className="sm:col-span-2" data-testid="home-plan-tile">
+      <Tile to="/plan" title="Plan" icon={CalendarClock} headline={p ? String(p.blocks.length) : "–"} lines={lines} />
+    </div>
+  );
+}
+
 export function Home() {
   const summary = useHomeSummary();
   const projects = useProjects();
@@ -50,6 +71,7 @@ export function Home() {
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-bold">Hub</h1>
       <div className="grid gap-4 sm:grid-cols-2">
+        <PlanTile />
         <Tile
           to="/calendar"
           title="Calendar"

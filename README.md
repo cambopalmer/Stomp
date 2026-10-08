@@ -42,6 +42,10 @@ Open http://localhost:5173 and sign in. Seeded accounts (all created by `db:seed
 
 Email/password is always on. Google OAuth is optional — see [`docs/GOOGLE-OAUTH.md`](docs/GOOGLE-OAUTH.md) for the full Cloud Console walkthrough; in short, set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `.env` and a "Continue with Google" button appears. `ALLOW_SIGNUP=false` closes open signup (the first-ever user is always allowed, and becomes the **admin**). Admins get **Manage users** in the account menu (`/admin`): change roles, disable sign-in, set a new password, delete (anonymize) an account — admins never see other people's items. Sessions are a signed httpOnly cookie (`stomp_session`, 30-day TTL); set a strong `SESSION_SECRET` in production. Tests run with `AUTH_TEST_BYPASS=true`.
 
+### Day planner (Phase 4.5)
+
+**Plan** in the nav (`/plan`) is a quick, flexible plan for your day ([ADR-0006](planning/_config/decisions/adr-0006-day-planner.md)): a 15-minute timeline with your calendar events as fixed blocks; tap a time (or drag on desktop) to add a block, colour-coded by category; schedule todos from the "To schedule" tray; attach prep blocks to an event with **Add before…** (they move when it moves); review how the day went (planned vs actual, totals, notes); copy a previous day as a routine. It's built phone-first — on your phone choose **Add to Home Screen** and STOMP opens straight to today's plan.
+
 ### Google integrations (Phase 4)
 
 In **Settings → Connected accounts**, each user can connect **Gmail** (messages they label `STOMP` arrive in Incoming) and **Google Calendar** (events from the calendars they pick show up read-only in the calendar). Needs the Google OAuth app from [`docs/GOOGLE-OAUTH.md`](docs/GOOGLE-OAUTH.md) — including the second redirect URI and §7 — plus `INTEGRATION_ENC_KEY` (encrypts stored tokens). The API syncs every `SYNC_INTERVAL_MINUTES` (default 10); decisions in [ADR-0005](planning/_config/decisions/adr-0005-google-integrations.md).

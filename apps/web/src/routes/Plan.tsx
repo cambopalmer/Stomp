@@ -1,9 +1,10 @@
 import type { PlannerEvent, TrayTodo } from "@stomp/shared";
-import { CalendarDays, ChevronLeft, ChevronRight, ListTodo, Plus, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, Copy, ChevronRight, ListTodo, Plus, X } from "lucide-react";
 import { type MouseEvent, type PointerEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { BlockItem, type Times } from "../components/planner/BlockItem.js";
 import { BlockSheet, type SheetTarget } from "../components/planner/BlockSheet.js";
+import { CopyDay } from "../components/planner/CopyDay.js";
 import { DaySummary } from "../components/planner/DaySummary.js";
 import { EventSheet } from "../components/planner/EventSheet.js";
 import { CategoryIcon } from "../components/planner/CategoryIcon.js";
@@ -41,6 +42,7 @@ export function Plan() {
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
   const [trayOpen, setTrayOpen] = useState(false);
   const [eventOpen, setEventOpen] = useState<string | null>(null);
+  const [copyOpen, setCopyOpen] = useState(false);
   /** a block mid-drag (or mid-save): drawn here instead of where the server has it */
   const [override, setOverride] = useState<({ id: string } & Times) | null>(null);
   /** drag-to-create preview on empty time */
@@ -153,11 +155,16 @@ export function Plan() {
               Today
             </Button>
           )}
+          <Button variant="ghost" onClick={() => setCopyOpen((v) => !v)} aria-expanded={copyOpen}>
+            <Copy size={16} aria-hidden="true" /> Copy a day
+          </Button>
           <Button onClick={addAtNextSlot}>
             <Plus size={16} aria-hidden="true" /> Add block
           </Button>
         </div>
       </div>
+
+      {copyOpen && <CopyDay key={date} date={date} onClose={() => setCopyOpen(false)} />}
 
       {allDay.length > 0 && (
         <ul aria-label="All-day events" className="flex flex-wrap gap-1.5">

@@ -162,3 +162,30 @@ export function plannedIfMoved(b: {
   if (b.plannedStartMin === b.startMin && b.plannedEndMin === b.endMin) return null;
   return { startMin: b.plannedStartMin, endMin: b.plannedEndMin };
 }
+
+// ─────────────────────────────────────── Home "Now / Next" (slice 6)
+
+export interface NowNextItem {
+  title: string;
+  startMin: number;
+  endMin: number;
+  kind: "block" | "event";
+}
+
+/** What's on now and what's next today — blocks and timed events; skipped blocks don't count. */
+export function nowNext(
+  blocks: { title: string | null; todo?: { title: string } | null; startMin: number; endMin: number; status: string }[],
+  events: { title: string; startMin: number; endMin: number; allDay: boolean }[],
+  nowMin: number,
+): { now: NowNextItem | null; next: NowNextItem | null } {
+  const items: NowNextItem[] = [
+    ...blocks
+      .filter((b) => b.status !== "skipped")
+      .map((b) => ({ title: b.title ?? b.todo?.title ?? "Block", startMin: b.startMin, endMin: b.endMin, kind: "block" as const })),
+    ...events.filter((e) => !e.allDay).map((e) => ({ title: e.title, startMin: e.startMin, endMin: e.endMin, kind: "event" as const })),
+  ].sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
+  return {
+    now: items.find((i) => i.startMin <= nowMin && nowMin < i.endMin) ?? null,
+    next: items.find((i) => i.startMin > nowMin) ?? null,
+  };
+}

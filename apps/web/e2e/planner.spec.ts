@@ -340,3 +340,60 @@ test("Add before… stacks prep blocks that follow the event, and are flagged wh
   await sheet(page).getByRole("button", { name: "Keep it" }).click();
   await expect(blocks(page).filter({ hasText: "Dinner" })).not.toHaveAttribute("aria-label", /cancelled/);
 });
+
+/* ── slice 6: extras ───────────────────────────────────────── */
+
+test("copy a previous day's plan onto this one", async ({ page }) => {
+  const SRC = "2031-04-07";
+  const DST = "2031-04-14"; // same weekday, a week later — the panel's default
+  const tag = Date.now();
+  await apiBlock(page, SRC, 420, 450, `Run ${tag}`);
+  await apiBlock(page, SRC, 540, 660, `Deep work ${tag}`);
+  await page.goto(`/plan/${DST}`);
+  await main(page).getByRole("button", { name: "Copy a day" }).click();
+  const form = main(page).getByRole("form", { name: "Copy a day" });
+  await expect(form.getByLabel("Copy the plan from")).toHaveValue(SRC);
+  await form.getByRole("button", { name: "Copy here" }).click();
+  await expect(form.getByText(/Copied 2 blocks from/)).toBeVisible();
+  await expect(byTitle(page, `Run ${tag}`)).toHaveAttribute("aria-label", /7:00\sAM – 7:30\sAM/);
+  await expect(byTitle(page, `Deep work ${tag}`)).toBeVisible();
+});
+
+test("Home shows what's on now from today's plan", async ({ page }) => {
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const start = Math.floor(nowMin / 15) * 15;
+  const title = `Right now ${Date.now()}`;
+  await apiBlock(page, `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`, start, Math.min(1440, start + 15), title);
+  await page.goto("/");
+  await expect(page.getByTestId("home-plan-tile")).toContainText(`Now: ${title}`);
+  await page.getByTestId("home-plan-tile").getByRole("link").click();
+  await expect(page).toHaveURL(/\/plan\/\d{4}-\d{2}-\d{2}$/);
+});
+
+test("an admin adds a default category and it shows up in the planner", async ({ page }) => {
+  const name = `Gym club ${Date.now() % 100000}`;
+  await page.goto("/admin");
+  const section = main(page).getByRole("region", { name: "Planner default categories" });
+  await section.getByLabel("Name").fill(name);
+  await section.getByLabel("Colour").selectOption("fuchsia");
+  await section.getByLabel("Icon").selectOption("dumbbell");
+  await section.getByRole("button", { name: "Add for everyone" }).click();
+  await expect(section.getByText(/got it\./)).toBeVisible();
+  await expect(section.getByTestId("default-categories")).toContainText(name);
+
+  await page.goto(`/plan/${DAY}`);
+  await main(page).getByRole("button", { name: "Add block" }).click();
+  await expect(sheet(page).getByRole("button", { name: new RegExp(name) })).toBeVisible();
+});
+
+test("installable: manifest + icons are served and linked", async ({ page }) => {
+  const manifest = await (await page.request.get("/manifest.json")).json();
+  expect(manifest).toMatchObject({ short_name: "STOMP", start_url: "/plan", display: "standalone" });
+  for (const icon of manifest.icons as { src: string }[]) {
+    expect((await page.request.get(icon.src)).status()).toBe(200);
+  }
+  await page.goto("/");
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/manifest.json");
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "/apple-touch-icon.png");
+});

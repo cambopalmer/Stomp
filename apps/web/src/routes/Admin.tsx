@@ -1,5 +1,6 @@
 import type { AdminUser } from "@stomp/shared";
 import { useState } from "react";
+import { DefaultCategoriesAdmin } from "../components/planner/DefaultCategoriesAdmin.js";
 import { Badge, Button, EmptyState, ErrorState, Input, Select, Spinner } from "../components/ui.js";
 import { useAuth } from "../lib/auth.js";
 import { fmtDate } from "../lib/format.js";
@@ -57,6 +58,10 @@ export function Admin() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="border-t border-border pt-4">
+        <DefaultCategoriesAdmin />
       </div>
 
       {deleted.length > 0 && (

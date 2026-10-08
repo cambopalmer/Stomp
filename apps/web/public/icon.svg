@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- STOMP: a day planner — calendar page with a clock, on brand indigo -->
+  <rect width="512" height="512" rx="112" fill="#4f46e5"/>
+  <rect x="104" y="128" width="304" height="272" rx="36" fill="#ffffff"/>
+  <rect x="104" y="128" width="304" height="72" rx="36" fill="#c7d2fe"/>
+  <rect x="104" y="164" width="304" height="36" fill="#c7d2fe"/>
+  <rect x="164" y="96" width="28" height="72" rx="14" fill="#ffffff"/>
+  <rect x="320" y="96" width="28" height="72" rx="14" fill="#ffffff"/>
+  <circle cx="256" cy="306" r="70" fill="none" stroke="#4f46e5" stroke-width="20"/>
+  <path d="M256 262 V306 L286 326" fill="none" stroke="#4f46e5" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
