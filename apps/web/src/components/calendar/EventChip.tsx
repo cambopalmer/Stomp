@@ -8,7 +8,7 @@ export function EventChip({ event, className = "" }: { event: CalendarEvent; cla
     <Link
       to={`/calendar/${event.id}`}
       title={`${event.title}${event.location ? ` · ${event.location}` : ""}`}
-      className={`block truncate rounded px-1 py-0.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 ${className}`}
+      className={`block truncate rounded-sm px-1 py-0.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 ${className}`}
     >
       {!event.allDay && (
         <span className="tnum mr-1 tabular-nums text-primary/70">{fmtTime(event.startsAt)}</span>

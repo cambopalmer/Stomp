@@ -42,7 +42,7 @@ export function WorkspaceSwitcher() {
       {open && (
         <ul
           role="listbox"
-          className="absolute left-0 z-20 mt-1 min-w-[12rem] rounded-md border border-border bg-surface p-1 shadow-md"
+          className="absolute left-0 z-20 mt-1 min-w-48 rounded-md border border-border bg-surface p-1 shadow-md"
         >
           <Option label="Personal" selected={active === null} onSelect={() => { setActive(null); setOpen(false); }} />
           {workspaces?.map((w) => (
@@ -58,7 +58,7 @@ export function WorkspaceSwitcher() {
             <Link
               to="/workspaces"
               onClick={() => setOpen(false)}
-              className="block rounded px-2 py-1.5 text-sm text-muted hover:bg-surface-2 hover:text-text"
+              className="block rounded-sm px-2 py-1.5 text-sm text-muted hover:bg-surface-2 hover:text-text"
             >
               Manage workspaces…
             </Link>
@@ -76,7 +76,7 @@ function Option({ label, selected, onSelect }: { label: string; selected: boolea
         role="option"
         aria-selected={selected}
         onClick={onSelect}
-        className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm hover:bg-surface-2"
+        className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left text-sm hover:bg-surface-2"
       >
         {label}
         {selected && <Check size={14} className="text-primary" aria-hidden="true" />}

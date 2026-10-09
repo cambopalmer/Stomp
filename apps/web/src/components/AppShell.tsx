@@ -56,7 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="mx-auto flex min-h-dvh max-w-7xl flex-col px-4">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:rounded focus:bg-primary focus:px-3 focus:py-1 focus:text-primary-fg"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:rounded-sm focus:bg-primary focus:px-3 focus:py-1 focus:text-primary-fg"
       >
         Skip to main content
       </a>

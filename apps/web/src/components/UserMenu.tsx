@@ -48,7 +48,7 @@ export function UserMenu() {
             role="menuitem"
             to="/settings"
             onClick={() => setOpen(false)}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-surface-2"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-2"
           >
             <SettingsIcon size={14} aria-hidden="true" /> Settings
           </Link>
@@ -57,7 +57,7 @@ export function UserMenu() {
               role="menuitem"
               to="/admin"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-surface-2"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-2"
             >
               <ShieldCheck size={14} aria-hidden="true" /> Manage users
             </Link>
@@ -65,7 +65,7 @@ export function UserMenu() {
           <button
             role="menuitem"
             onClick={() => logout()}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-surface-2"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-2"
           >
             <LogOut size={14} aria-hidden="true" /> Sign out
           </button>

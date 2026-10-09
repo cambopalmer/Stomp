@@ -81,7 +81,7 @@ export function WeekView({
                   <Link
                     key={e.id}
                     to={`/calendar/${e.id}`}
-                    className="truncate rounded bg-primary/10 px-1 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
+                    className="truncate rounded-sm bg-primary/10 px-1 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
                   >
                     {e.title}
                   </Link>
@@ -133,7 +133,7 @@ export function WeekView({
                     key={event.id}
                     to={`/calendar/${event.id}`}
                     title={`${event.title}${event.location ? ` · ${event.location}` : ""}`}
-                    className="absolute overflow-hidden rounded border border-primary/30 bg-primary/15 px-1 py-0.5 text-xs text-primary hover:bg-primary/25"
+                    className="absolute overflow-hidden rounded-sm border border-primary/30 bg-primary/15 px-1 py-0.5 text-xs text-primary hover:bg-primary/25"
                     style={{
                       top: `${top * 100}%`,
                       height: `calc(${height * 100}% - 2px)`,

@@ -266,7 +266,7 @@ function CalendarPicker({ account }: { account: IntegrationAccount }) {
         <label key={c.id} className="flex min-h-8 cursor-pointer items-center gap-2 text-sm">
           <input
             type="checkbox"
-            className="h-4 w-4 accent-[var(--color-primary)]"
+            className="h-4 w-4 accent-primary"
             checked={picked.includes(c.id)}
             onChange={(e) => setPicked((p) => (e.target.checked ? [...p, c.id] : p.filter((x) => x !== c.id)))}
           />

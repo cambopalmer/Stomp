@@ -44,7 +44,7 @@ export function HotSidebar() {
           <ul className="flex flex-col gap-1">
             {todos.map((t) => (
               <li key={t.id}>
-                <Link to={`/todos/${t.id}`} className="block truncate rounded px-1 py-0.5 text-sm hover:bg-surface-2">
+                <Link to={`/todos/${t.id}`} className="block truncate rounded-sm px-1 py-0.5 text-sm hover:bg-surface-2">
                   {t.title}
                   {t.dueAt && (
                     <span className="ml-1 text-xs text-muted tnum">· {relativeDay(t.dueAt)}</span>
@@ -64,7 +64,7 @@ export function HotSidebar() {
           <ul className="flex flex-col gap-1">
             {data.incoming.slice(0, 5).map((i) => (
               <li key={i.id}>
-                <Link to="/incoming" className="block truncate rounded px-1 py-0.5 text-sm hover:bg-surface-2">
+                <Link to="/incoming" className="block truncate rounded-sm px-1 py-0.5 text-sm hover:bg-surface-2">
                   {i.title}
                 </Link>
               </li>

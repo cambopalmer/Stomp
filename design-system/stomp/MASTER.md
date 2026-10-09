@@ -319,4 +319,4 @@ The generated GSAP Scroll-Reveal snippet is for **marketing/onboarding pages onl
 
 ## O8. Stack mapping
 
-Tokens → `apps/web/src/index.css` as CSS variables on `:root` + `@media (prefers-color-scheme: dark)` + `:root[data-theme]`. Tailwind reads them via `theme.extend.colors` referencing the vars. shadcn/ui components themed by pointing its `--background`/`--foreground`/`--primary`/etc. at these tokens. No raw hex in components — token classes only.
+Tokens → `apps/web/src/index.css` as CSS variables on `:root` + `@media (prefers-color-scheme: dark)` + `:root[data-theme]`. Tailwind (v4) reads them via `@theme inline` in the same file — utilities like `bg-surface` / `text-muted` compile straight to `var(--color-…)` token expressions (inline, because several utility names are also token names). shadcn/ui components themed by pointing its `--background`/`--foreground`/`--primary`/etc. at these tokens. No raw hex in components — token classes only.
