@@ -362,9 +362,11 @@ test("copy a previous day's plan onto this one", async ({ page }) => {
 test("Home shows what's on now from today's plan", async ({ page }) => {
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
-  const start = Math.floor(nowMin / 15) * 15;
+  void nowMin;
   const title = `Right now ${Date.now()}`;
-  await apiBlock(page, `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`, start, Math.min(1440, start + 15), title);
+  // the whole day: it covers "now" and starts before anything other tests put on today
+  // (Now shows the earliest-started item covering now — e.g. a 9:00 event at 9:45)
+  await apiBlock(page, `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`, 0, 1440, title);
   await page.goto("/");
   await expect(page.getByTestId("home-plan-tile")).toContainText(`Now: ${title}`);
   await page.getByTestId("home-plan-tile").getByRole("link").click();
