@@ -61,3 +61,15 @@ test("a member doesn't get the menu item, and /admin says admins only", async ({
   await expect(main(page).getByText("Admins only")).toBeVisible();
   await ctx.close();
 });
+
+test("admin sees Tools & links: data browser, architecture map, Google Cloud console", async ({ page }) => {
+  await page.goto("/admin");
+  const tools = main(page).getByRole("region", { name: "Tools & links" });
+  await expect(tools.getByRole("link", { name: /Data browser \(Drizzle Studio\)/ })).toHaveAttribute("href", "https://local.drizzle.studio");
+  await expect(tools.getByText(/db:studio/)).toBeVisible();
+  await expect(tools.getByRole("link", { name: /Architecture map/ })).toHaveAttribute("href", "/architecture.html");
+  const audience = tools.getByTestId("google-links").getByRole("link", { name: /Test users & publishing/ });
+  await expect(audience).toHaveAttribute("href", "https://console.cloud.google.com/auth/audience?project=stomp-e2e-123");
+  await expect(audience).toHaveAttribute("target", "_blank");
+  await page.screenshot({ path: "test-results/admin-tools.png", fullPage: true });
+});

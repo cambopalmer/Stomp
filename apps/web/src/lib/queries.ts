@@ -1,4 +1,5 @@
 import type {
+  AdminTools,
   Category,
   CreateCategory,
   DefaultCategory,
@@ -365,3 +366,6 @@ export const useAddDefaultCategory = mutation((body: CreateCategory) =>
   api.post<{ category: DefaultCategory; addedTo: number }>("/admin/default-categories", body),
 );
 export const useDeleteDefaultCategory = mutation((id: string) => api.del(`/admin/default-categories/${id}`));
+
+export const useAdminTools = (enabled = true) =>
+  useQuery({ queryKey: ["admin", "tools"], queryFn: () => api.get<AdminTools>("/admin/tools"), enabled });

@@ -17,6 +17,7 @@ const env = {
   GOOGLE_CLIENT_ID: "e2e-client.apps.googleusercontent.com",
   GOOGLE_CLIENT_SECRET: "e2e-secret",
   INTEGRATION_ENC_KEY: "ZTJlLWUyZS1lMmUtZTJlLWUyZS1lMmUtZTJlLWUyZS0=",
+  GOOGLE_CLOUD_PROJECT: "stomp-e2e-123",
   SYNC_INTERVAL_MINUTES: "0",
 };
 

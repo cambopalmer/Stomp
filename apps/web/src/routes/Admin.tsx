@@ -1,5 +1,6 @@
 import type { AdminUser } from "@stomp/shared";
 import { useState } from "react";
+import { AdminTools } from "../components/AdminTools.js";
 import { DefaultCategoriesAdmin } from "../components/planner/DefaultCategoriesAdmin.js";
 import { Badge, Button, EmptyState, ErrorState, Input, Select, Spinner } from "../components/ui.js";
 import { useAuth } from "../lib/auth.js";
@@ -62,6 +63,10 @@ export function Admin() {
 
       <div className="border-t border-border pt-4">
         <DefaultCategoriesAdmin />
+      </div>
+
+      <div className="border-t border-border pt-4">
+        <AdminTools />
       </div>
 
       {deleted.length > 0 && (

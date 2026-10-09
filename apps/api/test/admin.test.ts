@@ -214,3 +214,21 @@ describe("admin: hub default categories (day planner)", () => {
     );
   });
 });
+
+describe("admin: tools & links", () => {
+  it("members get 403; admins get the operator links (no data, just URLs)", async () => {
+    expect((await as(member, "GET", "/api/admin/tools")).statusCode).toBe(403);
+    const r = await as(admin, "GET", "/api/admin/tools");
+    expect(r.statusCode).toBe(200);
+    const t = r.json();
+    // not production → the local data browser is offered, with its hint
+    expect(t.dataBrowser).toMatchObject({ url: "https://local.drizzle.studio" });
+    expect(t.dataBrowser.hint).toMatch(/db:studio/);
+    expect(t.architectureMap.url).toBe("/architecture.html");
+    expect(t.googleCloud).toMatchObject({ configured: true, projectId: "stomp-test-123" });
+    const urls = t.googleCloud.links.map((l: { url: string }) => l.url);
+    expect(urls).toContain("https://console.cloud.google.com/auth/audience?project=stomp-test-123");
+    expect(urls).toContain("https://console.cloud.google.com/auth/clients?project=stomp-test-123");
+    expect(urls.every((u: string) => u.startsWith("https://console.cloud.google.com/"))).toBe(true);
+  });
+});

@@ -30,6 +30,15 @@ const schema = z.object({
   ALLOW_SIGNUP: z.coerce.boolean().default(true),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  /** Google Cloud project id (e.g. "stomp-123456") — only for admin deep links to the console */
+  // an empty value (as in .env.example) means "not set", not "invalid"
+  GOOGLE_CLOUD_PROJECT: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z
+      .string()
+      .regex(/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/, "a Google Cloud project id (lowercase letters, digits, hyphens)")
+      .optional(),
+  ),
   // ─── integrations (Phase 4, ADR-0005) ───
   /** 32 random bytes, base64 — encrypts stored OAuth tokens. Integrations are off until set. */
   INTEGRATION_ENC_KEY: z

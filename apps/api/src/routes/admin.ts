@@ -2,6 +2,7 @@ import * as S from "@stomp/shared";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { db } from "../db/client.js";
+import { adminTools } from "../services/adminTools.js";
 import * as planner from "../services/planner.js";
 import * as users from "../services/users.js";
 
@@ -31,6 +32,11 @@ export const adminRoutes: FastifyPluginAsyncZod = async (app) => {
   app.delete("/admin/users/:id", { schema: { params: idParams } }, async (req, reply) => {
     await users.deleteUser(db, req.ctx, req.params.id);
     reply.code(204);
+  });
+
+  app.get("/admin/tools", { schema: { response: { 200: S.adminTools } } }, async (req) => {
+    await users.assertAdmin(db, req.ctx);
+    return adminTools();
   });
 
   // ─── hub default categories (day planner, ADR-0006) ───

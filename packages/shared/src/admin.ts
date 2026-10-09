@@ -28,6 +28,23 @@ export const adminUpdateUser = z
   .refine((v) => v.role !== undefined || v.disabled !== undefined, "Nothing to change");
 export type AdminUpdateUser = z.infer<typeof adminUpdateUser>;
 
+const toolLink = z.object({ label: z.string(), url: z.string(), hint: z.string().optional() });
+
+/** Operator links for the admin page (backlog: "Admin panel: tools & links"). */
+export const adminTools = z.object({
+  /** Drizzle Studio — a local dev tool; null in production */
+  dataBrowser: toolLink.nullable(),
+  architectureMap: toolLink,
+  googleCloud: z.object({
+    /** OAuth app configured on this server */
+    configured: z.boolean(),
+    /** null until GOOGLE_CLOUD_PROJECT is set */
+    projectId: z.string().nullable(),
+    links: z.array(toolLink),
+  }),
+});
+export type AdminTools = z.infer<typeof adminTools>;
+
 /** Admin sets a new password (no email infra yet — hand it over out of band). */
 export const adminResetPassword = credentials.pick({ password: true });
 export type AdminResetPassword = z.infer<typeof adminResetPassword>;

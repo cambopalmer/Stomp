@@ -14,6 +14,7 @@ export default defineConfig({
       GOOGLE_CLIENT_ID: "test-client.apps.googleusercontent.com",
       GOOGLE_CLIENT_SECRET: "test-secret",
       INTEGRATION_ENC_KEY: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
+      GOOGLE_CLOUD_PROJECT: "stomp-test-123",
       SYNC_INTERVAL_MINUTES: "0",
       // pin: a developer's root .env (dotenv-loaded) must not leak into tests
       PUBLIC_BASE_URL: "http://localhost:8080",
